@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Tanque Cheio",
+    "slug": "tanquecheio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "tanquecheio",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/playstore.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tanquecheio.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/playstore.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.tanquecheio.app"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
