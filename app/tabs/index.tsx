@@ -1,48 +1,68 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   StyleSheet,
   Text,
   View,
   ActivityIndicator,
   Alert,
-  Image, // 1. IMPORTADO
-  TouchableOpacity, // 1. IMPORTADO
+  Image,
+  FlatList,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
+import Slider from "@react-native-community/slider";
+
 import { useGasStationStore } from "@/store/GasStationStore";
 import { useUserStore } from "@/store/userStore";
+import { GasStationCard } from "@/components/GasStationCard";
 import { colors } from "@/constants/colors";
-
-
 import markerImage from "@/assets/images/marker.png";
 
-// Coordenadas iniciais para Floriano, PI
 const INITIAL_REGION = {
-  latitude: -6.7706,
-  longitude: -43.0311,
-  latitudeDelta: 0.0922,
-  longitudeDelta: 0.0421,
+  latitude: -5.101460135649267,
+  longitude: -42.80321186214014,
+  latitudeDelta: 0.8,
+  longitudeDelta: 0.8,
 };
+
+const { height } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUserStore();
   const {
-    allStations,
-    fetchAllStations,
+    nearbyStations,
+    fetchNearbyStations,
+    userLocation,
     setUserLocation,
     isLoading,
   } = useGasStationStore();
-  
+
   const [mapRegion, setMapRegion] = useState(INITIAL_REGION);
-  const [isLocationReady, setIsLocationReady] = useState(false);
+  const [radius, setRadius] = useState(50); // Raio inicial de 50km
+
+  const handleSearch = useCallback(
+    (newRadius: number) => {
+      if (!userLocation) {
+        Alert.alert(
+          "Localização Indisponível",
+          "Não foi possível obter sua localização para buscar postos próximos."
+        );
+        return;
+      }
+      fetchNearbyStations({
+        lat: userLocation.latitude,
+        lng: userLocation.longitude,
+        radius: newRadius,
+      });
+    },
+    [userLocation, fetchNearbyStations]
+  );
 
   useEffect(() => {
-    fetchAllStations(); 
-
     const requestLocation = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -50,34 +70,40 @@ export default function HomeScreen() {
           "Permissão de Localização",
           "A permissão foi negada. O mapa será centralizado em Floriano."
         );
-        setIsLocationReady(true);
         return;
       }
 
       try {
         const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
-        
+        // const { latitude, longitude } = location.coords;
+        // Valores fixos para desenvolvimento
+        const latitude = -5.101460135649267;
+        const longitude = -42.80321186214014;
+
         setUserLocation(latitude, longitude);
         setMapRegion({
           latitude,
           longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
+          latitudeDelta: 0.8,
+          longitudeDelta: 0.8,
         });
+        // Busca inicial com o raio padrão
+        handleSearch(radius);
       } catch (error) {
         console.error("Erro ao obter localização: ", error);
-      } finally {
-        setIsLocationReady(true);
+        Alert.alert(
+          "Erro de Localização",
+          "Não foi possível obter sua localização."
+        );
       }
     };
 
     requestLocation();
-  }, [fetchAllStations, setUserLocation]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Olá,</Text>
           <Text style={styles.name}>{user?.name || "Usuário"}</Text>
@@ -88,66 +114,88 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.mapContainer}>
-        {(!isLocationReady || (isLoading && allStations.length === 0)) ? (
-          <ActivityIndicator style={StyleSheet.absoluteFill} size="large" color={colors.primary} />
-        ) : (
-          <MapView
-            style={styles.map}
-            provider={PROVIDER_GOOGLE}
-            initialRegion={mapRegion}
-            showsUserLocation
-            showsMyLocationButton
-          >
-            {allStations
-              .filter(station => station.localization.coordinates && station.localization.coordinates.coordinates)
-              .map((station) => (
-              <Marker
-                key={station.id}
-                coordinate={{
-                  latitude: station.localization.coordinates!.coordinates[1],
-                  longitude: station.localization.coordinates!.coordinates[0],
-                }}
+        <MapView
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          region={mapRegion}
+          showsUserLocation
+          showsMyLocationButton
+        >
+          {nearbyStations.map((station) => (
+            <Marker
+              key={station.id}
+              coordinate={{
+                latitude: station.localization.coordinates!.coordinates[1],
+                longitude: station.localization.coordinates!.coordinates[0],
+              }}
+            >
+              <Image
+                source={markerImage}
+                style={styles.customMarker}
+                resizeMode="contain"
+              />
+              <Callout
+                tooltip
+                onPress={() => router.push(`/gas-station/${station.id}` as any)}
               >
-                 {/* 3. ÍCONE SUBSTITUÍDO PELA IMAGEM PERSONALIZADA */}
-                 <Image
-                    source={markerImage}
-                    style={styles.customMarker}
-                    resizeMode="contain"
-                  />
-                 
-                 <Callout tooltip>
-                   <View style={styles.calloutContainer}>
-                      <Text style={styles.calloutTitle}>{station.legal_name}</Text>
-                      <Text style={styles.calloutBrand}>Bandeira: {station.brand}</Text>
-                      
-                      <View style={styles.separator} />
-
-                      <Text style={styles.fuelPricesTitle}>Preços dos Combustíveis:</Text>
-                      {station.fuelPrices && station.fuelPrices.length > 0 ? (
-                        station.fuelPrices.map((fuel) => (
-                          <View key={fuel.name} style={styles.fuelPriceRow}>
-                            <Text style={styles.fuelName}>{fuel.name}</Text>
-                            <Text style={styles.fuelPrice}>{Number(fuel.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={styles.noFuelData}>Sem dados de preços.</Text>
-                      )}
-
-                      {/* 4. BOTÃO PARA NAVEGAÇÃO ADICIONADO */}
-                      <TouchableOpacity 
-                        style={styles.detailsButton}
-                        onPress={() => router.push(`/gas-station/${station.id}`)}
-                      >
-                        <Text style={styles.detailsButtonText}>Ver Detalhes</Text>
-                      </TouchableOpacity>
-                   </View>
-                 </Callout>
-              </Marker>
-            ))}
-          </MapView>
-        )}
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle} numberOfLines={1}>
+                    {station.legal_name}
+                  </Text>
+                  <Text style={styles.calloutBrand}>
+                    Bandeira: {station.brand}
+                  </Text>
+                  <Text style={styles.detailsButtonText}>Ver Detalhes</Text>
+                </View>
+              </Callout>
+            </Marker>
+          ))}
+        </MapView>
       </View>
+
+      <View style={styles.controlsContainer}>
+        <Text style={styles.radiusLabel}>Raio: {Math.round(radius)} km</Text>
+        <Slider
+          style={styles.slider}
+          minimumValue={1}
+          maximumValue={100}
+          value={radius}
+          onSlidingComplete={(value) => {
+            setRadius(value);
+            handleSearch(value);
+          }}
+          minimumTrackTintColor={colors.primary}
+          maximumTrackTintColor={colors.border}
+          thumbTintColor={colors.primary}
+        />
+      </View>
+
+      {isLoading ? (
+        <ActivityIndicator
+          style={styles.loader}
+          size="large"
+          color={colors.primary}
+        />
+      ) : (
+        <FlatList
+          data={nearbyStations}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.cardContainer}>
+              <GasStationCard station={item} />
+            </View>
+          )}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Nenhum posto encontrado.</Text>
+              <Text style={styles.emptySubtext}>
+                Tente aumentar o raio da busca.
+              </Text>
+            </View>
+          }
+        />
+      )} */}
     </SafeAreaView>
   );
 }
@@ -162,9 +210,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   greeting: {
     fontSize: 16,
@@ -189,81 +238,82 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   mapContainer: {
-    flex: 1,
+    height: height * 0.4,
     backgroundColor: colors.border,
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  // 5. ESTILOS DO MARCADOR ANTIGO REMOVIDOS E NOVOS ESTILOS ADICIONADOS
   customMarker: {
-    width: 40, // ajuste a largura conforme necessário
-    height: 40, // ajuste a altura conforme necessário
+    width: 40,
+    height: 40,
   },
   calloutContainer: {
     backgroundColor: colors.white,
-    padding: 15,
-    borderRadius: 10,
+    padding: 10,
+    borderRadius: 8,
     borderColor: colors.border,
     borderWidth: 1,
-    width: 250, 
-    elevation: 5, // Sombra para Android
-    shadowColor: '#000', // Sombra para iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    width: 200,
   },
   calloutTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: "bold",
     color: colors.text,
     marginBottom: 2,
   },
   calloutBrand: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 8,
-  },
-  fuelPricesTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 6,
-  },
-  fuelPriceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 4,
   },
-  fuelName: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  fuelPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  noFuelData: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  detailsButton: {
-    marginTop: 12,
-    backgroundColor: colors.primary,
-    paddingVertical: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
   detailsButtonText: {
-    color: colors.white,
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  controlsContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  radiusLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: "center",
+    marginBottom: 4,
+    fontWeight: "500",
+  },
+  slider: {
+    width: "100%",
+    height: 40,
+  },
+  loader: {
+    marginTop: 20,
+  },
+  cardContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  listContent: {
+    paddingBottom: 100, // Espaço para a barra de abas
+  },
+  emptyContainer: {
+    marginTop: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.text,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 4,
   },
 });

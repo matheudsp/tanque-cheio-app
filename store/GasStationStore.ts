@@ -11,7 +11,7 @@ interface GasStationState {
   nearbyStations: GasStation[];
   priceHistory: ProductPriceHistory[];
   isDetailsLoading: boolean;
-  isHistoryLoading: boolean
+  isHistoryLoading: boolean;
   selectedStation: GasStation | null;
   fuelTypes: FuelProduct[];
   historyFilters: {
@@ -70,7 +70,7 @@ export const useGasStationStore = create<GasStationState>()(
             error:
               error instanceof Error
                 ? error.message
-                : "Failed to fetch all stations",
+                : "Falha ao buscar postos de combustíveis",
             isLoading: false,
             allStations: [],
           });
@@ -89,10 +89,10 @@ export const useGasStationStore = create<GasStationState>()(
         } catch (error) {
           console.error(`Error fetching nearby stations: ${error}`);
           set({
-            error:
+           error:
               error instanceof Error
                 ? error.message
-                : "Failed to fetch nearby stations",
+                : "Falha ao buscar postos de combustíveis  nas proximidades",
             isLoading: false,
             nearbyStations: [],
           });
@@ -110,10 +110,10 @@ export const useGasStationStore = create<GasStationState>()(
         } catch (error) {
           console.error("Error fetching station details:", error);
           set({
-            error:
+           error:
               error instanceof Error
                 ? error.message
-                : "Failed to fetch station details",
+                : "Falha ao buscar detalhes do posto de combustível",
             isDetailsLoading: false,
           });
         }
@@ -136,10 +136,10 @@ export const useGasStationStore = create<GasStationState>()(
         } catch (error) {
           console.error("Error fetching price history:", error);
           set({
-            error:
+           error:
               error instanceof Error
                 ? error.message
-                : "Failed to fetch price history",
+                : "Falha ao buscar histórico de preços",
             isHistoryLoading: false,
           });
         }
@@ -157,7 +157,7 @@ export const useGasStationStore = create<GasStationState>()(
             error:
               error instanceof Error
                 ? error.message
-                : "Failed to fetch fuel types",
+                : "Falha ao buscar tipos de combustíveis",
           });
         }
       },

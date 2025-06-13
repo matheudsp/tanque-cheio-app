@@ -117,11 +117,12 @@ export default function GasStationsScreen() {
   const displayedStations = searchQuery.trim() ? searchResults : nearbyStations;
 
   const renderStation = ({ item }: { item: GasStation }) => (
-    <GasStationCard
+     <GasStationCard
       station={item}
       showDistance={!searchQuery.trim()}
       filteredFuel={selectedFuelType}
-    />
+    /> 
+    
   );
 
   return (

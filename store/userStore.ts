@@ -111,8 +111,7 @@ export const useUserStore = create<UserState>()(
         } catch (error) {
           console.error("Registration error:", error);
           set({
-            error:
-              error instanceof Error ? error.message : "Registration failed",
+            error: error instanceof Error ? error.message : "Login failed",
             isLoading: false,
             isAuthenticated: false,
             user: null,
@@ -206,24 +205,25 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-        updatePreferences: async (preferences: User["preferences"]) => {
+      updatePreferences: async (preferences: User["preferences"]) => {
         set({ isLoading: true, error: null });
         try {
           set((state) => ({
             user: state.user
               ? {
-                ...state.user,
-                preferences: { ...state.user.preferences, ...preferences },
-              }
+                  ...state.user,
+                  preferences: { ...state.user.preferences, ...preferences },
+                }
               : null,
             isLoading: false,
           }));
         } catch (error) {
           console.error("Preferences update error:", error);
           set({
-            error: error instanceof Error
-              ? error.message
-              : "Failed to update preferences",
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to update preferences",
             isLoading: false,
           });
           throw error;

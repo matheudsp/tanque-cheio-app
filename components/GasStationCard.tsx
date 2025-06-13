@@ -7,10 +7,12 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { MapPin, Fuel, Clock } from "lucide-react-native";
+import { MapPin, Clock, Fuel } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { GasStation, GasProduct } from "@/types";
 import { colors } from "@/constants/colors";
 import { differenceInDays, parseISO } from "date-fns";
+import { FuelIcon } from "@/utils/getFuelIcons";
 
 type GasStationCardProps = {
   station: GasStation;
@@ -20,22 +22,14 @@ type GasStationCardProps = {
 
 const getUpdateStatus = (dateString?: string) => {
   if (!dateString) return { text: "Sem data", color: colors.textSecondary };
-
   const daysDiff = differenceInDays(new Date(), parseISO(dateString));
-
   if (daysDiff <= 15)
     return { text: `Atualizado há ${daysDiff} dias`, color: colors.success };
-
   return { text: `Atualizado há ${daysDiff} dias`, color: colors.warning };
 };
 
-/**
- * Formata a distância para ser mais legível.
- */
 const formatDistance = (distanceInKm: number) => {
-  if (distanceInKm < 1) {
-    return `${Math.round(distanceInKm * 1000)} m`;
-  }
+  if (distanceInKm < 1) return `${Math.round(distanceInKm * 1000)} m`;
   return `${distanceInKm} km`.replace(".", ",");
 };
 
@@ -46,10 +40,7 @@ export const GasStationCard = ({
 }: GasStationCardProps) => {
   const router = useRouter();
 
-  /**
-   * O cérebro do componente: processa os dados do posto uma única vez
-   * e retorna tudo que a UI precisa para renderizar.
-   */
+  // A lógica interna para decidir qual combustível destacar permanece a mesma.
   const cardData = useMemo(() => {
     const prices = station.fuelPrices || [];
     let heroFuel: GasProduct | null = null;
@@ -57,24 +48,24 @@ export const GasStationCard = ({
     let otherPricesCount = 0;
 
     if (filteredFuel) {
-      // Cenário 1: Usuário filtrou um combustível. Ele é o herói.
       heroFuel =
         prices.find(
           (p) => p.name.toUpperCase() === filteredFuel.toUpperCase()
         ) || null;
       heroLabel = heroFuel?.name || filteredFuel;
       otherPricesCount = prices.length - (heroFuel ? 1 : 0);
-    } else if (prices.length > 0) {
-      // Cenário 2: Sem filtro, vamos encontrar o melhor candidato a herói.
-      // Prioridade 1: Gasolina Comum.
+    } else if (prices.length === 1) {
+      heroFuel = prices[0];
+      heroLabel = heroFuel.name;
+      otherPricesCount = 0;
+    } else if (prices.length > 1) {
       heroFuel =
         prices.find((p) => p.name.toUpperCase().includes("COMUM")) || null;
-      heroLabel = "Gasolina Comum";
-
-      if (!heroFuel) {
-        // Prioridade 2: O combustível mais barato como "A partir de".
-        heroFuel = [...prices].sort((a, b) => a.price - b.price)[0];
-        heroLabel = "A partir de";
+      if (heroFuel) {
+        heroLabel = heroFuel.name;
+      } else {
+        heroFuel = prices[0];
+        heroLabel = heroFuel.name;
       }
       otherPricesCount = prices.length - 1;
     }
@@ -100,7 +91,7 @@ export const GasStationCard = ({
     router.push({
       pathname: "/gas-station/[id]",
       params: { id: station.id },
-    });
+    } as any);
   };
 
   return (
@@ -112,7 +103,8 @@ export const GasStationCard = ({
       {/* SEÇÃO 1: INFORMAÇÕES GERAIS */}
       <View style={styles.infoSection}>
         <View style={styles.header}>
-          <Fuel size={18} color={colors.primary} style={{ marginTop: 2 }} />
+          {/* 2. Ícone FIXO de posto de gasolina */}
+          <Fuel size={20} color={colors.primary} style={{ marginTop: 2 }} />
           <View style={styles.titleInfo}>
             <Text style={styles.stationName} numberOfLines={1}>
               {station.trade_name || station.legal_name}
@@ -131,7 +123,15 @@ export const GasStationCard = ({
       {/* SEÇÃO 2: PREÇO EM DESTAQUE */}
       <View style={styles.priceSection}>
         <View style={styles.priceDetails}>
-          <Text style={styles.heroLabel}>{cardData.heroLabel}</Text>
+          {/* 3. Container para o ícone dinâmico e o nome do combustível */}
+          <View style={styles.heroLabelContainer}>
+            <FuelIcon
+              fuelName={cardData.heroLabel}
+              width={30}
+              height={30}
+            />
+            <Text style={styles.heroLabel}>{cardData.heroLabel}</Text>
+          </View>
           <View style={styles.updateStatus}>
             <Clock size={12} color={cardData.updateStatus.color} />
             <Text
@@ -164,6 +164,7 @@ export const GasStationCard = ({
   );
 };
 
+// 4. Estilos ajustados para a nova estrutura
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.white,
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
-    backgroundColor: colors.primary + "10", // Um fundo sutil para destacar
+    backgroundColor: colors.primary + "10",
     borderTopWidth: 1,
     borderTopColor: colors.border,
     borderBottomLeftRadius: 16,
@@ -226,16 +227,22 @@ const styles = StyleSheet.create({
   priceDetails: {
     flex: 1,
   },
+  heroLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
   heroLabel: {
     fontSize: 14,
     fontWeight: "500",
     color: colors.text,
-    textTransform: "capitalize",
+    textTransform: "uppercase",
+    marginLeft: 6,
   },
   updateStatus: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
+    paddingLeft: 2,
   },
   updateStatusText: {
     marginLeft: 4,

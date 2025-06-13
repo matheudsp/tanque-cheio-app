@@ -16,22 +16,21 @@ import {
 
 // Base API URL
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
-// const API_URL = "http://137.184.48.203/api";
 
 // Token management helpers
 export const getTokenData = async (): Promise<TokenData | null> => {
   try {
     const tokenDataString = await AsyncStorage.getItem("auth_token_data");
     if (!tokenDataString) return null;
-    
+
     const tokenData: TokenData = JSON.parse(tokenDataString);
-    
+
     // Check if token is expired
     if (Date.now() >= tokenData.expires_at) {
       await AsyncStorage.removeItem("auth_token_data");
       return null;
     }
-    
+
     return tokenData;
   } catch (error) {
     console.error("Error getting token data:", error);
@@ -39,16 +38,18 @@ export const getTokenData = async (): Promise<TokenData | null> => {
   }
 };
 
-export const saveTokenData = async (loginResponse: LoginResponseDto): Promise<void> => {
+export const saveTokenData = async (
+  loginResponse: LoginResponseDto
+): Promise<void> => {
   try {
     const tokenData: TokenData = {
       access_token: loginResponse.data.access_token,
       refresh_token: loginResponse.data.refresh_token,
       expires_in: loginResponse.data.expires_in,
       token_type: loginResponse.data.token_type,
-      expires_at: Date.now() + (loginResponse.data.expires_in * 1000), // Convert to milliseconds
+      expires_at: Date.now() + loginResponse.data.expires_in * 1000, // Convert to milliseconds
     };
-    
+
     await AsyncStorage.setItem("auth_token_data", JSON.stringify(tokenData));
   } catch (error) {
     console.error("Error saving token data:", error);
@@ -61,22 +62,26 @@ export const getToken = async (): Promise<string | null> => {
   return tokenData ? tokenData.access_token : null;
 };
 
-// Generic API request handler with error handling and timeout
-export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+// API request handler with error handling and timeout
+export const apiRequest = async (
+  endpoint: string,
+  options: RequestInit = {}
+) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
   try {
     // Do not include Authorization header for login or registration
-    const isAuthEndpoint = endpoint === "/auth/local/sign-in" ||
+    const isAuthEndpoint =
+      endpoint === "/auth/local/sign-in" ||
       endpoint === "/auth/local/sign-up" ||
       endpoint.startsWith("/auth/");
-    
+
     const token = isAuthEndpoint ? null : await getToken();
 
     const headers = {
       "Content-Type": "application/json",
-      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     };
 
@@ -85,62 +90,35 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
       headers,
       signal: controller.signal,
     });
-    console.log("API URL:", API_URL)
 
     clearTimeout(timeoutId);
 
+    const responseBody = await response.json();
+
     if (!response.ok) {
-      // Handle specific error cases
-      if (response.status === 401 || response.status === 403) {
-        // Clear invalid token
-        await AsyncStorage.removeItem("auth_token_data");
-        throw new Error(
-          `Authentication failed (${response.status}): Please log in again`,
-        );
-      }
-
-      if (response.status === 404) {
-        throw new Error("Resource not found");
-      }
-
-      if (response.status >= 500) {
-        throw new Error("Server error. Please try again later.");
-      }
-
-      // Try to get error message from response
-      try {
-        const errorData: ApiErrorResponse = await response.json();
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
-      } catch {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+      // Se a resposta não foi bem-sucedida, usamos a mensagem da API.
+      // A estrutura do erro é { statusCode, statusMessage, message }
+      const errorMessage =
+        responseBody.message || `Erro HTTP ${response.status}`;
+      throw new Error(errorMessage);
     }
-
-    // Handle empty responses
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      const rawText = await response.clone().text();
-      const json = JSON.parse(rawText || "{}");
-      return json;
-    } else {
-      return {}; // Return empty object for non-JSON responses
-    }
+    // Se a resposta foi bem-sucedida, retorna o corpo.
+    // Seus serviços (auth.service, gas-station.service) esperam o objeto completo
+    // para acessar a propriedade `data`.
+    return responseBody;
   } catch (error) {
     clearTimeout(timeoutId);
 
     if (error instanceof Error) {
       if (error.name === "AbortError") {
-        throw new Error("Request timeout");
+        throw new Error("A requisição demorou muito para responder (timeout).");
       }
-      // Re-throw our custom errors
+      // Re-lança o erro (seja o nosso erro customizado da API ou outro)
       throw error;
     }
 
-    console.error("API request failed:", error);
-    throw error;
+    console.error("Falha na requisição da API:", error);
+    throw new Error("Ocorreu um erro de conexão. Verifique sua internet.");
   }
 };
 
@@ -174,11 +152,6 @@ export const refreshAuthToken = async (): Promise<boolean> => {
 
 // Helper function to convert backend user to frontend User format
 export const convertBackendUser = (backendUser: any, role?: any): User => {
-  // Split name into firstName and lastName if needed
-  const nameParts = backendUser.name ? backendUser.name.split(" ") : ["", ""];
-  const firstName = nameParts[0] || "";
-  const lastName = nameParts.slice(1).join(" ") || "";
-
   return {
     id: backendUser.id,
     name: backendUser.name,
@@ -186,16 +159,9 @@ export const convertBackendUser = (backendUser: any, role?: any): User => {
     created_at: backendUser.created_at,
     updated_at: backendUser.updated_at,
     deleted_at: backendUser.deleted_at,
-    // Computed properties for frontend compatibility
     role: role,
-    // Additional fields with defaults
   };
 };
-
-
-
-
-
 
 // Admin Dashboard API (keeping existing structure)
 export const adminAPI = {
@@ -203,7 +169,9 @@ export const adminAPI = {
   users: {
     getAll: async (): Promise<User[]> => {
       const response = await apiRequest("/admin-dashboard/users");
-      return response.data ? response.data.map((user: any) => convertBackendUser(user)) : response;
+      return response.data
+        ? response.data.map((user: any) => convertBackendUser(user))
+        : response;
     },
 
     getById: async (id: string): Promise<User> => {
@@ -214,7 +182,7 @@ export const adminAPI = {
     updateName: async (
       id: string,
       firstName: string,
-      lastName: string,
+      lastName: string
     ): Promise<User> => {
       const response = await apiRequest(`/admin-dashboard/users/${id}`, {
         method: "PUT",
@@ -274,8 +242,6 @@ export const adminAPI = {
   },
 };
 
-
-
 // Webhook API (keeping existing structure)
 export const webhookAPI = {
   processPayment: async (paymentData: any): Promise<any> => {
@@ -292,7 +258,7 @@ export interface ApiError {
   message: string;
 }
 
-export const isApiError = (error: any): error is ApiError => {
-  return error && typeof error.status === "number" &&
-    typeof error.message === "string";
-};
+  export const isApiError = (error: any): error is ApiError => {
+    return error && typeof error.status === "number" &&
+      typeof error.message === "string";
+  };
