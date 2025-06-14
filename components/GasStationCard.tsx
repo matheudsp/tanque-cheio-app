@@ -8,11 +8,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MapPin, Clock, Fuel } from "lucide-react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { GasStation, GasProduct } from "@/types";
 import { colors } from "@/constants/colors";
 import { differenceInDays, parseISO } from "date-fns";
-import { FuelIcon } from "@/utils/getFuelIcons";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 
 type GasStationCardProps = {
   station: GasStation;
@@ -78,12 +78,14 @@ export const GasStationCard = ({
     const updateStatus = getUpdateStatus(heroFuel?.lastupdated);
     const distanceText = showDistance ? formatDistance(station.distance) : "";
 
+    const iconName = getIconNameFromFuel(heroFuel?.name);
     return {
       heroLabel,
       priceText,
       updateStatus,
       otherPricesCount,
       distanceText,
+      iconName,
     };
   }, [station, filteredFuel, showDistance]);
 
@@ -104,7 +106,12 @@ export const GasStationCard = ({
       <View style={styles.infoSection}>
         <View style={styles.header}>
           {/* 2. Ícone FIXO de posto de gasolina */}
-          <Fuel size={20} color={colors.primary} style={{ marginTop: 2 }} />
+          <AppIcon
+            name={"gasPump"}
+            width={30}
+            height={30}
+            style={{ marginTop: 2 }}
+          />
           <View style={styles.titleInfo}>
             <Text style={styles.stationName} numberOfLines={1}>
               {station.trade_name || station.legal_name}
@@ -125,11 +132,7 @@ export const GasStationCard = ({
         <View style={styles.priceDetails}>
           {/* 3. Container para o ícone dinâmico e o nome do combustível */}
           <View style={styles.heroLabelContainer}>
-            <FuelIcon
-              fuelName={cardData.heroLabel}
-              width={30}
-              height={30}
-            />
+            <AppIcon name={cardData.iconName} width={30} height={30} />
             <Text style={styles.heroLabel}>{cardData.heroLabel}</Text>
           </View>
           <View style={styles.updateStatus}>

@@ -37,7 +37,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   const chartData = useMemo(() => {
     if (!priceHistory || priceHistory.length === 0) return null;
     let filteredHistory = priceHistory;
-    if (selectedProduct !== "all") {
+    if (selectedProduct !== "TODOS") {
       filteredHistory = priceHistory.filter(
         (p: { productName: string }) => p.productName === selectedProduct
       );
