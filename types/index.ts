@@ -2,14 +2,9 @@ export { GasProduct, GasStation,NearbyStationsParams,PriceHistoryPoint,ProductPr
 export {
   LoginResponseDto,
   ApiErrorResponse,
-  BookingFormData,
-  Lesson,
   LoginUserDto,
   RegisterResponseDTO,
   RegisterUserDto,
-  Registration,
-  Scenario,
-  Session,
   TokenData,
   User,
 } from "./all";

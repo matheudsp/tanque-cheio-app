@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,15 +10,12 @@ import {
   Button,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useGasStationStore } from "@/store/GasStationStore";
+import { useGasStationStore } from "@/store/gasStationStore";
 import { colors } from "@/constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { ChartSkeleton } from "@/components/ChartSkeleton";
-import { ChipSelector } from "@/components/ChipSelector";
-import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 import { getPeriodDates, type Period } from "@/utils/getPeriodDate";
 import { PriceHistoryChart } from "@/components/PriceHistoryChart";
-import { AppIcon } from "@/components/ui/AppIcon";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,6 +25,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FuelSelector } from "@/components/FuelSelector";
+import { TablePrices } from "@/components/TablePrices";
 
 const HEADER_MAX_HEIGHT = 280;
 
@@ -127,23 +125,34 @@ export default function GasStationDetailScreen() {
     transform: [{ translateY: contentTranslateY.value }],
   }));
 
-  const handleGetDirections = () => {
-    if (!selectedStation?.localization.coordinates) return;
+   const handleGetDirections = () => {
+    // 1. Garante que temos as informações necessárias
+    console.log(selectedStation?.localization.coordinates?.coordinates)
+    if (
+      !selectedStation?.localization?.coordinates?.coordinates
+    ) {
+      console.warn("Faltam coordenadas ou nome do posto para traçar a rota.");
+      return;
+    }
+
+    // 2. Extrai latitude e longitude da estrutura de dados
     const [longitude, latitude] =
       selectedStation.localization.coordinates.coordinates;
-    const scheme = Platform.select({
-      ios: "maps:0,0?q=",
-      android: "geo:0,0?q=",
-    });
-    const latLng = `${latitude},${longitude}`;
-    const label = selectedStation.legal_name;
+    // 3. Cria uma URL de mapa universal
+    const label = encodeURIComponent(selectedStation.legal_name);
     const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`,
+      ios: `maps:0,0?q=${label}@${latitude},${longitude}`,
+      android: `geo:0,0?q=${latitude},${longitude}(${label})`,
     });
-    if (url) Linking.openURL(url);
-  };
 
+    // 4. Tenta abrir a URL no aplicativo de mapas padrão do sistema
+    if (url) {
+      Linking.openURL(url).catch((err) =>
+        console.error("Não foi possível abrir o app de mapas", err)
+      );
+    }
+  };
+  
   const handleRetry = () => {
     if (id) {
       clearError();
@@ -185,40 +194,8 @@ export default function GasStationDetailScreen() {
         contentContainerStyle={{ paddingTop: HEADER_MAX_HEIGHT }}
       >
         <Animated.View style={[styles.contentContainer, cardsAnimatedStyle]}>
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Tabela de Preços</Text>
-            {selectedStation.fuelPrices.map((fuel, index) => {
-              const iconName = getIconNameFromFuel(fuel.name);
-              return (
-                <View
-                  key={fuel.name}
-                  style={[
-                    styles.priceRow,
-                    index === selectedStation.fuelPrices.length - 1 &&
-                      styles.priceRowLast,
-                  ]}
-                >
-                  <View style={styles.fuelInfoContainer}>
-                    <AppIcon name={iconName} width={30} height={30} />
-                    <View style={styles.fuelTextContainer}>
-                      <Text style={styles.fuelName}>{fuel.name}</Text>
-                      <Text style={styles.lastUpdated}>
-                        Atualizado em:{" "}
-                        {new Date(fuel.lastupdated).toLocaleDateString("pt-BR")}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.fuelPrice}>
-                    {Number(fuel.price).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-
+         
+          <TablePrices selectedStation={selectedStation}/>
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Histórico de Preços</Text>
 
@@ -443,20 +420,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  priceRowLast: { borderBottomWidth: 0 },
-  fuelInfoContainer: { flexDirection: "row", alignItems: "center" },
-  fuelTextContainer: { marginLeft: 12 },
-  fuelName: { fontSize: 16, fontWeight: "600", color: colors.text },
-  lastUpdated: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-  fuelPrice: { fontSize: 18, fontWeight: "bold", color: colors.primary },
   filterLabel: {
     fontSize: 14,
     fontWeight: "600",

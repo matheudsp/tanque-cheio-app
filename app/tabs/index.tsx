@@ -12,10 +12,8 @@ import {
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
-import * as Location from "expo-location";
 import Slider from "@react-native-community/slider";
-
-import { useGasStationStore } from "@/store/GasStationStore";
+import { useGasStationStore } from "@/store/gasStationStore";
 import { useUserStore } from "@/store/userStore";
 import { GasStationCard } from "@/components/GasStationCard";
 import { colors } from "@/constants/colors";
@@ -24,8 +22,8 @@ import markerImage from "@/assets/images/marker.png";
 const INITIAL_REGION = {
   latitude: -5.101460135649267,
   longitude: -42.80321186214014,
-  latitudeDelta: 0.8,
-  longitudeDelta: 0.8,
+  latitudeDelta: 0.02,
+  longitudeDelta: 0.02,
 };
 
 const { height } = Dimensions.get("window");
@@ -33,77 +31,77 @@ const { height } = Dimensions.get("window");
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUserStore();
+
   const {
     nearbyStations,
-    fetchNearbyStations,
-    userLocation,
-    setUserLocation,
     isLoading,
+    userLocation,
+    fetchNearbyStations, // Action para buscar postos
+    searchParams, // Parâmetros de busca salvos
+    error,
+    clearError,
   } = useGasStationStore();
 
   const [mapRegion, setMapRegion] = useState(INITIAL_REGION);
-  const [radius, setRadius] = useState(50); // Raio inicial de 50km
+  const [radius, setRadius] = useState(searchParams?.radius || 50);
 
+  useEffect(() => {
+    if (userLocation) {
+      setMapRegion({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      });
+    }
+  }, [userLocation]);
+
+  // Função de busca implementada com useCallback para otimização
   const handleSearch = useCallback(
     (newRadius: number) => {
       if (!userLocation) {
         Alert.alert(
-          "Localização Indisponível",
-          "Não foi possível obter sua localização para buscar postos próximos."
+          "Localização não disponível",
+          "Não foi possível realizar a busca pois sua localização não foi encontrada."
         );
         return;
       }
+
       fetchNearbyStations({
+        ...searchParams,
         lat: userLocation.latitude,
         lng: userLocation.longitude,
         radius: newRadius,
+        sortBy: searchParams?.sortBy || "distanceAsc",
       });
+      console.log(
+        searchParams,
+        userLocation.latitude,
+        userLocation.longitude,
+        newRadius,
+        searchParams?.sortBy || "distanceAsc"
+      );
+
+      if (error) {
+        clearError;
+      }
     },
-    [userLocation, fetchNearbyStations]
+    [userLocation, searchParams, fetchNearbyStations]
   );
 
-  useEffect(() => {
-    const requestLocation = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permissão de Localização",
-          "A permissão foi negada. O mapa será centralizado em Floriano."
-        );
-        return;
-      }
-
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        // const { latitude, longitude } = location.coords;
-        // Valores fixos para desenvolvimento
-        const latitude = -5.101460135649267;
-        const longitude = -42.80321186214014;
-
-        setUserLocation(latitude, longitude);
-        setMapRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.8,
-          longitudeDelta: 0.8,
-        });
-        // Busca inicial com o raio padrão
-        handleSearch(radius);
-      } catch (error) {
-        console.error("Erro ao obter localização: ", error);
-        Alert.alert(
-          "Erro de Localização",
-          "Não foi possível obter sua localização."
-        );
-      }
-    };
-
-    requestLocation();
-  }, []);
+  if (!userLocation) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* <View style={styles.header}>
+      {/* Header */}
+      <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Olá,</Text>
           <Text style={styles.name}>{user?.name || "Usuário"}</Text>
@@ -113,6 +111,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Mapa e Controles */}
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
@@ -151,8 +150,18 @@ export default function HomeScreen() {
             </Marker>
           ))}
         </MapView>
+        {/* Mostra mensagem de erro/vazio sobre o mapa se necessário */}
+        {!isLoading && nearbyStations.length === 0 && error && (
+          <View style={[styles.centerContent, styles.mapOverlay]}>
+            <Text style={styles.emptyText}>Nenhum posto encontrado.</Text>
+            <Text style={styles.emptySubtext}>
+              Tente aumentar o raio da busca. {error}
+            </Text>
+          </View>
+        )}
       </View>
 
+      {/* Controles do Raio */}
       <View style={styles.controlsContainer}>
         <Text style={styles.radiusLabel}>Raio: {Math.round(radius)} km</Text>
         <Slider
@@ -160,22 +169,25 @@ export default function HomeScreen() {
           minimumValue={1}
           maximumValue={100}
           value={radius}
-          onSlidingComplete={(value) => {
-            setRadius(value);
-            handleSearch(value);
-          }}
+          onValueChange={setRadius}
+          onSlidingComplete={(value) =>
+            handleSearch(parseInt(value.toString()))
+          }
           minimumTrackTintColor={colors.primary}
           maximumTrackTintColor={colors.border}
           thumbTintColor={colors.primary}
         />
       </View>
 
+      {/* Indicador de carregamento para a lista */}
       {isLoading ? (
-        <ActivityIndicator
-          style={styles.loader}
-          size="large"
-          color={colors.primary}
-        />
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator
+            style={styles.loader}
+            size="large"
+            color={colors.primary}
+          />
+        </View>
       ) : (
         <FlatList
           data={nearbyStations}
@@ -186,16 +198,8 @@ export default function HomeScreen() {
             </View>
           )}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Nenhum posto encontrado.</Text>
-              <Text style={styles.emptySubtext}>
-                Tente aumentar o raio da busca.
-              </Text>
-            </View>
-          }
         />
-      )} */}
+      )}
     </SafeAreaView>
   );
 }
@@ -204,6 +208,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: colors.textSecondary,
   },
   header: {
     flexDirection: "row",
@@ -240,9 +253,15 @@ const styles = StyleSheet.create({
   mapContainer: {
     height: height * 0.4,
     backgroundColor: colors.border,
+    justifyContent: "center",
+    alignItems: "center",
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  mapOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.7)", // Fundo semitransparente
   },
   customMarker: {
     width: 40,
@@ -299,12 +318,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   listContent: {
-    paddingBottom: 100, // Espaço para a barra de abas
-  },
-  emptyContainer: {
-    marginTop: 40,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingBottom: 100,
   },
   emptyText: {
     fontSize: 18,
@@ -315,5 +329,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     marginTop: 4,
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
 });

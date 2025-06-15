@@ -94,7 +94,7 @@ export const gasStationsAPI = {
 
       return response.data;
     } catch (error) {
-      console.error("Get nearby stations error:", error);
+      // console.warn("Get nearby stations error:", error);
       throw error;
     }
   },

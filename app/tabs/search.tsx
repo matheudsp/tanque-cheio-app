@@ -5,25 +5,21 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
-  TextInput,
   TouchableOpacity,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search, Filter, Navigation, Fuel } from "lucide-react-native";
+import { Filter, Fuel } from "lucide-react-native";
 import * as Location from "expo-location";
-import { useGasStationStore } from "@/store/GasStationStore";
+import { useGasStationStore } from "@/store/gasStationStore";
 import { GasStationCard } from "@/components/GasStationCard";
 import { ActiveFilters } from "@/components/ActiveFilters";
 import { FiltersModal } from "@/components/FiltersModal";
 import { colors } from "@/constants/colors";
-import {
-  GasStation,
-  NearbyStationsParams,
-} from "@/types";
+import { GasStation, NearbyStationsParams } from "@/types";
 import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
 
-export default function GasStationsScreen() {
+export default function SearchScreen() {
   const {
     nearbyStations,
     fuelTypes,
@@ -32,7 +28,6 @@ export default function GasStationsScreen() {
     error,
     fetchNearbyStations,
     fetchFuelTypes,
-    setUserLocation,
     clearError,
   } = useGasStationStore();
 
@@ -42,7 +37,7 @@ export default function GasStationsScreen() {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
 
   const [selectedFuelType, setSelectedFuelType] = useState("");
-  const [radius, setRadius] = useState(5);
+  const [radius, setRadius] = useState(50);
   const [sortBy, setSortBy] = useState<
     "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc"
   >("distanceAsc");
@@ -57,31 +52,14 @@ export default function GasStationsScreen() {
 
   useEffect(() => {
     fetchFuelTypes();
-    requestLocationPermission();
-  }, []);
-
-  const requestLocationPermission = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permissão de Localização",
-        "Precisamos da sua localização para encontrar postos próximos."
-      );
-      return;
-    }
-    const location = await Location.getCurrentPositionAsync({});
-    setUserLocation(location.coords.latitude, location.coords.longitude);
-    handleSearchNearby({
-      lat: location.coords.latitude,
-      lng: location.coords.longitude,
-    });
-  };
-
-  const handleSearchNearby = (
+  }, [fetchFuelTypes]);
+  const handleSearchWithFilters = (
     overrideParams?: Partial<NearbyStationsParams>
   ) => {
     if (!userLocation) {
-      requestLocationPermission();
+      // Se por algum motivo a localização ainda não estiver disponível, não faz nada.
+      // Isso previne chamadas de API inválidas.
+      console.warn("Aguardando localização para iniciar a busca...");
       return;
     }
     const params: NearbyStationsParams = {
@@ -93,36 +71,32 @@ export default function GasStationsScreen() {
       ...overrideParams,
     };
     fetchNearbyStations(params);
-    setSearchQuery("");
-    setSearchResults([]);
   };
 
   const handleRefresh = () => {
     clearError();
-
-    handleSearchNearby();
+    handleSearchWithFilters();
   };
 
   const clearFilters = () => {
     setSelectedFuelType("");
     setSortBy("distanceAsc");
-    setRadius(5);
+    setRadius(50);
   };
 
   const applyFiltersAndSearch = () => {
     setShowFiltersModal(false);
-    handleSearchNearby();
+    handleSearchWithFilters();
   };
 
   const displayedStations = searchQuery.trim() ? searchResults : nearbyStations;
-
+ 
   const renderStation = ({ item }: { item: GasStation }) => (
-     <GasStationCard
+    <GasStationCard
       station={item}
       showDistance={!searchQuery.trim()}
       filteredFuel={selectedFuelType}
-    /> 
-    
+    />
   );
 
   return (
@@ -152,17 +126,17 @@ export default function GasStationsScreen() {
         onClearFuel={() => {
           const newFuel = "";
           setSelectedFuelType(newFuel);
-          handleSearchNearby({ product: newFuel || undefined });
+          handleSearchWithFilters({ product: newFuel || undefined });
         }}
         onClearSort={() => {
           const newSort = "distanceAsc";
           setSortBy(newSort);
-          handleSearchNearby({ sortBy: newSort });
+          handleSearchWithFilters({ sortBy: newSort });
         }}
         onClearRadius={() => {
-          const newRadius = 5;
+          const newRadius = 50;
           setRadius(newRadius);
-          handleSearchNearby({ radius: newRadius });
+          handleSearchWithFilters({ radius: newRadius });
         }}
       />
 
@@ -222,10 +196,10 @@ export default function GasStationsScreen() {
         onClear={() => {
           clearFilters();
           setShowFiltersModal(false);
-          handleSearchNearby({
+          handleSearchWithFilters({
             product: undefined,
             sortBy: "distanceAsc",
-            radius: 5,
+            radius: 50,
           });
         }}
         activeFilterCount={activeFilterCount}

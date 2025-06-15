@@ -1,17 +1,39 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs } from "expo-router";
-import {
-  BarChart,
-  Calendar,
-  ClipboardList,
-  Fuel,
-  Home,
-  User,
-} from "lucide-react-native";
+import { Fuel, Home, User } from "lucide-react-native";
 import { colors } from "@/constants/colors";
-import { Platform, StyleSheet } from "react-native";
+import { Alert, Platform } from "react-native";
+import { useGasStationStore } from "@/store/gasStationStore";
+import * as Location from "expo-location";
 
 export default function TabLayout() {
+  const { setUserLocation } = useGasStationStore();
+  useEffect(() => {
+    const requestLocation = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permissão Negada",
+          "A permissão de localização é necessária para encontrar postos próximos."
+        );
+        return;
+      }
+
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+
+        setUserLocation(location.coords.latitude, location.coords.longitude);
+      } catch (error) {
+        console.error("Erro ao obter localização no layout:", error);
+        Alert.alert(
+          "Erro de Localização",
+          "Não foi possível obter sua localização."
+        );
+      }
+    };
+
+    requestLocation();
+  }, []);
   return (
     <Tabs
       initialRouteName="index"
@@ -51,19 +73,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="gas-stations"
+        name="search"
         options={{
           title: "Procurar",
           tabBarIcon: ({ color }) => <Fuel size={24} color={color} />,
         }}
       />
-      {/* <Tabs.Screen
-        name="progress"
-        options={{
-          title: "My Progress",
-          tabBarIcon: ({ color }) => <BarChart size={24} color={color} />,
-        }}
-      /> */}
       <Tabs.Screen
         name="profile"
         options={{

@@ -87,9 +87,10 @@ export const useGasStationStore = create<GasStationState>()(
             isLoading: false,
           });
         } catch (error) {
+          
           console.error(`Error fetching nearby stations: ${error}`);
           set({
-           error:
+            error:
               error instanceof Error
                 ? error.message
                 : "Falha ao buscar postos de combustíveis  nas proximidades",
@@ -110,7 +111,7 @@ export const useGasStationStore = create<GasStationState>()(
         } catch (error) {
           console.error("Error fetching station details:", error);
           set({
-           error:
+            error:
               error instanceof Error
                 ? error.message
                 : "Falha ao buscar detalhes do posto de combustível",
@@ -136,7 +137,7 @@ export const useGasStationStore = create<GasStationState>()(
         } catch (error) {
           console.error("Error fetching price history:", error);
           set({
-           error:
+            error:
               error instanceof Error
                 ? error.message
                 : "Falha ao buscar histórico de preços",
@@ -163,19 +164,32 @@ export const useGasStationStore = create<GasStationState>()(
       },
 
       setUserLocation: (latitude: number, longitude: number) => {
-        set({
-          userLocation: { latitude, longitude },
-        });
+        const { userLocation, searchParams } = get();
 
-        // If we have previous search params, automatically refresh with new location
-        const { searchParams } = get();
-        if (searchParams) {
-          get().fetchNearbyStations({
-            ...searchParams,
-            lat: latitude,
-            lng: longitude,
-          });
+        // Opcional: Evita buscas repetidas se a localização não mudou.
+        if (
+          userLocation?.latitude === latitude &&
+          userLocation?.longitude === longitude
+        ) {
+          return;
         }
+
+        console.warn("Definindo nova localização e buscando postos...");
+        set({ userLocation: { latitude, longitude } });
+
+        const defaultParams = {
+          lat: latitude,
+          lng: longitude,
+          radius: 50,
+          sortBy: "distanceAsc" as const,
+        };
+
+        get().fetchNearbyStations({
+          ...defaultParams,
+          ...searchParams,
+          // lat: latitude,
+          // lng: longitude,
+        });
       },
 
       clearSelectedStation: () => {
