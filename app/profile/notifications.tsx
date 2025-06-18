@@ -7,8 +7,8 @@ import { colors } from '@/constants/colors';
 import { Switch } from 'react-native';
 
 export default function NotificationsScreen() {
-  const [lessonReminders, setLessonReminders] = useState(true);
-  const [instructorMessages, setInstructorMessages] = useState(true);
+  
+  
   const [promotions, setPromotions] = useState(false);
   const [systemUpdates, setSystemUpdates] = useState(true);
 
@@ -23,49 +23,15 @@ export default function NotificationsScreen() {
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.section}>
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationInfo}>
-              <Calendar size={24} color={colors.primary} />
-              <View style={styles.notificationDetails}>
-                <Text style={styles.notificationTitle}>Lesson Reminders</Text>
-                <Text style={styles.notificationDescription}>
-                  Get notified about upcoming lessons and schedule changes
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={lessonReminders}
-              onValueChange={setLessonReminders}
-              trackColor={{ false: colors.border, true: colors.primaryLight }}
-              thumbColor={lessonReminders ? colors.primary : colors.textSecondary}
-            />
-          </View>
-
-          <View style={styles.notificationItem}>
-            <View style={styles.notificationInfo}>
-              <MessageSquare size={24} color={colors.primary} />
-              <View style={styles.notificationDetails}>
-                <Text style={styles.notificationTitle}>Instructor Messages</Text>
-                <Text style={styles.notificationDescription}>
-                  Receive messages and updates from your instructor
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={instructorMessages}
-              onValueChange={setInstructorMessages}
-              trackColor={{ false: colors.border, true: colors.primaryLight }}
-              thumbColor={instructorMessages ? colors.primary : colors.textSecondary}
-            />
-          </View>
+        
 
           <View style={styles.notificationItem}>
             <View style={styles.notificationInfo}>
               <Bell size={24} color={colors.primary} />
               <View style={styles.notificationDetails}>
-                <Text style={styles.notificationTitle}>Promotions</Text>
+                <Text style={styles.notificationTitle}>Promoções</Text>
                 <Text style={styles.notificationDescription}>
-                  Get notified about special offers and discounts
+                  Receba alertas de ofertas e descontos
                 </Text>
               </View>
             </View>
@@ -81,9 +47,9 @@ export default function NotificationsScreen() {
             <View style={styles.notificationInfo}>
               <AlertCircle size={24} color={colors.primary} />
               <View style={styles.notificationDetails}>
-                <Text style={styles.notificationTitle}>System Updates</Text>
+                <Text style={styles.notificationTitle}>Atualizações do sistema</Text>
                 <Text style={styles.notificationDescription}>
-                  Receive important updates about the app
+                  Fique por dentro de tudo que acontece no app.
                 </Text>
               </View>
             </View>

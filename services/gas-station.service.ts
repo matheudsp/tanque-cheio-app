@@ -22,6 +22,7 @@ export const gasStationsAPI = {
       if (!response.data) {
         throw new Error("Invalid station response: No data received");
       }
+      
       return response.data;
     } catch (error) {
       console.error("Get station details error:", error);

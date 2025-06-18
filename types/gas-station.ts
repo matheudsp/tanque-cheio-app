@@ -34,9 +34,10 @@ export interface GasStation {
   distance: number;
 }
 export interface GasProduct {
+  productId: string;
   name: string;
   price: number;
-  lastupdated: string;
+  lastUpdated: string;
   unit: string;
 }
 

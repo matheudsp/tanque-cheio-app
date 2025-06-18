@@ -6,7 +6,10 @@ import { gasStationsAPI } from "@/services/gas-station.service";
 import { fallbackFuelTypes } from "@/constants/mockData";
 import type { FuelProduct, ProductPriceHistory } from "@/types/gas-station";
 
+
 interface GasStationState {
+  
+
   allStations: GasStation[];
   nearbyStations: GasStation[];
   priceHistory: ProductPriceHistory[];
@@ -27,6 +30,7 @@ interface GasStationState {
   error: string | null;
 
   // Actions
+  
   fetchNearbyStations: (params: NearbyStationsParams) => Promise<void>;
   fetchAllStations: () => Promise<void>;
   fetchStationDetails: (stationId: string) => Promise<void>;
@@ -55,6 +59,8 @@ export const useGasStationStore = create<GasStationState>()(
       searchParams: null,
       isLoading: false,
       error: null,
+    
+        
 
       fetchAllStations: async () => {
         set({ isLoading: true, error: null });
@@ -87,7 +93,6 @@ export const useGasStationStore = create<GasStationState>()(
             isLoading: false,
           });
         } catch (error) {
-          
           console.error(`Error fetching nearby stations: ${error}`);
           set({
             error:
@@ -199,7 +204,10 @@ export const useGasStationStore = create<GasStationState>()(
       clearError: () => {
         set({ error: null });
       },
+
+     
     }),
+
     {
       name: "gas-station-storage",
       storage: createJSONStorage(() => AsyncStorage),

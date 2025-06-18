@@ -18,6 +18,7 @@ type GasStationCardProps = {
   station: GasStation;
   showDistance?: boolean;
   filteredFuel?: string;
+  isSelected?: boolean;
 };
 
 const getUpdateStatus = (dateString?: string) => {
@@ -37,9 +38,10 @@ export const GasStationCard = ({
   station,
   showDistance = true,
   filteredFuel,
+  isSelected,
 }: GasStationCardProps) => {
   const router = useRouter();
-
+  console.log('STATIONNNNNNNNNNN',station)
   // A lógica interna para decidir qual combustível destacar permanece a mesma.
   const cardData = useMemo(() => {
     const prices = station.fuelPrices || [];
@@ -75,7 +77,7 @@ export const GasStationCard = ({
         ? `R$ ${Number(heroFuel.price).toFixed(2).replace(".", ",")}`
         : "N/A";
 
-    const updateStatus = getUpdateStatus(heroFuel?.lastupdated);
+    const updateStatus = getUpdateStatus(heroFuel?.lastUpdated);
     const distanceText = showDistance ? formatDistance(station.distance) : "";
 
     const iconName = getIconNameFromFuel(heroFuel?.name);
@@ -98,7 +100,13 @@ export const GasStationCard = ({
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[
+        styles.container,
+        isSelected && {
+          borderWidth: 1.5,
+          borderColor: colors.primaryLight,
+        },
+      ]}
       onPress={handlePress}
       activeOpacity={0.8}
     >

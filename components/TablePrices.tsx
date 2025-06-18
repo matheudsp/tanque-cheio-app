@@ -2,15 +2,34 @@ import { colors } from "@/constants/colors";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 import { View, Text, StyleSheet } from "react-native";
 import { AppIcon } from "./ui/AppIcon";
+import type { FuelProduct } from "@/types";
 
-type FuelPrice = {
-  name: string;
-  price: number;
-  lastupdated: string;
-};
 
 type TablePriceProps = {
-  selectedStation: { fuelPrices: FuelPrice[] };
+  selectedStation: { fuelPrices: FuelProduct[] };
+};
+
+/**
+ * @param dateString A data no formato 'AAAA-MM-DD'.
+ * @returns A data formatada como 'dd/MM/yyyy' ou uma mensagem de erro.
+ */
+const formatDate = (dateString: string) => {
+  try {
+    if (!dateString) return "Data não informada";
+    const date = new Date(`${dateString}T00:00:00`);
+    
+    if (isNaN(date.getTime())) {
+      return "Data inválida";
+    }
+    return date.toLocaleDateString("pt-BR", {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+  } catch (error) {
+    console.error("Erro ao formatar data:", error);
+    return "Data inválida";
+  }
 };
 
 export const TablePrices: React.FC<TablePriceProps> = ({ selectedStation }) => {
@@ -34,7 +53,8 @@ export const TablePrices: React.FC<TablePriceProps> = ({ selectedStation }) => {
                 <Text style={styles.fuelName}>{fuel.name}</Text>
                 <Text style={styles.lastUpdated}>
                   Atualizado em:{" "}
-                  {new Date(fuel.lastupdated).toLocaleDateString("pt-BR")}
+                  
+                  {formatDate(fuel.lastUpdated)}
                 </Text>
               </View>
             </View>

@@ -8,6 +8,8 @@ import {
   Linking,
   Platform,
   Button,
+  Modal,
+  FlatList,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useGasStationStore } from "@/store/gasStationStore";
@@ -26,8 +28,74 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FuelSelector } from "@/components/FuelSelector";
 import { TablePrices } from "@/components/TablePrices";
+import { useFavoriteStore } from "@/store/favoriteStore";
+import type { GasStation } from "@/types/gas-station";
 
 const HEADER_MAX_HEIGHT = 280;
+
+// Componente do Modal para selecionar o combustível a ser favoritado
+const FavoriteFuelModal = ({
+  isVisible,
+  onClose,
+  station,
+  onToggleFavorite,
+  isFavorite,
+}: {
+  isVisible: boolean;
+  onClose: () => void;
+  station: GasStation | null;
+  onToggleFavorite: (productId: string) => void;
+  isFavorite: (stationId: string, productId: string) => boolean;
+}) => {
+  if (!station) return null;
+
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPressOut={onClose}
+      >
+        <View style={styles.modalContainer} onStartShouldSetResponder={() => true}>
+          <Text style={styles.modalTitle}>Acompanhar Preço</Text>
+          <Text style={styles.modalSubtitle}>
+            Selecione o combustível para favoritar e receber notificações de
+            preço.
+          </Text>
+          <FlatList
+            data={station.fuelPrices}
+            keyExtractor={(item) => item.productId}
+            style={{ width: "100%" }}
+            renderItem={({ item }) => {
+              const isFav = isFavorite(station.id, item.productId);
+              return (
+                <TouchableOpacity
+                  style={styles.fuelItem}
+                  onPress={() => onToggleFavorite(item.productId)}
+                >
+                  <Text style={styles.fuelItemText}>{item.name}</Text>
+                  <Ionicons
+                    name={isFav ? "heart" : "heart-outline"}
+                    size={26}
+                    color={isFav ? colors.secondary : colors.primary}
+                  />
+                </TouchableOpacity>
+              );
+            }}
+          />
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>Fechar</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
 
 export default function GasStationDetailScreen() {
   const router = useRouter();
@@ -39,6 +107,7 @@ export default function GasStationDetailScreen() {
 
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("month");
   const [selectedProduct, setSelectedProduct] = useState<string>("TODOS");
+  const [isFavoriteModalVisible, setFavoriteModalVisible] = useState(false);
 
   const {
     selectedStation,
@@ -52,6 +121,37 @@ export default function GasStationDetailScreen() {
     clearError,
   } = useGasStationStore();
 
+  const { addFavorite, unfavoriteProduct, isFavorite, fetchFavorites } =
+    useFavoriteStore();
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
+  
+  // Verifica se QUALQUER produto neste posto está favoritado para controlar o ícone do header
+  const isAnyProductFavorite =
+    selectedStation?.fuelPrices?.some((product) =>
+      isFavorite(selectedStation.id, product.id)
+    ) ?? false;
+
+  const handleOpenFavoriteModal = () => {
+    if (selectedStation?.fuelPrices?.length) {
+      setFavoriteModalVisible(true);
+    } else {
+      console.warn("Nenhum produto para favoritar neste posto.");
+    }
+  };
+
+  const handleToggleProductFavorite = (productId: string) => {
+    if (!selectedStation) return;
+
+    if (isFavorite(selectedStation.id, productId)) {
+      unfavoriteProduct(selectedStation.id, productId);
+    } else {
+      addFavorite(selectedStation.id, productId);
+    }
+  };
+
   const scrollY = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(20);
@@ -62,23 +162,15 @@ export default function GasStationDetailScreen() {
   }, [id, fetchStationDetails]);
 
   useEffect(() => {
-    // A busca acontece sempre que houver um ID,
-    // independentemente do produto selecionado.
     if (id) {
       const { startDate, endDate } = getPeriodDates(selectedPeriod);
-
       const params: { startDate: string; endDate: string; product?: string } = {
         startDate,
         endDate,
       };
-
-      // Se o produto selecionado NÃO for 'todos', adiciona o parâmetro 'product'.
-      // Caso contrário, o parâmetro não é enviado, e o backend deve
-      // retornar o histórico de todos os produtos.
       if (selectedProduct !== "TODOS") {
         params.product = selectedProduct;
       }
-
       fetchPriceHistory(id, params);
     }
   }, [id, selectedPeriod, selectedProduct, fetchPriceHistory]);
@@ -125,34 +217,24 @@ export default function GasStationDetailScreen() {
     transform: [{ translateY: contentTranslateY.value }],
   }));
 
-   const handleGetDirections = () => {
-    // 1. Garante que temos as informações necessárias
-    console.log(selectedStation?.localization.coordinates?.coordinates)
-    if (
-      !selectedStation?.localization?.coordinates?.coordinates
-    ) {
-      console.warn("Faltam coordenadas ou nome do posto para traçar a rota.");
+  const handleGetDirections = () => {
+    if (!selectedStation?.localization?.coordinates?.coordinates) {
       return;
     }
-
-    // 2. Extrai latitude e longitude da estrutura de dados
     const [longitude, latitude] =
       selectedStation.localization.coordinates.coordinates;
-    // 3. Cria uma URL de mapa universal
     const label = encodeURIComponent(selectedStation.legal_name);
     const url = Platform.select({
       ios: `maps:0,0?q=${label}@${latitude},${longitude}`,
       android: `geo:0,0?q=${latitude},${longitude}(${label})`,
     });
-
-    // 4. Tenta abrir a URL no aplicativo de mapas padrão do sistema
     if (url) {
       Linking.openURL(url).catch((err) =>
         console.error("Não foi possível abrir o app de mapas", err)
       );
     }
   };
-  
+
   const handleRetry = () => {
     if (id) {
       clearError();
@@ -184,9 +266,16 @@ export default function GasStationDetailScreen() {
   if (!selectedStation) {
     return null;
   }
-
+  
   return (
     <View style={styles.container}>
+      <FavoriteFuelModal
+        isVisible={isFavoriteModalVisible}
+        onClose={() => setFavoriteModalVisible(false)}
+        station={selectedStation}
+        onToggleFavorite={handleToggleProductFavorite}
+        isFavorite={isFavorite}
+      />
       <Animated.ScrollView
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -194,11 +283,9 @@ export default function GasStationDetailScreen() {
         contentContainerStyle={{ paddingTop: HEADER_MAX_HEIGHT }}
       >
         <Animated.View style={[styles.contentContainer, cardsAnimatedStyle]}>
-         
-          <TablePrices selectedStation={selectedStation}/>
+          <TablePrices selectedStation={selectedStation} />
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Histórico de Preços</Text>
-
             <Text style={styles.filterLabel}>Período</Text>
             <View style={styles.filterContainer}>
               {(["week", "month", "semester"] as Period[]).map((period) => (
@@ -226,7 +313,6 @@ export default function GasStationDetailScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-
             <Text style={styles.filterLabel}>Combustível</Text>
             <FuelSelector
               options={[
@@ -271,8 +357,16 @@ export default function GasStationDetailScreen() {
               {selectedStation.trade_name || selectedStation.legal_name}
             </Text>
           </Animated.View>
-          <TouchableOpacity onPress={() => {}} style={styles.headerButton}>
-            <Ionicons name="heart-outline" size={24} color={colors.white} />
+          <TouchableOpacity
+            onPress={handleOpenFavoriteModal}
+            style={styles.headerButton}
+            disabled={!selectedStation?.fuelPrices?.length}
+          >
+            <Ionicons
+              name={isAnyProductFavorite ? "heart" : "heart-outline"}
+              size={24}
+              color={isAnyProductFavorite ? colors.secondary : colors.white}
+            />
           </TouchableOpacity>
         </View>
 
@@ -438,12 +532,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     marginHorizontal: 4,
     alignItems: "center",
-    borderWidth:1.5,
-    borderColor:colors.border
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   filterButtonActive: {
     backgroundColor: colors.primary,
-    borderColor:'transparent'
+    borderColor: "transparent",
   },
   filterButtonText: {
     color: colors.textSecondary,
@@ -451,5 +545,68 @@ const styles = StyleSheet.create({
   },
   filterButtonTextActive: {
     color: colors.white,
+  },
+  // Estilos para o Modal
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+  },
+  modalContainer: {
+    width: "90%",
+    maxHeight: "80%",
+    backgroundColor: "white",
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: "center",
+    marginBottom: 25,
+  },
+  fuelItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  fuelItemText: {
+    fontSize: 18,
+    color: colors.text,
+    flex: 1,
+  },
+  closeButton: {
+    marginTop: 25,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 25,
+    paddingVertical: 14,
+    width: '100%',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: colors.primary,
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
