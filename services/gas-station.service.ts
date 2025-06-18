@@ -5,15 +5,14 @@ import {
   AllStationsResponse,
 } from "@/types";
 import { apiRequest } from "./api";
-import type { FuelProduct, FuelProductResponse, ProductPriceHistory } from "@/types/gas-station";
-import { fallbackFuelTypes } from "@/constants/mockData";
+import type { ProductPriceHistory } from "@/types/gas-station";
 
 // Gas Stations API
 export const gasStationsAPI = {
   /**
    * Get a specific gas station by ID, with optional filters for price history
    */
-   getStationDetails: async (stationId: string): Promise<GasStation> => {
+  getStationDetails: async (stationId: string): Promise<GasStation> => {
     try {
       // A URL agora é simples, sem parâmetros de query.
       const url = `/v1/gas-stations/${stationId}`;
@@ -22,7 +21,7 @@ export const gasStationsAPI = {
       if (!response.data) {
         throw new Error("Invalid station response: No data received");
       }
-      
+
       return response.data;
     } catch (error) {
       console.error("Get station details error:", error);
@@ -30,7 +29,7 @@ export const gasStationsAPI = {
     }
   },
 
-   /**
+  /**
    * Busca o histórico de preços para o gráfico.
    */
   getPriceHistory: async (
@@ -39,15 +38,17 @@ export const gasStationsAPI = {
   ): Promise<ProductPriceHistory[]> => {
     try {
       const queryParams = new URLSearchParams();
-      if (params?.startDate) queryParams.append('startDate', params.startDate);
-      if (params?.endDate) queryParams.append('endDate', params.endDate);
-      if (params?.product) queryParams.append('product', params.product);
+      if (params?.startDate) queryParams.append("startDate", params.startDate);
+      if (params?.endDate) queryParams.append("endDate", params.endDate);
+      if (params?.product) queryParams.append("product", params.product);
 
       const queryString = queryParams.toString();
-      const url = `/v1/gas-stations/${stationId}/price-history${queryString ? `?${queryString}` : ''}`;
-      
+      const url = `/v1/gas-stations/${stationId}/price-history${
+        queryString ? `?${queryString}` : ""
+      }`;
+
       const response = await apiRequest(url);
-      
+
       return response.data || [];
     } catch (error) {
       console.error("Get price history error:", error);
@@ -55,7 +56,6 @@ export const gasStationsAPI = {
     }
   },
 
-  
   /**
    * Get nearby gas stations based on location and filters
    */
@@ -124,14 +124,14 @@ export const gasStationsAPI = {
    * Get all available fuel products
    */
 
-  getFuelTypes: async (): Promise<FuelProduct[]> => {
+  getFuelTypes: async (): Promise<any[]> => {
     try {
       const response = await apiRequest("/v1/products");
-      return response.data || fallbackFuelTypes;
+      return response.data;
     } catch (error) {
       console.error("Get fuel types error:", error);
       // Return common fuel types as fallback
-      return fallbackFuelTypes;
+      throw error;
     }
   },
 };

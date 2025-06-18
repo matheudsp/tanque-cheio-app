@@ -2,11 +2,11 @@ import { colors } from "@/constants/colors";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 import { View, Text, StyleSheet } from "react-native";
 import { AppIcon } from "./ui/AppIcon";
-import type { FuelProduct } from "@/types";
+import type { GasProduct } from "@/types";
 
 
 type TablePriceProps = {
-  selectedStation: { fuelPrices: FuelProduct[] };
+  selectedStation: { fuelPrices: GasProduct[] };
 };
 
 /**
@@ -37,10 +37,10 @@ export const TablePrices: React.FC<TablePriceProps> = ({ selectedStation }) => {
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>Tabela de Preços</Text>
       {selectedStation.fuelPrices.map((fuel, index) => {
-        const iconName = getIconNameFromFuel(fuel.name);
+        const iconName = getIconNameFromFuel(fuel.productName);
         return (
           <View
-            key={fuel.name}
+            key={fuel.productName}
             style={[
               styles.priceRow,
               index === selectedStation.fuelPrices.length - 1 &&
@@ -50,7 +50,7 @@ export const TablePrices: React.FC<TablePriceProps> = ({ selectedStation }) => {
             <View style={styles.fuelInfoContainer}>
               <AppIcon name={iconName} width={30} height={30} />
               <View style={styles.fuelTextContainer}>
-                <Text style={styles.fuelName}>{fuel.name}</Text>
+                <Text style={styles.fuelName}>{fuel.productName}</Text>
                 <Text style={styles.lastUpdated}>
                   Atualizado em:{" "}
                   

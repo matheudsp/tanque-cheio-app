@@ -6,6 +6,7 @@ interface FavoriteState {
   favorites: FavoriteStation[];
   favoriteIds: Set<string>; // Armazena uma chave composta "stationId-productId"
   isLoading: boolean;
+  error: string | null;
 
   // Actions
   fetchFavorites: () => Promise<void>;
@@ -18,14 +19,15 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
   favorites: [],
   favoriteIds: new Set(),
   isLoading: false,
+  error: null,
 
   fetchFavorites: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
       const favoritesData = await favoritesAPI.getFavorites();
       const favoriteIds = new Set(
         // O ID do produto está dentro do objeto 'product'
-        favoritesData.map((fav) => `${fav.stationId}-${fav.product.id}`)
+        favoritesData.map((fav) => `${fav.stationId}-${fav.product.productId}`)
       );
       set({
         favorites: favoritesData,
@@ -34,7 +36,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to fetch favorites:", error);
-      set({ isLoading: false });
+      set({ error: "Falha ao buscar favoritos.", isLoading: false });
     }
   },
 
@@ -64,7 +66,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
     // Atualização otimista
     const updatedFavorites = originalFavorites.filter(
-      (fav) => !(fav.stationId === stationId && fav.product.id === productId)
+      (fav) => !(fav.stationId === stationId && fav.product.productId === productId)
     );
     const updatedIds = new Set(get().favoriteIds);
     updatedIds.delete(compositeKey);
@@ -76,7 +78,12 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     } catch (error) {
       console.error("Failed to unfavorite product:", error);
       // Rollback
-      set({ favorites: originalFavorites, favoriteIds: new Set(originalFavorites.map(f => `${f.stationId}-${f.product.id}`)) });
+      set({
+        favorites: originalFavorites,
+        favoriteIds: new Set(
+          originalFavorites.map((f) => `${f.stationId}-${f.product.productId}`)
+        ),
+      });
     }
   },
 

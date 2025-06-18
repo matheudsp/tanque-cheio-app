@@ -1,12 +1,4 @@
-export interface FavoriteProduct {
-  id: string; 
-  name: string;
-  price: string;
-  unit: string;
-  lastUpdated: string;
-  percentageChange: string;
-  trend: "STABLE" | "UP" | "DOWN";
-}
+import type { GasProduct } from "./gas-station";
 
 export interface FavoriteStation {
   stationId: string;
@@ -22,5 +14,5 @@ export interface FavoriteStation {
     zipCode: string;
   };
   favoritedAt: string;
-  product: FavoriteProduct;
+  product: GasProduct;
 }

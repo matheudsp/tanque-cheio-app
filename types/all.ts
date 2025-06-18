@@ -11,7 +11,7 @@ export interface LoginUserDto {
   password: string;
 }
 
-// Updated response types to match your backend
+
 export interface LoginResponseDto {
   statusCode: number;
   statusMessage: string;

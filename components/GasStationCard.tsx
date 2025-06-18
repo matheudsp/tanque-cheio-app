@@ -41,7 +41,7 @@ export const GasStationCard = ({
   isSelected,
 }: GasStationCardProps) => {
   const router = useRouter();
-  console.log('STATIONNNNNNNNNNN',station)
+  
   // A lógica interna para decidir qual combustível destacar permanece a mesma.
   const cardData = useMemo(() => {
     const prices = station.fuelPrices || [];
@@ -52,35 +52,35 @@ export const GasStationCard = ({
     if (filteredFuel) {
       heroFuel =
         prices.find(
-          (p) => p.name.toUpperCase() === filteredFuel.toUpperCase()
+          (p) => p.productName.toUpperCase() === filteredFuel.toUpperCase()
         ) || null;
-      heroLabel = heroFuel?.name || filteredFuel;
+      heroLabel = heroFuel?.productName || filteredFuel;
       otherPricesCount = prices.length - (heroFuel ? 1 : 0);
     } else if (prices.length === 1) {
       heroFuel = prices[0];
-      heroLabel = heroFuel.name;
+      heroLabel = heroFuel.productName;
       otherPricesCount = 0;
     } else if (prices.length > 1) {
       heroFuel =
-        prices.find((p) => p.name.toUpperCase().includes("COMUM")) || null;
+        prices.find((p) => p.productName.toUpperCase().includes("COMUM")) || null;
       if (heroFuel) {
-        heroLabel = heroFuel.name;
+        heroLabel = heroFuel.productName;
       } else {
         heroFuel = prices[0];
-        heroLabel = heroFuel.name;
+        heroLabel = heroFuel.productName;
       }
       otherPricesCount = prices.length - 1;
     }
 
     const priceText =
-      heroFuel?.price && heroFuel.price > 0
+      heroFuel?.price && parseFloat(heroFuel.price) > 0
         ? `R$ ${Number(heroFuel.price).toFixed(2).replace(".", ",")}`
         : "N/A";
 
     const updateStatus = getUpdateStatus(heroFuel?.lastUpdated);
     const distanceText = showDistance ? formatDistance(station.distance) : "";
 
-    const iconName = getIconNameFromFuel(heroFuel?.name);
+    const iconName = getIconNameFromFuel(heroFuel?.productName);
     return {
       heroLabel,
       priceText,

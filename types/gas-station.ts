@@ -35,10 +35,12 @@ export interface GasStation {
 }
 export interface GasProduct {
   productId: string;
-  name: string;
-  price: number;
-  lastUpdated: string;
+  productName: string;
+  price: string;
   unit: string;
+  lastUpdated: string;
+  percentageChange: string
+  trend: 'DOWN' | 'STABLE'| 'UP';
 }
 
 export interface NearbyStationsParams {
@@ -55,7 +57,7 @@ export interface NearbyStationsResponse extends responseBase {
   data: {
     results: GasStation[];
     total: number;
-    // ... outros campos
+    
   };
 }
 
@@ -63,15 +65,8 @@ export interface AllStationsResponse extends responseBase {
   data: GasStation[];
 }
 
-export interface FuelProduct {
-  id: string;
-  name: string;
-  category: string;
-  createdAt: string;
-  updatedAt: string;
-  unitOfMeasure: string;
-}
+
 
 export interface FuelProductResponse extends responseBase {
-  data: FuelProduct[];
+  data: GasProduct[];
 }

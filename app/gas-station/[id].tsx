@@ -78,7 +78,7 @@ const FavoriteFuelModal = ({
                   style={styles.fuelItem}
                   onPress={() => onToggleFavorite(item.productId)}
                 >
-                  <Text style={styles.fuelItemText}>{item.name}</Text>
+                  <Text style={styles.fuelItemText}>{item.productName}</Text>
                   <Ionicons
                     name={isFav ? "heart" : "heart-outline"}
                     size={26}
@@ -131,7 +131,7 @@ export default function GasStationDetailScreen() {
   // Verifica se QUALQUER produto neste posto está favoritado para controlar o ícone do header
   const isAnyProductFavorite =
     selectedStation?.fuelPrices?.some((product) =>
-      isFavorite(selectedStation.id, product.id)
+      isFavorite(selectedStation.id, product.productId)
     ) ?? false;
 
   const handleOpenFavoriteModal = () => {
@@ -317,7 +317,7 @@ export default function GasStationDetailScreen() {
             <FuelSelector
               options={[
                 "TODOS",
-                ...selectedStation.fuelPrices.map((p) => p.name),
+                ...selectedStation.fuelPrices.map((p) => p.productName),
               ]}
               selectedValue={selectedProduct}
               onSelect={setSelectedProduct}

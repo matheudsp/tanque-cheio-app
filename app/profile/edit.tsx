@@ -9,10 +9,8 @@ import { useUserStore } from '@/store/userStore';
 export default function EditProfileScreen() {
   const { user, updateUser } = useUserStore();
   const [formData, setFormData] = useState({
-    fullName: user?.fullName || '',
+    fullName: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
   });
 
   const handleSave = () => {
@@ -25,10 +23,10 @@ export default function EditProfileScreen() {
       Alert.alert('Error', 'Please enter your email');
       return;
     }
-    if (!formData.phone.trim()) {
-      Alert.alert('Error', 'Please enter your phone number');
-      return;
-    }
+    // if (!formData.phone.trim()) {
+    //   Alert.alert('Error', 'Please enter your phone number');
+    //   return;
+    // }
 
     // Update user data
     updateUser({
@@ -101,7 +99,7 @@ export default function EditProfileScreen() {
             />
           </View>
 
-          <View style={styles.inputGroup}>
+          {/* <View style={styles.inputGroup}>
             <View style={styles.inputLabel}>
               <Phone size={20} color={colors.primary} />
               <Text style={styles.label}>Phone Number</Text>
@@ -114,9 +112,9 @@ export default function EditProfileScreen() {
               placeholderTextColor={colors.textSecondary}
               keyboardType="phone-pad"
             />
-          </View>
+          </View> */}
 
-          <View style={styles.inputGroup}>
+          {/* <View style={styles.inputGroup}>
             <View style={styles.inputLabel}>
               <MapPin size={20} color={colors.primary} />
               <Text style={styles.label}>Address</Text>
@@ -130,7 +128,7 @@ export default function EditProfileScreen() {
               multiline
               numberOfLines={3}
             />
-          </View>
+          </View> */}
         </View>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>

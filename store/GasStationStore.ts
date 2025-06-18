@@ -3,20 +3,25 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GasStation, NearbyStationsParams } from "@/types";
 import { gasStationsAPI } from "@/services/gas-station.service";
-import { fallbackFuelTypes } from "@/constants/mockData";
-import type { FuelProduct, ProductPriceHistory } from "@/types/gas-station";
 
+import type { GasProduct, ProductPriceHistory } from "@/types/gas-station";
 
 interface GasStationState {
-  
-
   allStations: GasStation[];
   nearbyStations: GasStation[];
   priceHistory: ProductPriceHistory[];
   isDetailsLoading: boolean;
   isHistoryLoading: boolean;
   selectedStation: GasStation | null;
-  fuelTypes: FuelProduct[];
+  fuelTypes: {
+    id: string;
+    name: string;
+    category: string;
+    unitOfMeasure: string;
+    isActive: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
   historyFilters: {
     product?: string;
     period?: "week" | "month" | "semester";
@@ -30,7 +35,7 @@ interface GasStationState {
   error: string | null;
 
   // Actions
-  
+
   fetchNearbyStations: (params: NearbyStationsParams) => Promise<void>;
   fetchAllStations: () => Promise<void>;
   fetchStationDetails: (stationId: string) => Promise<void>;
@@ -59,8 +64,6 @@ export const useGasStationStore = create<GasStationState>()(
       searchParams: null,
       isLoading: false,
       error: null,
-    
-        
 
       fetchAllStations: async () => {
         set({ isLoading: true, error: null });
@@ -157,14 +160,8 @@ export const useGasStationStore = create<GasStationState>()(
           set({ fuelTypes });
         } catch (error) {
           console.error("Error fetching fuel types:", error);
-          // Set default fuel types on error
-          set({
-            fuelTypes: fallbackFuelTypes,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Falha ao buscar tipos de combustíveis",
-          });
+
+          throw error;
         }
       },
 
@@ -204,8 +201,6 @@ export const useGasStationStore = create<GasStationState>()(
       clearError: () => {
         set({ error: null });
       },
-
-     
     }),
 
     {

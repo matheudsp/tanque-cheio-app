@@ -11,12 +11,12 @@ import {
 import { X } from "lucide-react-native";
 import { Button } from "./Button";
 import { colors } from "@/constants/colors";
-import type { FuelProduct } from "@/types/gas-station";
+
 
 type FiltersModalProps = {
   visible: boolean;
   onClose: () => void;
-  fuelTypes: FuelProduct[];
+  fuelTypes: any[];
   selectedFuelType: string;
   setSelectedFuelType: (fuel: string) => void;
   sortBy: string;
@@ -94,7 +94,7 @@ export const FiltersModal = ({
               isActive={!selectedFuelType}
               onPress={() => setSelectedFuelType("")}
             />
-            {fuelTypes.map((fuel) => (
+            {fuelTypes.map((fuel,i) => (
               <FilterOptionButton
                 key={fuel.id}
                 label={fuel.name}

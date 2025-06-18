@@ -56,6 +56,46 @@ export const getToken = async (): Promise<string | null> => {
   return tokenData ? tokenData.access_token : null;
 };
 
+export const refreshAuthToken = async (): Promise<boolean> => {
+  try {
+    const tokenData = await getTokenData();
+    if (!tokenData || !tokenData.refresh_token) {
+      return false;
+    }
+
+    const response = await apiRequest("/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({
+        refresh_token: tokenData.refresh_token,
+      }),
+    });
+
+    if (response && response.data) {
+      await saveTokenData(response);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Token refresh failed:", error);
+    await AsyncStorage.removeItem("auth_token_data");
+    return false;
+  }
+};
+
+// Helper function to convert backend user to frontend User format
+export const convertBackendUser = (backendUser: any, role?: any): User => {
+  return {
+    id: backendUser.id,
+    name: backendUser.name,
+    email: backendUser.email,
+    created_at: backendUser.created_at,
+    updated_at: backendUser.updated_at,
+    deleted_at: backendUser.deleted_at,
+    role: role,
+  };
+};
+
 // API request handler with error handling and timeout
 export const apiRequest = async (
   endpoint: string,
@@ -81,13 +121,13 @@ export const apiRequest = async (
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     if (hasBody) {
-      headers['Content-Type'] = 'application/json';
+      headers["Content-Type"] = "application/json";
     }
-    
+
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
@@ -100,7 +140,7 @@ export const apiRequest = async (
     if (response.status === 204) {
       return; // Retorna undefined, que é um valor "vazio" válido
     }
-    
+
     const responseBody = await response.json();
 
     if (!response.ok) {
@@ -108,7 +148,7 @@ export const apiRequest = async (
         responseBody.message || `Erro HTTP ${response.status}`;
       throw new Error(errorMessage);
     }
-    
+
     return responseBody;
   } catch (error) {
     clearTimeout(timeoutId);
