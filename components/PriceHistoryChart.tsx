@@ -2,9 +2,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { LineChart } from "react-native-chart-kit";
 import { EmptyState } from "@/components/EmptyState";
 import { useMemo, useState } from "react";
-import { StyleSheet,Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { Dimensions, ScrollView, View } from "react-native";
 import { colors } from "@/constants/colors";
+import type { Product } from "@/types";
+
+
+interface IDataChart {
+  product_name: string;
+  prices: Product[];
+}
+export type PriceHistoryChartProps = {
+  priceHistory: IDataChart[];
+  selectedProduct: string;
+};
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -24,10 +35,7 @@ const lineChartConfig = {
   propsForDots: { r: "4", strokeWidth: "2" },
 };
 
-export type PriceHistoryChartProps = {
-  priceHistory: any[];
-  selectedProduct: string;
-};
+
 export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
   priceHistory,
   selectedProduct,
@@ -39,33 +47,24 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     let filteredHistory = priceHistory;
     if (selectedProduct !== "TODOS") {
       filteredHistory = priceHistory.filter(
-        (p: { productName: string }) => p.productName === selectedProduct
+        (p: { product_name: string }) => p.product_name === selectedProduct
       );
     }
     if (filteredHistory.length === 0) return null;
-    interface PricePoint {
-      date: string;
-      price: number;
-    }
-
-    interface ProductPriceHistory {
-      productName: string;
-      prices: PricePoint[];
-    }
 
     const allPrices: number[] = (
-      filteredHistory as ProductPriceHistory[]
-    ).flatMap((p: ProductPriceHistory) =>
-      p.prices.map((pricePoint: PricePoint) => pricePoint.price)
+      filteredHistory as IDataChart[]
+    ).flatMap((p: IDataChart) =>
+      p.prices.map((pricePoint: Product) => Number(pricePoint.price))
     );
     if (allPrices.length === 0) return null;
     const sortedPrices = filteredHistory
       .flatMap((p) => p.prices)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .sort((a, b) => new Date(a.collection_date).getTime() - new Date(b.collection_date).getTime());
     const labels = [
       ...new Set(
         sortedPrices.map((p) =>
-          new Date(p.date).toLocaleDateString("pt-BR", {
+          new Date(p.collection_date).toLocaleDateString("pt-BR", {
             day: "2-digit",
             month: "2-digit",
           })
@@ -78,9 +77,11 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     const yAxisMin = Math.max(0, minPrice - 0.1);
     const datasets = filteredHistory.map((productHistory, index) => {
       const data = labels.map((label) => {
-        const pricePoint: PricePoint | undefined = (productHistory as ProductPriceHistory).prices.find(
-          (p: PricePoint) =>
-            new Date(p.date).toLocaleDateString("pt-BR", {
+        const pricePoint: Product | undefined = (
+          productHistory as IDataChart
+        ).prices.find(
+          (p: Product) =>
+            new Date(p.collection_date).toLocaleDateString("pt-BR", {
               day: "2-digit",
               month: "2-digit",
             }) === label
@@ -91,7 +92,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
         if (data[i] === null) data[i] = data[i - 1];
       }
       return {
-        data: data.filter((d) => d !== null) as number[],
+        data: data.filter((d) => d !== null).map((d) => Number(d)) as number[],
         color: (opacity = 1) =>
           chartColors[index % chartColors.length](opacity),
         strokeWidth: 2,
@@ -100,7 +101,7 @@ export const PriceHistoryChart: React.FC<PriceHistoryChartProps> = ({
     return {
       labels,
       datasets,
-      legend: filteredHistory.map((p) => p.productName),
+      legend: filteredHistory.map((p) => p.product_name),
       chartWidth,
       yAxisMin,
     };

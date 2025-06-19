@@ -1,4 +1,11 @@
-export { GasProduct, GasStation,NearbyStationsParams,PriceHistoryPoint,ProductPriceHistory,NearbyStationsResponse,FuelProductResponse,responseBase,AllStationsResponse} from "./gas-station";
+export {
+  GasStation,
+  NearbyStationsParams,
+  ProductPriceHistory,
+  GetNearbyStationsResponse,
+} from "./gas-stations";
+export { responseBase } from "./base";
+export { Product, ProductResponse } from "./products";
 export {
   LoginResponseDto,
   ApiErrorResponse,
@@ -7,5 +14,5 @@ export {
   RegisterUserDto,
   TokenData,
   User,
-} from "./all";
-export { FavoriteStation} from './favorites'
+} from "./user";
+export { FavoriteStation } from "./favorites";

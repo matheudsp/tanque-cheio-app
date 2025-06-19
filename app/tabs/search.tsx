@@ -38,17 +38,17 @@ export default function SearchScreen() {
 
   const [selectedFuelType, setSelectedFuelType] = useState("");
   const [radius, setRadius] = useState(50);
-  const [sortBy, setSortBy] = useState<
+  const [sort, setSort] = useState<
     "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc"
   >("distanceAsc");
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedFuelType) count++;
-    if (sortBy) count++;
+    if (sort) count++;
     if (radius) count++;
     return count;
-  }, [selectedFuelType, sortBy, radius]);
+  }, [selectedFuelType, sort, radius]);
 
   useEffect(() => {
     fetchFuelTypes();
@@ -66,7 +66,7 @@ export default function SearchScreen() {
       lat: userLocation.latitude,
       lng: userLocation.longitude,
       radius: radius,
-      sortBy,
+      sort,
       product: selectedFuelType || undefined,
       ...overrideParams,
     };
@@ -80,7 +80,7 @@ export default function SearchScreen() {
 
   const clearFilters = () => {
     setSelectedFuelType("");
-    setSortBy("distanceAsc");
+    setSort("distanceAsc");
     setRadius(50);
   };
 
@@ -121,7 +121,7 @@ export default function SearchScreen() {
 
       <ActiveFilters
         selectedFuelType={selectedFuelType}
-        sortBy={sortBy}
+        sortBy={sort}
         radius={radius}
         onClearFuel={() => {
           const newFuel = "";
@@ -130,8 +130,8 @@ export default function SearchScreen() {
         }}
         onClearSort={() => {
           const newSort = "distanceAsc";
-          setSortBy(newSort);
-          handleSearchWithFilters({ sortBy: newSort });
+          setSort(newSort);
+          handleSearchWithFilters({ sort: newSort });
         }}
         onClearRadius={() => {
           const newRadius = 50;
@@ -188,8 +188,8 @@ export default function SearchScreen() {
         fuelTypes={fuelTypes}
         selectedFuelType={selectedFuelType}
         setSelectedFuelType={setSelectedFuelType}
-        sortBy={sortBy}
-        setSortBy={setSortBy as any}
+        sortBy={sort}
+        setSortBy={setSort as any}
         radius={radius}
         setRadius={setRadius}
         onApply={applyFiltersAndSearch}
@@ -198,7 +198,7 @@ export default function SearchScreen() {
           setShowFiltersModal(false);
           handleSearchWithFilters({
             product: undefined,
-            sortBy: "distanceAsc",
+            sort: "distanceAsc",
             radius: 50,
           });
         }}

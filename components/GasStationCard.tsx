@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MapPin, Clock, Fuel } from "lucide-react-native";
-import { GasStation, GasProduct } from "@/types";
+import { GasStation, Product } from "@/types";
 import { colors } from "@/constants/colors";
 import { differenceInDays, parseISO } from "date-fns";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -44,30 +44,30 @@ export const GasStationCard = ({
   
   // A lógica interna para decidir qual combustível destacar permanece a mesma.
   const cardData = useMemo(() => {
-    const prices = station.fuelPrices || [];
-    let heroFuel: GasProduct | null = null;
+    const prices = station.fuel_prices || [];
+    let heroFuel: Product | null = null;
     let heroLabel = "";
     let otherPricesCount = 0;
 
     if (filteredFuel) {
       heroFuel =
         prices.find(
-          (p) => p.productName.toUpperCase() === filteredFuel.toUpperCase()
+          (p) => p.product_name.toUpperCase() === filteredFuel.toUpperCase()
         ) || null;
-      heroLabel = heroFuel?.productName || filteredFuel;
+      heroLabel = heroFuel?.product_name || filteredFuel;
       otherPricesCount = prices.length - (heroFuel ? 1 : 0);
     } else if (prices.length === 1) {
       heroFuel = prices[0];
-      heroLabel = heroFuel.productName;
+      heroLabel = heroFuel.product_name;
       otherPricesCount = 0;
     } else if (prices.length > 1) {
       heroFuel =
-        prices.find((p) => p.productName.toUpperCase().includes("COMUM")) || null;
+        prices.find((p) => p.product_name.toUpperCase().includes("COMUM")) || null;
       if (heroFuel) {
-        heroLabel = heroFuel.productName;
+        heroLabel = heroFuel.product_name;
       } else {
         heroFuel = prices[0];
-        heroLabel = heroFuel.productName;
+        heroLabel = heroFuel.product_name;
       }
       otherPricesCount = prices.length - 1;
     }
@@ -77,10 +77,10 @@ export const GasStationCard = ({
         ? `R$ ${Number(heroFuel.price).toFixed(2).replace(".", ",")}`
         : "N/A";
 
-    const updateStatus = getUpdateStatus(heroFuel?.lastUpdated);
-    const distanceText = showDistance ? formatDistance(station.distance) : "";
+    const updateStatus = getUpdateStatus(heroFuel?.collection_date);
+    const distanceText = showDistance ? formatDistance(station.distance!) : "";
 
-    const iconName = getIconNameFromFuel(heroFuel?.productName);
+    const iconName = getIconNameFromFuel(heroFuel?.product_name);
     return {
       heroLabel,
       priceText,

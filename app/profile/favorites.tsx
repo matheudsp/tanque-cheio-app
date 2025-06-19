@@ -14,7 +14,7 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { colors } from "@/constants/colors";
 import { useFavoriteStore } from "@/store/favoriteStore";
-import type { FavoriteStation, GasProduct } from "@/types/index";
+import type { FavoriteStation, Product } from "@/types/index";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -35,20 +35,20 @@ const PriceTrendBadge = React.memo(
     trend,
     percentage,
   }: {
-    trend: GasProduct["trend"];
-    percentage: GasProduct["percentageChange"];
+    trend: Product["trend"];
+    percentage: Product["percentage_change"];
   }) => {
-    const percentageValue = parseFloat(percentage);
+    const percentageValue = percentage;
     const trendInfo = {
       UP: {
         icon: "trending-up" as const,
         color: colors.error,
-        text: `${percentageValue.toFixed(2)}%`,
+        text: `${percentageValue}%`,
       },
       DOWN: {
         icon: "trending-down" as const,
         color: colors.success,
-        text: `${percentageValue.toFixed(2)}%`,
+        text: `${percentageValue}%`,
       },
       STABLE: {
         icon: "minus" as const,
@@ -101,30 +101,30 @@ const ErrorState = React.memo(({ onRetry }: { onRetry: () => void }) => (
 const FavoriteProductRow = React.memo(
   ({
     product,
-    onUnfavorite,
-    stationId,
+    on_unfavorite,
+    gas_station_id,
   }: {
-    product: GasProduct;
-    onUnfavorite: (stationId: string, productId: string) => void;
-    stationId: string;
+    product: Product;
+    on_unfavorite: (gas_station_id: string, product_id: string) => void;
+    gas_station_id: string;
   }) => {
     return (
       <View style={styles.productRow}>
         <View style={styles.productInfo}>
-          <Text style={styles.productName}>{product.productName}</Text>
+          <Text style={styles.productName}>{product.product_name}</Text>
           <Text style={styles.lastUpdatedText}>
             {`R$ ${parseFloat(product.price).toFixed(2)} • ${formatLastUpdated(
-              product.lastUpdated
+              product.collection_date
             )}`}
           </Text>
         </View>
         <View style={styles.productActions}>
           <PriceTrendBadge
             trend={product.trend}
-            percentage={product.percentageChange}
+            percentage={product.percentage_change}
           />
           <TouchableOpacity
-            onPress={() => onUnfavorite(stationId, product.productId)}
+            onPress={() => on_unfavorite(gas_station_id, product.product_id)}
             style={styles.unfollowIcon}
           >
             <Feather name="x-circle" size={22} color={colors.textSecondary} />
@@ -137,36 +137,36 @@ const FavoriteProductRow = React.memo(
 
 const StationFavoritesCard = React.memo(
   ({
-    stationData,
-    onUnfavorite,
+    station_data,
+    on_unfavorite,
   }: {
-    stationData: { stationInfo: FavoriteStation; products: GasProduct[] };
-    onUnfavorite: (stationId: string, productId: string) => void;
+    station_data: { station_info: FavoriteStation; products: Product[] };
+    on_unfavorite: (gas_station_id: string, product_id: string) => void;
   }) => {
     const router = useRouter();
-    const { stationInfo, products } = stationData;
+    const { station_info, products } = station_data;
 
     return (
       <View style={styles.card}>
         <TouchableOpacity
-          onPress={() => router.push(`/gas-station/${stationInfo.stationId}`)}
+          onPress={() => router.push(`/gas-station/${station_info.gas_station_id}` as any)}
         >
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{stationInfo.stationName}</Text>
+            <Text style={styles.cardTitle}>{station_info.gas_station_name}</Text>
             <Text
               style={styles.cardAddress}
-            >{`${stationInfo.localization.city}, ${stationInfo.localization.state}`}</Text>
+            >{`${station_info.localization.city}, ${station_info.localization.state}`}</Text>
           </View>
         </TouchableOpacity>
         <View style={styles.productsList}>
           {products.map((product, index) => (
             <React.Fragment
-              key={`${stationInfo.stationId}-${product.productId}`}
+              key={`${station_info.gas_station_id}-${product.product_id}`}
             >
               <FavoriteProductRow
                 product={product}
-                stationId={stationInfo.stationId}
-                onUnfavorite={onUnfavorite}
+                gas_station_id={station_info.gas_station_id}
+                on_unfavorite={on_unfavorite}
               />
               {index < products.length - 1 && <View style={styles.separator} />}
             </React.Fragment>
@@ -193,19 +193,19 @@ export default function FavoritesScreen() {
   // Lógica para agrupar favoritos por posto de gasolina
   const groupedFavorites = useMemo(() => {
     const groups: {
-      [key: string]: { stationInfo: FavoriteStation; products: GasProduct[] };
+      [key: string]: { station_info: FavoriteStation; products: Product[] };
     } = {};
     
     favorites
-      .filter(fav => fav && fav.product && fav.product.productId)
+      .filter(fav => fav && fav.product && fav.product.product_id)
       .forEach((fav) => {
-        if (!groups[fav.stationId]) {
-          groups[fav.stationId] = {
-            stationInfo: fav,
+        if (!groups[fav.gas_station_id]) {
+          groups[fav.gas_station_id] = {
+            station_info: fav,
             products: [],
           };
         }
-        groups[fav.stationId].products.push(fav.product);
+        groups[fav.gas_station_id].products.push(fav.product);
       });
       
     return Object.values(groups);
@@ -231,11 +231,11 @@ export default function FavoritesScreen() {
         data={groupedFavorites}
         renderItem={({ item }) => (
           <StationFavoritesCard
-            stationData={item}
-            onUnfavorite={unfavoriteProduct}
+            station_data={item}
+            on_unfavorite={unfavoriteProduct}
           />
         )}
-        keyExtractor={(item) => item.stationInfo.stationId}
+        keyExtractor={(item) => item.station_info.gas_station_id}
         ListEmptyComponent={!isLoading ? <EmptyState /> : null}
         contentContainerStyle={styles.listContainer}
         ItemSeparatorComponent={() => <View style={{ height: 16 }} />}

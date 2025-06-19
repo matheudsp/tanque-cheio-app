@@ -10,7 +10,7 @@ import {
 } from "@/types";
 
 // Base API URL
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.115:3000/api";
 
 // Token management helpers
 export const getTokenData = async (): Promise<TokenData | null> => {

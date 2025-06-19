@@ -19,14 +19,14 @@ export const favoritesAPI = {
   /**
    * Adiciona um produto de um posto aos favoritos.
    */
-  addFavorite: async (stationId: string, productId: string): Promise<void> => {
+  addFavorite: async (station_id: string, product_id: string): Promise<void> => {
     try {
       await apiRequest('/v1/favorites', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ stationId, productId }),
+        body: JSON.stringify({ station_id, product_id }),
       });
     } catch (error) {
       console.error("Add favorite error:", error);
@@ -37,9 +37,9 @@ export const favoritesAPI = {
   /**
    * Remove um produto de um posto dos favoritos.
    */
-  removeFavorite: async (stationId: string, productId: string): Promise<void> => {
+  removeFavorite: async (station_id: string, product_id: string): Promise<void> => {
     try {
-      await apiRequest(`/v1/favorites/${stationId}?productId=${productId}`, {
+      await apiRequest(`/v1/favorites/${station_id}?productId=${product_id}`, {
         method: 'DELETE'
       });
       

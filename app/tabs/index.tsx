@@ -89,7 +89,7 @@ export default function HomeScreen() {
         lat: region.latitude,
         lng: region.longitude,
         radius: radiusInKm,
-        sortBy: searchParams?.sortBy || "distanceAsc",
+        sort: searchParams?.sort || "distanceAsc",
       });
       // NOVO: Ao buscar, abre o BottomSheet para a posição inicial (peek)
       bottomSheetRef.current?.snapToIndex(0);

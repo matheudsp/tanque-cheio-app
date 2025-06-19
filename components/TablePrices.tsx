@@ -2,11 +2,11 @@ import { colors } from "@/constants/colors";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 import { View, Text, StyleSheet } from "react-native";
 import { AppIcon } from "./ui/AppIcon";
-import type { GasProduct } from "@/types";
+import type { Product } from "@/types";
 
 
 type TablePriceProps = {
-  selectedStation: { fuelPrices: GasProduct[] };
+  selectedStation: { fuel_prices: Product[] };
 };
 
 /**
@@ -36,25 +36,25 @@ export const TablePrices: React.FC<TablePriceProps> = ({ selectedStation }) => {
   return (
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>Tabela de Preços</Text>
-      {selectedStation.fuelPrices.map((fuel, index) => {
-        const iconName = getIconNameFromFuel(fuel.productName);
+      {selectedStation.fuel_prices.map((fuel, index) => {
+        const iconName = getIconNameFromFuel(fuel.product_name);
         return (
           <View
-            key={fuel.productName}
+            key={fuel.product_name}
             style={[
               styles.priceRow,
-              index === selectedStation.fuelPrices.length - 1 &&
+              index === selectedStation.fuel_prices.length - 1 &&
                 styles.priceRowLast,
             ]}
           >
             <View style={styles.fuelInfoContainer}>
               <AppIcon name={iconName} width={30} height={30} />
               <View style={styles.fuelTextContainer}>
-                <Text style={styles.fuelName}>{fuel.productName}</Text>
+                <Text style={styles.fuelName}>{fuel.product_name}</Text>
                 <Text style={styles.lastUpdated}>
                   Atualizado em:{" "}
                   
-                  {formatDate(fuel.lastUpdated)}
+                  {formatDate(fuel.collection_date)}
                 </Text>
               </View>
             </View>

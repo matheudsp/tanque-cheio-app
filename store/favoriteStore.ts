@@ -10,9 +10,9 @@ interface FavoriteState {
 
   // Actions
   fetchFavorites: () => Promise<void>;
-  addFavorite: (stationId: string, productId: string) => Promise<void>;
-  unfavoriteProduct: (stationId: string, productId: string) => Promise<void>;
-  isFavorite: (stationId: string, productId: string) => boolean;
+  addFavorite: (gas_station_id: string, product_id: string) => Promise<void>;
+  unfavoriteProduct: (gas_station_id: string, product_id: string) => Promise<void>;
+  isFavorite: (gas_station_id: string, product_id: string) => boolean;
 }
 
 export const useFavoriteStore = create<FavoriteState>((set, get) => ({
@@ -27,7 +27,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
       const favoritesData = await favoritesAPI.getFavorites();
       const favoriteIds = new Set(
         // O ID do produto está dentro do objeto 'product'
-        favoritesData.map((fav) => `${fav.stationId}-${fav.product.productId}`)
+        favoritesData.map((fav) => `${fav.gas_station_id}-${fav.product.product_id}`)
       );
       set({
         favorites: favoritesData,
@@ -40,8 +40,8 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     }
   },
 
-  addFavorite: async (stationId: string, productId: string) => {
-    const compositeKey = `${stationId}-${productId}`;
+  addFavorite: async (gas_station_id: string, product_id: string) => {
+    const compositeKey = `${gas_station_id}-${product_id}`;
     const originalIds = new Set(get().favoriteIds);
 
     // 1. Atualização otimista do ícone
@@ -50,7 +50,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
     try {
       // 2. Chamada à API
-      await favoritesAPI.addFavorite(stationId, productId);
+      await favoritesAPI.addFavorite(gas_station_id, product_id);
       // 3. Após sucesso, busca a lista atualizada para ter o objeto completo
       await get().fetchFavorites();
     } catch (error) {
@@ -60,13 +60,13 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     }
   },
 
-  unfavoriteProduct: async (stationId: string, productId: string) => {
+  unfavoriteProduct: async (gas_station_id: string, product_id: string) => {
     const originalFavorites = [...get().favorites];
-    const compositeKey = `${stationId}-${productId}`;
+    const compositeKey = `${gas_station_id}-${product_id}`;
 
     // Atualização otimista
     const updatedFavorites = originalFavorites.filter(
-      (fav) => !(fav.stationId === stationId && fav.product.productId === productId)
+      (fav) => !(fav.gas_station_id === gas_station_id && fav.product.product_id === product_id)
     );
     const updatedIds = new Set(get().favoriteIds);
     updatedIds.delete(compositeKey);
@@ -74,21 +74,21 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
 
     // Chamada à API
     try {
-      await favoritesAPI.removeFavorite(stationId, productId);
+      await favoritesAPI.removeFavorite(gas_station_id, product_id);
     } catch (error) {
       console.error("Failed to unfavorite product:", error);
       // Rollback
       set({
         favorites: originalFavorites,
         favoriteIds: new Set(
-          originalFavorites.map((f) => `${f.stationId}-${f.product.productId}`)
+          originalFavorites.map((f) => `${f.gas_station_id}-${f.product.product_id}`)
         ),
       });
     }
   },
 
-  isFavorite: (stationId: string, productId: string) => {
-    const compositeKey = `${stationId}-${productId}`;
+  isFavorite: (gas_station_id: string, product_id: string) => {
+    const compositeKey = `${gas_station_id}-${product_id}`;
     return get().favoriteIds.has(compositeKey);
   },
 }));

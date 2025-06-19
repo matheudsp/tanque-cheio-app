@@ -1,8 +1,8 @@
-import type { GasProduct } from "./gas-station";
+import type { Product } from "./";
 
 export interface FavoriteStation {
-  stationId: string;
-  stationName: string;
+  gas_station_id: string;
+  gas_station_name: string;
   localization: {
     id: string;
     state: string;
@@ -11,8 +11,11 @@ export interface FavoriteStation {
     number: string;
     complement: string | null;
     neighborhood: string;
-    zipCode: string;
+    zip_code: string;
+    coordinates: any;
+    created_at: string;
+    updated_at: string;
   };
-  favoritedAt: string;
-  product: GasProduct;
+  favorited_at: string;
+  product: Product;
 }

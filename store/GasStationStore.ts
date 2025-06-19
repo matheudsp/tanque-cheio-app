@@ -4,10 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GasStation, NearbyStationsParams } from "@/types";
 import { gasStationsAPI } from "@/services/gas-station.service";
 
-import type { GasProduct, ProductPriceHistory } from "@/types/gas-station";
+import type { ProductPriceHistory } from "@/types/gas-stations";
 
 interface GasStationState {
-  allStations: GasStation[];
+  
   nearbyStations: GasStation[];
   priceHistory: ProductPriceHistory[];
   isDetailsLoading: boolean;
@@ -37,11 +37,11 @@ interface GasStationState {
   // Actions
 
   fetchNearbyStations: (params: NearbyStationsParams) => Promise<void>;
-  fetchAllStations: () => Promise<void>;
-  fetchStationDetails: (stationId: string) => Promise<void>;
+  
+  fetchStationDetails: (gas_station_id: string) => Promise<void>;
   fetchPriceHistory: (
-    stationId: string,
-    params?: { startDate?: string; endDate?: string; product?: string }
+    gas_station_id: string,
+    params?: { start_date?: string; end_date?: string; product?: string }
   ) => Promise<void>;
   fetchFuelTypes: () => Promise<void>;
   setUserLocation: (latitude: number, longitude: number) => void;
@@ -52,7 +52,7 @@ interface GasStationState {
 export const useGasStationStore = create<GasStationState>()(
   persist(
     (set, get) => ({
-      allStations: [],
+    
       nearbyStations: [],
       selectedStation: null,
       priceHistory: [],
@@ -65,26 +65,7 @@ export const useGasStationStore = create<GasStationState>()(
       isLoading: false,
       error: null,
 
-      fetchAllStations: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const stations = await gasStationsAPI.getAllStations();
-          set({
-            allStations: stations || [],
-            isLoading: false,
-          });
-        } catch (error) {
-          console.error(`Error fetching all stations: ${error}`);
-          set({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Falha ao buscar postos de combustíveis",
-            isLoading: false,
-            allStations: [],
-          });
-        }
-      },
+     
 
       fetchNearbyStations: async (params: NearbyStationsParams) => {
         set({ isLoading: true, error: null, searchParams: params });
@@ -108,10 +89,10 @@ export const useGasStationStore = create<GasStationState>()(
         }
       },
 
-      fetchStationDetails: async (stationId: string) => {
+      fetchStationDetails: async (gas_station_id: string) => {
         set({ isDetailsLoading: true, error: null });
         try {
-          const station = await gasStationsAPI.getStationDetails(stationId);
+          const station = await gasStationsAPI.getStationDetails(gas_station_id);
           set({
             selectedStation: station,
             isDetailsLoading: false,
@@ -129,13 +110,13 @@ export const useGasStationStore = create<GasStationState>()(
       },
 
       fetchPriceHistory: async (
-        stationId: string,
-        params?: { startDate?: string; endDate?: string; product?: string }
+        gas_station_id: string,
+        params?: { start_date?: string; end_date?: string; product?: string }
       ) => {
         set({ isHistoryLoading: true, error: null }); // Usa o loading do histórico
         try {
           const historyData = await gasStationsAPI.getPriceHistory(
-            stationId,
+            gas_station_id,
             params
           );
           set({
@@ -183,7 +164,7 @@ export const useGasStationStore = create<GasStationState>()(
           lat: latitude,
           lng: longitude,
           radius: 50,
-          sortBy: "distanceAsc" as const,
+          sort: "distanceAsc" as const,
         };
 
         get().fetchNearbyStations({

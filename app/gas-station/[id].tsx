@@ -29,7 +29,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FuelSelector } from "@/components/FuelSelector";
 import { TablePrices } from "@/components/TablePrices";
 import { useFavoriteStore } from "@/store/favoriteStore";
-import type { GasStation } from "@/types/gas-station";
+import type { GasStation } from "@/types/gas-stations";
 
 const HEADER_MAX_HEIGHT = 280;
 
@@ -61,24 +61,27 @@ const FavoriteFuelModal = ({
         activeOpacity={1}
         onPressOut={onClose}
       >
-        <View style={styles.modalContainer} onStartShouldSetResponder={() => true}>
+        <View
+          style={styles.modalContainer}
+          onStartShouldSetResponder={() => true}
+        >
           <Text style={styles.modalTitle}>Acompanhar Preço</Text>
           <Text style={styles.modalSubtitle}>
             Selecione o combustível para favoritar e receber notificações de
             preço.
           </Text>
           <FlatList
-            data={station.fuelPrices}
-            keyExtractor={(item) => item.productId}
+            data={station.fuel_prices}
+            keyExtractor={(item) => item.product_id}
             style={{ width: "100%" }}
             renderItem={({ item }) => {
-              const isFav = isFavorite(station.id, item.productId);
+              const isFav = isFavorite(station.id, item.product_id);
               return (
                 <TouchableOpacity
                   style={styles.fuelItem}
-                  onPress={() => onToggleFavorite(item.productId)}
+                  onPress={() => onToggleFavorite(item.product_id)}
                 >
-                  <Text style={styles.fuelItemText}>{item.productName}</Text>
+                  <Text style={styles.fuelItemText}>{item.product_name}</Text>
                   <Ionicons
                     name={isFav ? "heart" : "heart-outline"}
                     size={26}
@@ -127,15 +130,15 @@ export default function GasStationDetailScreen() {
   useEffect(() => {
     fetchFavorites();
   }, [fetchFavorites]);
-  
+
   // Verifica se QUALQUER produto neste posto está favoritado para controlar o ícone do header
   const isAnyProductFavorite =
-    selectedStation?.fuelPrices?.some((product) =>
-      isFavorite(selectedStation.id, product.productId)
+    selectedStation?.fuel_prices?.some((product) =>
+      isFavorite(selectedStation.id, product.product_id)
     ) ?? false;
 
   const handleOpenFavoriteModal = () => {
-    if (selectedStation?.fuelPrices?.length) {
+    if (selectedStation?.fuel_prices?.length) {
       setFavoriteModalVisible(true);
     } else {
       console.warn("Nenhum produto para favoritar neste posto.");
@@ -163,11 +166,13 @@ export default function GasStationDetailScreen() {
 
   useEffect(() => {
     if (id) {
-      const { startDate, endDate } = getPeriodDates(selectedPeriod);
-      const params: { startDate: string; endDate: string; product?: string } = {
-        startDate,
-        endDate,
-      };
+   
+      const { start_date, end_date } = getPeriodDates(selectedPeriod);
+      const params: { start_date: string; end_date: string; product?: string } =
+        {
+          start_date,
+          end_date,
+        };
       if (selectedProduct !== "TODOS") {
         params.product = selectedProduct;
       }
@@ -266,7 +271,7 @@ export default function GasStationDetailScreen() {
   if (!selectedStation) {
     return null;
   }
-  
+
   return (
     <View style={styles.container}>
       <FavoriteFuelModal
@@ -317,7 +322,7 @@ export default function GasStationDetailScreen() {
             <FuelSelector
               options={[
                 "TODOS",
-                ...selectedStation.fuelPrices.map((p) => p.productName),
+                ...selectedStation.fuel_prices.map((p) => p.product_name),
               ]}
               selectedValue={selectedProduct}
               onSelect={setSelectedProduct}
@@ -360,7 +365,7 @@ export default function GasStationDetailScreen() {
           <TouchableOpacity
             onPress={handleOpenFavoriteModal}
             style={styles.headerButton}
-            disabled={!selectedStation?.fuelPrices?.length}
+            disabled={!selectedStation?.fuel_prices?.length}
           >
             <Ionicons
               name={isAnyProductFavorite ? "heart" : "heart-outline"}
@@ -601,8 +606,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     borderRadius: 25,
     paddingVertical: 14,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   closeButtonText: {
     color: colors.primary,

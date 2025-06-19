@@ -1,21 +1,21 @@
 import {
   GasStation,
   NearbyStationsParams,
-  NearbyStationsResponse,
-  AllStationsResponse,
+  GetNearbyStationsResponse,
+  
 } from "@/types";
 import { apiRequest } from "./api";
-import type { ProductPriceHistory } from "@/types/gas-station";
+import type { ProductPriceHistory } from "@/types/gas-stations";
 
 // Gas Stations API
 export const gasStationsAPI = {
   /**
    * Get a specific gas station by ID, with optional filters for price history
    */
-  getStationDetails: async (stationId: string): Promise<GasStation> => {
+  getStationDetails: async (station_id: string): Promise<GasStation> => {
     try {
       // A URL agora é simples, sem parâmetros de query.
-      const url = `/v1/gas-stations/${stationId}`;
+      const url = `/v1/gas-stations/${station_id}`;
       const response = await apiRequest(url);
 
       if (!response.data) {
@@ -33,17 +33,17 @@ export const gasStationsAPI = {
    * Busca o histórico de preços para o gráfico.
    */
   getPriceHistory: async (
-    stationId: string,
-    params?: { startDate?: string; endDate?: string; product?: string }
+    station_id: string,
+    params?: { start_date?: string; end_date?: string; product?: string }
   ): Promise<ProductPriceHistory[]> => {
     try {
       const queryParams = new URLSearchParams();
-      if (params?.startDate) queryParams.append("startDate", params.startDate);
-      if (params?.endDate) queryParams.append("endDate", params.endDate);
+      if (params?.start_date) queryParams.append("start_date", params.start_date);
+      if (params?.end_date) queryParams.append("end_date", params.end_date);
       if (params?.product) queryParams.append("product", params.product);
 
       const queryString = queryParams.toString();
-      const url = `/v1/gas-stations/${stationId}/price-history${
+      const url = `/v1/gas-stations/${station_id}/price-history${
         queryString ? `?${queryString}` : ""
       }`;
 
@@ -76,15 +76,15 @@ export const gasStationsAPI = {
         queryParams.append("offset", params.offset.toString());
       }
 
-      if (params.sortBy) {
-        queryParams.append("sortBy", params.sortBy);
+      if (params.sort) {
+        queryParams.append("sort", params.sort);
       }
 
       if (params.product) {
         queryParams.append("product", params.product);
       }
 
-      const response: NearbyStationsResponse = await apiRequest(
+      const response: GetNearbyStationsResponse = await apiRequest(
         `/v1/gas-stations/nearby?${queryParams.toString()}`
       );
       // console.log(response)
@@ -96,26 +96,6 @@ export const gasStationsAPI = {
       return response.data;
     } catch (error) {
       // console.warn("Get nearby stations error:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get all gas stations available
-   */
-  getAllStations: async (): Promise<GasStation[]> => {
-    try {
-      const response: AllStationsResponse = await apiRequest(
-        `/v1/gas-stations/all`
-      );
-
-      if (!response.data) {
-        console.warn("No stations found in response for getAllStations");
-        return [];
-      }
-      return response.data;
-    } catch (error) {
-      console.error("Get all stations error:", error);
       throw error;
     }
   },
