@@ -24,6 +24,7 @@ import {
 import { useUserStore } from "@/store/userStore";
 import { colors } from "@/constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SubscriptionBadge } from "@/components/shared/SubscriptionBadge";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -155,7 +156,15 @@ export default function ProfileScreen() {
             <User size={40} color={colors.primary} />
           </View>
 
-          <Text style={styles.profileName}>{user?.name || "Usuário"}</Text>
+          <View style={styles.profileNameContainer}>
+            <Text style={styles.profileName}>{user?.name || "Usuário"}</Text>
+            <SubscriptionBadge
+              // planName={user?.role?.name}
+              planName={'premium'}
+              style={styles.badge}
+            />
+          </View>
+
           <Text style={styles.profileEmail}>
             {user?.email || "guest@mail.com"}
           </Text>
@@ -225,11 +234,26 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginVertical: 16,
   },
+  profileNameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center", 
+    gap: 8, 
+  },
   profileName: {
     fontSize: 24,
     fontWeight: "600",
     color: colors.text,
-    marginBottom: 4,
+  },
+  badge: {
+    
+  },
+
+  profileEmail: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 4, 
+    marginBottom: 16,
   },
 
   avatar: {
@@ -241,11 +265,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  profileEmail: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
+
   editProfileButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,

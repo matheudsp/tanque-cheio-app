@@ -27,7 +27,7 @@ export default function PaymentScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{
-          title: 'Payment Methods',
+          title: 'Métodos de Pagamento',
           headerBackTitle: 'Back',
         }}
       />
@@ -61,7 +61,7 @@ export default function PaymentScreen() {
         
         <TouchableOpacity style={styles.addButton}>
           <Plus size={20} color={colors.primary} />
-          <Text style={styles.addButtonText}>Add New Payment Method</Text>
+          <Text style={styles.addButtonText}>Adicionar novo método de pagamento</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

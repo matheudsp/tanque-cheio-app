@@ -8,45 +8,46 @@ import { colors } from '@/constants/colors';
 export default function HelpScreen() {
   const faqItems = [
     {
-      question: 'How do I book a driving lesson?',
-      answer: 'To book a lesson, go to the Schedule tab and tap the "+" button. Select your preferred date, time, and instructor.',
+      question: 'Como encontro postos de combustível?',
+      answer: 'Para encontrar postos, basta permitir o acesso à sua localização. O mapa mostrará automaticamente os postos mais próximos a você.',
     },
     {
-      question: 'Can I cancel or reschedule a lesson?',
-      answer: 'Yes, you can cancel or reschedule lessons up to 24 hours before the scheduled time. Go to the Schedule tab and tap on the lesson you want to modify.',
+      question: 'Os preços são atualizados em tempo real?',
+      answer: 'Os preços são atualizados com frequência com base nas informações mais recentes fornecidas pela ANP - Agência Nacional do Petróleo, Gás Natural e Biocombustíveis.',
     },
     {
-      question: 'How do I track my progress?',
-      answer: 'Your progress is automatically tracked in the Progress tab. You can see your completed lessons, skills, and achievements.',
+      question: 'Como posso filtrar os resultados?',
+      answer: 'Na tela do mapa, você pode usar os filtros para obter um resultado objetivo.',
     },
   ];
 
   const handleContact = (type: string) => {
     switch (type) {
       case 'phone':
-        Linking.openURL('tel:+1234567890');
+        // Adapte o número de telefone para o seu suporte
+        Linking.openURL('tel:+5589912345678');
         break;
       case 'email':
-        Linking.openURL('mailto:support@driveable.com');
+        Linking.openURL('mailto:atendimentoaocliente@valedosol');
         break;
       case 'chat':
-        // Implement chat functionality
+        // Implementar funcionalidade de chat
         break;
     }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
-          title: 'Help & Support',
-          headerBackTitle: 'Back',
+          title: 'Ajuda & Suporte',
+          headerBackTitle: 'Voltar',
         }}
       />
-      
+
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+          <Text style={styles.sectionTitle}>Perguntas Frequentes</Text>
           {faqItems.map((item, index) => (
             <View key={index} style={styles.faqItem}>
               <View style={styles.faqHeader}>
@@ -59,50 +60,50 @@ export default function HelpScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Us</Text>
-          <TouchableOpacity 
+          <Text style={styles.sectionTitle}>Fale Conosco</Text>
+          <TouchableOpacity
             style={styles.contactItem}
             onPress={() => handleContact('phone')}
           >
             <Phone size={24} color={colors.primary} />
             <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Call Us</Text>
-              <Text style={styles.contactDetail}>+1 (234) 567-890</Text>
+              <Text style={styles.contactTitle}>Ligue para nós</Text>
+              <Text style={styles.contactDetail}>+55 (89) 91234-5678</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.contactItem}
             onPress={() => handleContact('email')}
           >
             <Mail size={24} color={colors.primary} />
             <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Email Us</Text>
-              <Text style={styles.contactDetail}>support@driveable.com</Text>
+              <Text style={styles.contactTitle}>Envie um E-mail</Text>
+              <Text style={styles.contactDetail}>suporte@tanquecheio.com.br</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.contactItem}
             onPress={() => handleContact('chat')}
           >
             <MessageCircle size={24} color={colors.primary} />
             <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>Live Chat</Text>
-              <Text style={styles.contactDetail}>Available 24/7</Text>
+              <Text style={styles.contactTitle}>Chat ao Vivo</Text>
+              <Text style={styles.contactDetail}>Disponível 24/7</Text>
             </View>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Legal</Text>
+          <Text style={styles.sectionTitle}>Jurídico</Text>
           <TouchableOpacity style={styles.legalItem}>
             <FileText size={24} color={colors.primary} />
-            <Text style={styles.legalText}>Terms of Service</Text>
+            <Text style={styles.legalText}>Termos de Serviço</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.legalItem}>
             <FileText size={24} color={colors.primary} />
-            <Text style={styles.legalText}>Privacy Policy</Text>
+            <Text style={styles.legalText}>Política de Privacidade</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -187,4 +188,4 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginLeft: 12,
   },
-}); 
+});

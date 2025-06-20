@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
-import { AppIcon } from './ui/AppIcon';
+import { AppIcon } from './shared/AppIcon';
 import { getIconNameFromFuel } from '@/utils/getIconNameFromFuel';
 
 type FuelSelectorProps = {

@@ -8,8 +8,6 @@ import {
   Linking,
   Platform,
   Button,
-  Modal,
-  FlatList,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useGasStationStore } from "@/store/gasStationStore";
@@ -29,76 +27,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FuelSelector } from "@/components/FuelSelector";
 import { TablePrices } from "@/components/TablePrices";
 import { useFavoriteStore } from "@/store/favoriteStore";
-import type { GasStation } from "@/types/gas-stations";
+import { LinearGradient } from "expo-linear-gradient";
+import { Bell } from "lucide-react-native";
+import { BrandLogo } from "@/components/shared/BrandLogo";
+import { MapPin, Milestone } from "lucide-react-native";
+import { FavoriteFuelModal } from "@/components/FavoriteFuelModal";
+import { PremiumBadge } from "@/components/shared/PremiumBadge";
 
-const HEADER_MAX_HEIGHT = 280;
-
-// Componente do Modal para selecionar o combustível a ser favoritado
-const FavoriteFuelModal = ({
-  isVisible,
-  onClose,
-  station,
-  onToggleFavorite,
-  isFavorite,
-}: {
-  isVisible: boolean;
-  onClose: () => void;
-  station: GasStation | null;
-  onToggleFavorite: (productId: string) => void;
-  isFavorite: (stationId: string, productId: string) => boolean;
-}) => {
-  if (!station) return null;
-
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPressOut={onClose}
-      >
-        <View
-          style={styles.modalContainer}
-          onStartShouldSetResponder={() => true}
-        >
-          <Text style={styles.modalTitle}>Acompanhar Preço</Text>
-          <Text style={styles.modalSubtitle}>
-            Selecione o combustível para favoritar e receber notificações de
-            preço.
-          </Text>
-          <FlatList
-            data={station.fuel_prices}
-            keyExtractor={(item) => item.product_id}
-            style={{ width: "100%" }}
-            renderItem={({ item }) => {
-              const isFav = isFavorite(station.id, item.product_id);
-              return (
-                <TouchableOpacity
-                  style={styles.fuelItem}
-                  onPress={() => onToggleFavorite(item.product_id)}
-                >
-                  <Text style={styles.fuelItemText}>{item.product_name}</Text>
-                  <Ionicons
-                    name={isFav ? "heart" : "heart-outline"}
-                    size={26}
-                    color={isFav ? colors.secondary : colors.primary}
-                  />
-                </TouchableOpacity>
-              );
-            }}
-          />
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Fechar</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-};
+const HEADER_MAX_HEIGHT = 360;
 
 export default function GasStationDetailScreen() {
   const router = useRouter();
@@ -131,12 +67,6 @@ export default function GasStationDetailScreen() {
     fetchFavorites();
   }, [fetchFavorites]);
 
-  // Verifica se QUALQUER produto neste posto está favoritado para controlar o ícone do header
-  const isAnyProductFavorite =
-    selectedStation?.fuel_prices?.some((product) =>
-      isFavorite(selectedStation.id, product.product_id)
-    ) ?? false;
-
   const handleOpenFavoriteModal = () => {
     if (selectedStation?.fuel_prices?.length) {
       setFavoriteModalVisible(true);
@@ -166,7 +96,6 @@ export default function GasStationDetailScreen() {
 
   useEffect(() => {
     if (id) {
-   
       const { start_date, end_date } = getPeriodDates(selectedPeriod);
       const params: { start_date: string; end_date: string; product?: string } =
         {
@@ -288,6 +217,30 @@ export default function GasStationDetailScreen() {
         contentContainerStyle={{ paddingTop: HEADER_MAX_HEIGHT }}
       >
         <Animated.View style={[styles.contentContainer, cardsAnimatedStyle]}>
+          <TouchableOpacity
+            onPress={handleOpenFavoriteModal}
+            disabled={!selectedStation?.fuel_prices?.length}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[ colors.secondary ,colors.warning]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.premiumButton}
+            >
+              <View style={styles.premiumButtonContent}>
+                <Bell
+                  size={20}
+                  color={colors.white}
+                  style={styles.premiumButtonIcon}
+                />
+                <Text style={styles.premiumButtonText}>
+                  Ativar Alertas de Preço
+                </Text>
+              </View>
+              <PremiumBadge />
+            </LinearGradient>
+          </TouchableOpacity>
           <TablePrices selectedStation={selectedStation} />
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Histórico de Preços</Text>
@@ -350,7 +303,7 @@ export default function GasStationDetailScreen() {
             onPress={() => router.back()}
             style={styles.headerButton}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.white} />
+            <Ionicons name="arrow-back" size={18} color={colors.white} />
           </TouchableOpacity>
           <Animated.View
             style={[
@@ -363,14 +316,13 @@ export default function GasStationDetailScreen() {
             </Text>
           </Animated.View>
           <TouchableOpacity
-            onPress={handleOpenFavoriteModal}
             style={styles.headerButton}
-            disabled={!selectedStation?.fuel_prices?.length}
+            disabled={!selectedStation?.id}
           >
             <Ionicons
-              name={isAnyProductFavorite ? "heart" : "heart-outline"}
-              size={24}
-              color={isAnyProductFavorite ? colors.secondary : colors.white}
+              name={"ellipsis-vertical"}
+              size={18}
+              color={colors.white}
             />
           </TouchableOpacity>
         </View>
@@ -379,16 +331,48 @@ export default function GasStationDetailScreen() {
           style={[styles.heroContentContainer, heroContentAnimatedStyle]}
           pointerEvents="box-none"
         >
-          <Text style={styles.stationName}>{selectedStation.legal_name}</Text>
-          {selectedStation.trade_name && (
-            <Text style={styles.tradeName}>{selectedStation.trade_name}</Text>
-          )}
-          <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={16} color={colors.white} />
-            <Text
-              style={styles.heroInfoText}
-            >{`${selectedStation.localization.city}, ${selectedStation.localization.state}`}</Text>
+          {/* GRUPO 1: IDENTIDADE DO POSTO (LOGO + NOMES) */}
+          <View style={styles.identityContainer}>
+            <BrandLogo
+              brandName={selectedStation.brand}
+              style={styles.brandLogo}
+            />
+            {/* A View foi removida, o Text agora é filho direto */}
+            <Text style={styles.stationName} numberOfLines={2}>
+              {selectedStation.trade_name || selectedStation.legal_name}
+            </Text>
           </View>
+
+          {/* GRUPO 2: INFORMAÇÕES RÁPIDAS (STATS EM PILLS) */}
+          <View style={styles.statsContainer}>
+            {/* {selectedStation.distance && (
+              <View style={styles.statPill}>
+                <Milestone
+                  size={14}
+                  color={colors.white}
+                  style={styles.statIcon}
+                />
+                <Text style={styles.statText}>
+                  Aprox. {`${selectedStation.distance.toFixed(1)} km`}
+                </Text>
+              </View>
+            )} */}
+            <View style={styles.statPill}>
+              <MapPin size={14} color={colors.white} style={styles.statIcon} />
+              <Text style={styles.statText}>
+                {`${selectedStation.localization.address}, ${selectedStation.localization.number}`}
+              </Text>
+            </View>
+          </View>
+
+          {/* GRUPO 3: ENDEREÇO COMPLETO */}
+          <Text style={styles.fullAddressText}>
+            {`${selectedStation.localization.neighborhood}, ${
+              selectedStation.localization.city
+            } - ${selectedStation.localization.state.substring(0, 2)}`}
+          </Text>
+
+          {/* GRUPO 4: BOTÃO DE AÇÃO PRINCIPAL */}
           <TouchableOpacity
             style={styles.directionsButton}
             onPress={handleGetDirections}
@@ -427,6 +411,40 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
+
+  brandLogo: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    padding: 4,
+    marginBottom: 12,
+  },
+
+  stationName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: colors.white,
+    marginBottom: 2,
+    textAlign: "center",
+  },
+
+  statPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  statIcon: {
+    marginRight: 6,
+  },
+  statText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: "500",
+  },
   headerContainer: {
     position: "absolute",
     top: 0,
@@ -435,18 +453,56 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     zIndex: 1,
     overflow: "hidden",
+
+    justifyContent: "flex-end",
   },
+
   topNavContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 15,
     width: "100%",
   },
+
+  heroContentContainer: {
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+
+  identityContainer: {
+    flexDirection: "column",
+    alignItems: "center",
+
+    marginBottom: 12,
+  },
+
+  statsContainer: {
+    flexDirection: "row",
+
+    marginBottom: 10,
+    gap: 10,
+  },
+
+  fullAddressText: {
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 14,
+    width: "100%",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+
   headerButton: {
     backgroundColor: "rgba(0,0,0,0.3)",
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
@@ -459,31 +515,37 @@ const styles = StyleSheet.create({
   },
   collapsedTitle: {
     color: colors.white,
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  heroContentContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    paddingBottom: 20,
-  },
-  stationName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.white,
-    textAlign: "center",
-    marginBottom: 4,
-    paddingHorizontal: 20,
-  },
-  tradeName: {
     fontSize: 16,
-    color: "rgba(255,255,255,0.9)",
+    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 12,
   },
+  premiumButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 8,
+    marginBottom: 16,
+  },
+  premiumButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  premiumButtonIcon: {
+    marginRight: 10,
+  },
+  premiumButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
   infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
   heroInfoText: { marginLeft: 8, fontSize: 16, color: colors.white },
   directionsButton: {
@@ -550,68 +612,5 @@ const styles = StyleSheet.create({
   },
   filterButtonTextActive: {
     color: colors.white,
-  },
-  // Estilos para o Modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-  },
-  modalContainer: {
-    width: "90%",
-    maxHeight: "80%",
-    backgroundColor: "white",
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 25,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: colors.primary,
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: "center",
-    marginBottom: 25,
-  },
-  fuelItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 16,
-    width: "100%",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  fuelItemText: {
-    fontSize: 18,
-    color: colors.text,
-    flex: 1,
-  },
-  closeButton: {
-    marginTop: 25,
-    backgroundColor: colors.primaryLight,
-    borderRadius: 25,
-    paddingVertical: 14,
-    width: "100%",
-    alignItems: "center",
-  },
-  closeButtonText: {
-    color: colors.primary,
-    fontWeight: "bold",
-    fontSize: 16,
   },
 });

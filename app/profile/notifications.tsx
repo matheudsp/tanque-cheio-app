@@ -16,7 +16,7 @@ export default function NotificationsScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{
-          title: 'Notifications',
+          title: 'Notificações',
           headerBackTitle: 'Back',
         }}
       />

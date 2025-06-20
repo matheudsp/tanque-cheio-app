@@ -8,27 +8,27 @@ import { colors } from '@/constants/colors';
 export default function PreferencesScreen() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('English');
-  const [privacy, setPrivacy] = useState(true);
+  const [language, setLanguage] = useState('Português');
+  
   
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{
-          title: 'Preferences',
+          title: 'Preferências',
           headerBackTitle: 'Back',
         }}
       />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.section}>
-          <View style={styles.preferenceItem}>
+          {/* <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
               <Bell size={20} color={colors.primary} />
               <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Push Notifications</Text>
+                <Text style={styles.preferenceTitle}>Notificações Push</Text>
                 <Text style={styles.preferenceDescription}>
-                  Receive notifications about your lessons and updates
+                  Receba notificações sobre os postos que segue e atualizações do app
                 </Text>
               </View>
             </View>
@@ -37,15 +37,15 @@ export default function PreferencesScreen() {
               onValueChange={setNotifications}
               trackColor={{ false: colors.border, true: colors.primary }}
             />
-          </View>
+          </View> */}
           
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
               <Moon size={20} color={colors.primary} />
               <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Dark Mode</Text>
+                <Text style={styles.preferenceTitle}>Modo Noturno</Text>
                 <Text style={styles.preferenceDescription}>
-                  Switch between light and dark theme
+                  Alterne entre tema claro e escuro
                 </Text>
               </View>
             </View>
@@ -60,7 +60,7 @@ export default function PreferencesScreen() {
             <View style={styles.preferenceInfo}>
               <Globe size={20} color={colors.primary} />
               <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Language</Text>
+                <Text style={styles.preferenceTitle}>Linguagem</Text>
                 <Text style={styles.preferenceDescription}>
                   {language}
                 </Text>
@@ -68,22 +68,7 @@ export default function PreferencesScreen() {
             </View>
           </View>
           
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Shield size={20} color={colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Privacy Settings</Text>
-                <Text style={styles.preferenceDescription}>
-                  Manage your privacy preferences
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={privacy}
-              onValueChange={setPrivacy}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
-          </View>
+         
         </View>
       </ScrollView>
     </SafeAreaView>

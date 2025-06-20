@@ -9,7 +9,7 @@ export default function SupportScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{
-          title: 'Support',
+          title: 'Suporte',
           headerShown: true,
         }} 
       />

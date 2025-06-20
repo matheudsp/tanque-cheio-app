@@ -11,8 +11,9 @@ import { MapPin, Clock, Fuel } from "lucide-react-native";
 import { GasStation, Product } from "@/types";
 import { colors } from "@/constants/colors";
 import { differenceInDays, parseISO } from "date-fns";
-import { AppIcon } from "@/components/ui/AppIcon";
+import { AppIcon } from "@/components/shared/AppIcon";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
+import { BrandLogo } from "./shared/BrandLogo";
 
 type GasStationCardProps = {
   station: GasStation;
@@ -41,7 +42,7 @@ export const GasStationCard = ({
   isSelected,
 }: GasStationCardProps) => {
   const router = useRouter();
-  
+
   // A lógica interna para decidir qual combustível destacar permanece a mesma.
   const cardData = useMemo(() => {
     const prices = station.fuel_prices || [];
@@ -62,7 +63,8 @@ export const GasStationCard = ({
       otherPricesCount = 0;
     } else if (prices.length > 1) {
       heroFuel =
-        prices.find((p) => p.product_name.toUpperCase().includes("COMUM")) || null;
+        prices.find((p) => p.product_name.toUpperCase().includes("COMUM")) ||
+        null;
       if (heroFuel) {
         heroLabel = heroFuel.product_name;
       } else {
@@ -113,13 +115,7 @@ export const GasStationCard = ({
       {/* SEÇÃO 1: INFORMAÇÕES GERAIS */}
       <View style={styles.infoSection}>
         <View style={styles.header}>
-          {/* 2. Ícone FIXO de posto de gasolina */}
-          <AppIcon
-            name={"gasPump"}
-            width={30}
-            height={30}
-            style={{ marginTop: 2 }}
-          />
+          <BrandLogo brandName={station.brand} width={35} height={35} />
           <View style={styles.titleInfo}>
             <Text style={styles.stationName} numberOfLines={1}>
               {station.trade_name || station.legal_name}

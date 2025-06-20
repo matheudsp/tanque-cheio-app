@@ -50,7 +50,7 @@ export default function EditProfileScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{
-          title: 'Edit Profile',
+          title: 'Editar Perfil',
           headerBackTitle: 'Back',
         }}
       />

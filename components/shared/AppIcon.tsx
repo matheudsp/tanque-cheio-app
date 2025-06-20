@@ -1,6 +1,6 @@
 import React from 'react';
 import { SvgProps } from 'react-native-svg';
-
+import { StyleSheet } from 'react-native';
 
 import GasolinaIcon from '@/assets/icons/fuels/gasolina.svg';
 import EtanolIcon from '@/assets/icons/fuels/etanol.svg';
@@ -36,5 +36,5 @@ export const AppIcon: React.FC<AppIconProps> = ({ name, ...props }) => {
   
   const IconComponent = iconMap[name] || DefaultIcon;
 
-  return <IconComponent {...props} />;
+  return <IconComponent  {...props} />;
 };

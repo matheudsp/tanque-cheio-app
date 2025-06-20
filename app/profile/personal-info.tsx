@@ -13,7 +13,7 @@ export default function PersonalInfoScreen() {
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       <Stack.Screen
         options={{
-          title: "Personal Information",
+          title: "Informações Pessoais",
           headerBackTitle: "Back",
         }}
       />
@@ -26,7 +26,7 @@ export default function PersonalInfoScreen() {
           <View style={styles.infoItem}>
             <User size={20} color={colors.primary} />
             <View style={styles.infoContent}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>Nome</Text>
               <Text style={styles.value}>{user?.name || "Not set"}</Text>
             </View>
           </View>
@@ -34,7 +34,7 @@ export default function PersonalInfoScreen() {
           <View style={styles.infoItem}>
             <Mail size={20} color={colors.primary} />
             <View style={styles.infoContent}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>E-mail</Text>
               <Text style={styles.value}>{user?.email || "Not set"}</Text>
             </View>
           </View>

@@ -17,6 +17,7 @@ export interface GasStation {
     address: string;
     neighborhood: string;
     zip_code: string;
+    number: string;
     coordinates: {
       type: "Point";
       coordinates: [number, number]; // Formato: [longitude, latitude]
