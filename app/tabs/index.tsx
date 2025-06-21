@@ -26,7 +26,7 @@ import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { Feather } from '@expo/vector-icons';
 import { useGasStationStore } from "@/store/gasStationStore";
 import { useUserStore } from "@/store/userStore";
-import { GasStationCard } from "@/components/GasStationCard";
+import { GasStationCard } from "@/components/shared/GasStationCard";
 import { colors } from "@/constants/colors";
 import markerImage from "@/assets/images/marker.png";
 import markerSelectedImage from "@/assets/images/playstore.png";

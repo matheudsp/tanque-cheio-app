@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   TouchableOpacity,
@@ -11,12 +11,9 @@ import {
   SafeAreaView,
   Dimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import type { GasStation } from "@/types/gas-stations";
 import { colors } from "@/constants/colors";
 import { useFavoriteStore } from "@/store/favoriteStore";
-
-// Imports para Gestos e Feedback Tátil
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -27,7 +24,6 @@ import Animated, {
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
-// Lógica de props e funcional intacta
 interface FavoriteFuelModalProps {
   isVisible: boolean;
   onClose: () => void;
@@ -44,37 +40,28 @@ export const FavoriteFuelModal = ({
 }: FavoriteFuelModalProps) => {
   if (!station) return null;
 
-  // --- LÓGICA FUNCIONAL (INTACTA) ---
   const {
-    isFavorite,
     updateFavoritesInBulk,
-    isLoading: isSaving,
+    isLoading,
+    fetchFavoritesByStation,
+    stationSpecificFavorites,
   } = useFavoriteStore();
-  const [localSelectedProducts, setLocalSelectedProducts] = useState<
-    Set<string>
-  >(new Set());
-
+  const [localSelection, setLocalSelection] = useState<Set<string>>(new Set());
   const translateY = useSharedValue(MODAL_HEIGHT);
 
-  const initialSelectedProducts = useMemo(() => {
-    const initiallyFavorited = new Set<string>();
-    if (station) {
-      station.fuel_prices.forEach((product) => {
-        if (isFavorite(station.id, product.product_id)) {
-          initiallyFavorited.add(product.product_id);
-        }
-      });
+  useEffect(() => {
+    if (isVisible && station) {
+      translateY.value = withSpring(0, { damping: 15 });
+
+      fetchFavoritesByStation(station.id);
     }
-    return initiallyFavorited;
-  }, [station, isFavorite]);
+  }, [isVisible, station, fetchFavoritesByStation]);
 
   useEffect(() => {
-    if (isVisible) {
-      translateY.value = withSpring(0, { damping: 15 });
-      setLocalSelectedProducts(new Set(initialSelectedProducts));
-    }
-  }, [isVisible, initialSelectedProducts]);
+    setLocalSelection(stationSpecificFavorites);
+  }, [stationSpecificFavorites]);
 
+  
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       translateY.value = Math.max(0, event.translationY);
@@ -88,38 +75,50 @@ export const FavoriteFuelModal = ({
       }
     });
 
-  const handleSaveChanges = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const productsToAdd = [...localSelectedProducts].filter(
-      (id) => !initialSelectedProducts.has(id)
-    );
-    const productsToRemove = [...initialSelectedProducts].filter(
-      (id) => !initialSelectedProducts.has(id)
-    );
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
-    if (productsToAdd.length > 0 || productsToRemove.length > 0) {
-      await updateFavoritesInBulk(station.id, productsToAdd, productsToRemove);
-    }
-    onClose();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, [
-    station?.id,
-    localSelectedProducts,
-    initialSelectedProducts,
-    updateFavoritesInBulk,
-    onClose,
-  ]);
 
   const handleToggleSwitch = useCallback((productId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLocalSelectedProducts((prev) => {
+    setLocalSelection((prev) => {
       const newSelection = new Set(prev);
-      newSelection.has(productId)
-        ? newSelection.delete(productId)
-        : newSelection.add(productId);
+      if (newSelection.has(productId)) {
+        newSelection.delete(productId);
+      } else {
+        newSelection.add(productId);
+      }
       return newSelection;
     });
   }, []);
+
+  const handleSaveChanges = useCallback(async () => {
+    if (!station) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Compara o estado inicial com a seleção local para determinar o que mudou
+    const productsToAdd = [...localSelection].filter(
+      (id) => !stationSpecificFavorites.has(id)
+    );
+    const productsToRemove = [...stationSpecificFavorites].filter(
+      (id) => !localSelection.has(id)
+    );
+
+    // Só chama a API se houver mudanças
+    if (productsToAdd.length > 0 || productsToRemove.length > 0) {
+      await updateFavoritesInBulk(station.id, productsToAdd, productsToRemove);
+    }
+
+    runOnJS(onClose)(); // A função de fechar precisa ser chamada via runOnJS
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [
+    station?.id,
+    localSelection,
+    stationSpecificFavorites,
+    updateFavoritesInBulk,
+    onClose,
+  ]);
 
   const renderFuelItem = useCallback(
     ({ item }: { item: GasStation["fuel_prices"][0] }) => (
@@ -129,18 +128,16 @@ export const FavoriteFuelModal = ({
           trackColor={{ false: "#E9E9EA", true: colors.primary }}
           thumbColor={colors.white}
           onValueChange={() => handleToggleSwitch(item.product_id)}
-          value={localSelectedProducts.has(item.product_id)}
+          value={localSelection.has(item.product_id)} // Usa a seleção local
           style={styles.switch}
+          disabled={isLoading} // Desabilita durante o carregamento inicial
         />
       </View>
     ),
-    [localSelectedProducts, handleToggleSwitch]
+    [localSelection, handleToggleSwitch, isLoading]
   );
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-    };
-  });
+
+  // --- RENDERIZAÇÃO DO COMPONENTE ---
 
   return (
     <Modal transparent={true} visible={isVisible} onRequestClose={onClose}>
@@ -148,50 +145,58 @@ export const FavoriteFuelModal = ({
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.modalContainer, animatedStyle]}>
             <SafeAreaView style={{ flex: 1 }}>
-              {/* Header com Título Centralizado e Botão de Fechar na Direita */}
               <View style={styles.header}>
                 <View style={styles.headerAction} />
-                <Text
-                  style={styles.headerTitle}
-                  numberOfLines={1}
-                >{`Gerenciar Alertas`}</Text>
+                <Text style={styles.headerTitle} numberOfLines={1}>
+                  Gerenciar Alertas
+                </Text>
                 <TouchableOpacity
                   onPress={onClose}
-                  disabled={isSaving}
+                  disabled={isLoading}
                   style={styles.headerAction}
                 >
-                 <Text style={styles.headerCloseText}>Fechar</Text>
+                  <Text style={styles.headerCloseText}>Fechar</Text>
                 </TouchableOpacity>
               </View>
 
               <Text style={styles.explanatoryText}>
-                Ative os combustíveis que você mais usa para vê-los em destaque
-                na sua lista de favoritos.
+                Ative os combustíveis que você deseja seguir para receber
+                alertas sobre os preços.
               </Text>
 
               <View style={styles.listWrapper}>
-                <FlatList
-                  data={station.fuel_prices}
-                  renderItem={renderFuelItem}
-                  keyExtractor={(item) => item.product_id}
-                  ItemSeparatorComponent={() => (
-                    <View style={styles.separator} />
-                  )}
-                  style={styles.flatList}
-                />
+                {isLoading ? (
+                  <ActivityIndicator
+                    size="large"
+                    color={colors.primary}
+                    style={{ marginTop: 40 }}
+                  />
+                ) : (
+                  <FlatList
+                    data={station.fuel_prices}
+                    renderItem={renderFuelItem}
+                    keyExtractor={(item) => item.product_id}
+                    ItemSeparatorComponent={() => (
+                      <View style={styles.separator} />
+                    )}
+                    style={styles.flatList}
+                  />
+                )}
               </View>
 
               <View style={styles.footer}>
                 <TouchableOpacity
-                  style={[styles.saveButton, isSaving && styles.savingButton]}
+                  style={[
+                    styles.saveButton,
+                    (isLoading) && styles.savingButton,
+                  ]}
                   onPress={handleSaveChanges}
-                  disabled={isSaving}
-                  accessibilityLabel="Salvar alterações de favoritos"
+                  disabled={isLoading}
                 >
-                  {isSaving ? (
+                  {isLoading ? (
                     <ActivityIndicator color={colors.white} />
                   ) : (
-                    <Text style={styles.saveButtonText}>Salvar e Fechar</Text>
+                    <Text style={styles.saveButtonText}>Salvar</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -203,7 +208,7 @@ export const FavoriteFuelModal = ({
   );
 };
 
-// --- NOVOS ESTILOS COM FOCO NO HEADER ---
+// ESTILOS (Os estilos permanecem os mesmos do arquivo original)
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
@@ -230,24 +235,24 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(0, 0, 0, 0.2)",
   },
   headerTitle: {
-    flex: 1, // Permite que o título ocupe o espaço central
-    textAlign: "center", // Centraliza o texto dentro do espaço
+    flex: 1,
+    textAlign: "center",
     fontSize: 17,
     fontWeight: "600",
     color: "#000",
-    marginHorizontal: 16, // Garante que o texto não cole nos botões
+    marginHorizontal: 16,
   },
   headerAction: {
-    width: 64, 
+    width: 64,
     justifyContent: "center",
     alignItems: "center",
   },
-  headerCloseText:{
-    fontWeight:'600',
-    color:colors.primary,
-    fontSize:16
+  headerCloseText: {
+    fontWeight: "600",
+    color: colors.primary,
+    fontSize: 16,
   },
-  
+
   explanatoryText: {
     fontSize: 13,
     color: "#6D6D72",

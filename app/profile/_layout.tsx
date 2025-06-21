@@ -26,7 +26,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="payment" options={{ title: "Payment Methods" }} />
       <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
       <Stack.Screen name="help" options={{ title: "Help & Support" }} />
-      <Stack.Screen name="favorites" options={{ title: "Postos que você segue" }} />
+      <Stack.Screen name="favorites" options={{ title: "Favorites" }} />
     </Stack>
   );
 }

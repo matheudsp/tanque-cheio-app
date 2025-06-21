@@ -7,8 +7,10 @@ interface FavoriteState {
   favoriteIds: Set<string>; // Armazena uma chave composta "stationId-productId"
   isLoading: boolean;
   error: string | null;
+  stationSpecificFavorites: Set<string>;
 
   // Actions
+  fetchFavoritesByStation: (stationId: string) => Promise<void>;
   fetchFavorites: () => Promise<void>;
   updateFavoritesInBulk: (
     stationId: string,
@@ -24,6 +26,26 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
   favoriteIds: new Set(),
   isLoading: false,
   error: null,
+  stationSpecificFavorites: new Set(),
+
+  fetchFavoritesByStation: async (stationId: string) => {
+    set({ isLoading: true });
+    try {
+      const favoritedProductIds = await favoritesAPI.getFavoritesForStation(
+        stationId
+      );
+      set({
+        stationSpecificFavorites: new Set(favoritedProductIds),
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Falha ao buscar favoritos do posto no store:", error);
+      set({
+        error: "Não foi possível carregar os favoritos deste posto.",
+        isLoading: false,
+      });
+    }
+  },
 
   fetchFavorites: async () => {
     set({ isLoading: true, error: null });

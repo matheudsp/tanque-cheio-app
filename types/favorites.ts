@@ -3,6 +3,7 @@ import type { Product } from "./";
 export interface FavoriteStation {
   gas_station_id: string;
   gas_station_name: string;
+  gas_station_brand: string;
   localization: {
     id: string;
     state: string;

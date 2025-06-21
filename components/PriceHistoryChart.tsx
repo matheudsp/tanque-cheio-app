@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LineChart } from "react-native-chart-kit";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useMemo, useState } from "react";
 import { StyleSheet, Text } from "react-native";
 import { Dimensions, ScrollView, View } from "react-native";

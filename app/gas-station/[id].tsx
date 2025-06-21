@@ -29,10 +29,10 @@ import { TablePrices } from "@/components/TablePrices";
 import { useFavoriteStore } from "@/store/favoriteStore";
 import { LinearGradient } from "expo-linear-gradient";
 import { Bell } from "lucide-react-native";
-import { BrandLogo } from "@/components/shared/BrandLogo";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { MapPin, Milestone } from "lucide-react-native";
-import { FavoriteFuelModal } from "@/components/FavoriteFuelModal";
-import { PremiumBadge } from "@/components/shared/PremiumBadge";
+import { FavoriteFuelModal } from "@/components/shared/FavoriteFuelModal";
+import { PremiumBadge } from "@/components/ui/PremiumBadge";
 
 const HEADER_MAX_HEIGHT = 360;
 

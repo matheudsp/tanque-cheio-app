@@ -11,9 +11,9 @@ import { MapPin, Clock, Fuel } from "lucide-react-native";
 import { GasStation, Product } from "@/types";
 import { colors } from "@/constants/colors";
 import { differenceInDays, parseISO } from "date-fns";
-import { AppIcon } from "@/components/shared/AppIcon";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
-import { BrandLogo } from "./shared/BrandLogo";
+import { BrandLogo } from "../ui/BrandLogo";
 
 type GasStationCardProps = {
   station: GasStation;

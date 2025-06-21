@@ -1,7 +1,7 @@
 import { colors } from "@/constants/colors";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 import { View, Text, StyleSheet } from "react-native";
-import { AppIcon } from "./shared/AppIcon";
+import { AppIcon } from "./ui/AppIcon";
 import type { Product } from "@/types";
 
 

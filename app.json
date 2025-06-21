@@ -14,7 +14,6 @@
     },
     "ios": {
       "supportsTablet": true,
-      
       "bundleIdentifier": "com.tanquecheio.app"
     },
     "android": {
@@ -25,7 +24,8 @@
       "package": "com.tanquecheio.app"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

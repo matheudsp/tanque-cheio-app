@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { X } from "lucide-react-native";
-import { Button } from "./Button";
+import { Button } from "../Button";
 import { colors } from "@/constants/colors";
 
 

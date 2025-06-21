@@ -1,4 +1,4 @@
-import { IconName } from '@/components/shared/AppIcon'; // Importa o tipo do nosso componente
+import { IconName } from '@/components/ui/AppIcon'; // Importa o tipo do nosso componente
 
 /**
  * Retorna o nome do ícone correspondente a um nome de combustível.

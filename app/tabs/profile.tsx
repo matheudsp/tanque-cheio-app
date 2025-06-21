@@ -24,7 +24,7 @@ import {
 import { useUserStore } from "@/store/userStore";
 import { colors } from "@/constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SubscriptionBadge } from "@/components/shared/SubscriptionBadge";
+import { SubscriptionBadge } from "@/components/ui/SubscriptionBadge";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -95,12 +95,12 @@ export default function ProfileScreen() {
       items: [
         {
           icon: <FuelIcon size={20} color={colors.primary} />,
-          label: "Postos que você segue",
+          label: "Meus Alertas de Preço",
           onPress: () => router.push("/profile/favorites"),
         },
         {
           icon: <User size={20} color={colors.primary} />,
-          label: "Informações pessoais",
+          label: "Informações Pessoais",
           onPress: () => router.push("/profile/personal-info"),
         },
         {

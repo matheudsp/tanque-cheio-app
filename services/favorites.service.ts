@@ -16,6 +16,21 @@ export const favoritesAPI = {
     }
   },
 
+    /**
+   * Busca os IDs dos produtos favoritados para um posto específico.
+   * @param station_id - O ID do posto de combustível.
+   * @returns Uma promessa que resolve para um array de strings (product_id).
+   */
+  getFavoritesForStation: async (station_id: string): Promise<string[]> => {
+    try {
+      const response = await apiRequest(`/v1/favorites/station/${station_id}`);
+      return response.data || [];
+    } catch (error) {
+      console.error("Get favorites for station error:", error);
+      throw error;
+    }
+  },
+
   /**
    * Adiciona uma lista de produtos favoritos de um posto em uma única requisição.
    */
