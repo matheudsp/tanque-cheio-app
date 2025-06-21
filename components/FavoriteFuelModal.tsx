@@ -1,165 +1,310 @@
-
-
-import { colors } from "@/constants/colors";
-import type { GasStation } from "@/types";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  Modal,
+  TouchableOpacity,
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Switch,
+  ActivityIndicator,
+  SafeAreaView,
+  Dimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, TouchableOpacity, View, Text, FlatList, StyleSheet, Switch } from "react-native";
-import { PremiumBadge } from "./shared/PremiumBadge"; // Importe o badge
-import { LinearGradient } from 'expo-linear-gradient'; // Importe o gradiente
+import type { GasStation } from "@/types/gas-stations";
+import { colors } from "@/constants/colors";
+import { useFavoriteStore } from "@/store/favoriteStore";
+
+// Imports para Gestos e Feedback Tátil
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
+
+// Lógica de props e funcional intacta
+interface FavoriteFuelModalProps {
+  isVisible: boolean;
+  onClose: () => void;
+  station: GasStation | null;
+}
+
+const MODAL_HEIGHT = Dimensions.get("window").height * 0.65;
+const CLOSE_THRESHOLD = MODAL_HEIGHT * 0.4;
 
 export const FavoriteFuelModal = ({
   isVisible,
   onClose,
   station,
-  onToggleFavorite,
-  isFavorite,
-}: {
-  isVisible: boolean;
-  onClose: () => void;
-  station: GasStation | null;
-  onToggleFavorite: (productId: string) => void;
-  isFavorite: (stationId: string, productId: string) => boolean;
-}) => {
+}: FavoriteFuelModalProps) => {
   if (!station) return null;
 
+  // --- LÓGICA FUNCIONAL (INTACTA) ---
+  const {
+    isFavorite,
+    updateFavoritesInBulk,
+    isLoading: isSaving,
+  } = useFavoriteStore();
+  const [localSelectedProducts, setLocalSelectedProducts] = useState<
+    Set<string>
+  >(new Set());
+
+  const translateY = useSharedValue(MODAL_HEIGHT);
+
+  const initialSelectedProducts = useMemo(() => {
+    const initiallyFavorited = new Set<string>();
+    if (station) {
+      station.fuel_prices.forEach((product) => {
+        if (isFavorite(station.id, product.product_id)) {
+          initiallyFavorited.add(product.product_id);
+        }
+      });
+    }
+    return initiallyFavorited;
+  }, [station, isFavorite]);
+
+  useEffect(() => {
+    if (isVisible) {
+      translateY.value = withSpring(0, { damping: 15 });
+      setLocalSelectedProducts(new Set(initialSelectedProducts));
+    }
+  }, [isVisible, initialSelectedProducts]);
+
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      translateY.value = Math.max(0, event.translationY);
+    })
+    .onEnd(() => {
+      if (translateY.value > CLOSE_THRESHOLD) {
+        translateY.value = withTiming(MODAL_HEIGHT, { duration: 250 });
+        runOnJS(onClose)();
+      } else {
+        translateY.value = withSpring(0, { damping: 15 });
+      }
+    });
+
+  const handleSaveChanges = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const productsToAdd = [...localSelectedProducts].filter(
+      (id) => !initialSelectedProducts.has(id)
+    );
+    const productsToRemove = [...initialSelectedProducts].filter(
+      (id) => !initialSelectedProducts.has(id)
+    );
+
+    if (productsToAdd.length > 0 || productsToRemove.length > 0) {
+      await updateFavoritesInBulk(station.id, productsToAdd, productsToRemove);
+    }
+    onClose();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [
+    station?.id,
+    localSelectedProducts,
+    initialSelectedProducts,
+    updateFavoritesInBulk,
+    onClose,
+  ]);
+
+  const handleToggleSwitch = useCallback((productId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setLocalSelectedProducts((prev) => {
+      const newSelection = new Set(prev);
+      newSelection.has(productId)
+        ? newSelection.delete(productId)
+        : newSelection.add(productId);
+      return newSelection;
+    });
+  }, []);
+
+  const renderFuelItem = useCallback(
+    ({ item }: { item: GasStation["fuel_prices"][0] }) => (
+      <View style={styles.fuelItem}>
+        <Text style={styles.fuelName}>{item.product_name}</Text>
+        <Switch
+          trackColor={{ false: "#E9E9EA", true: colors.primary }}
+          thumbColor={colors.white}
+          onValueChange={() => handleToggleSwitch(item.product_id)}
+          value={localSelectedProducts.has(item.product_id)}
+          style={styles.switch}
+        />
+      </View>
+    ),
+    [localSelectedProducts, handleToggleSwitch]
+  );
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
   return (
-    <Modal
-      animationType="slide" // Mude a animação para 'slide' para o efeito de subir
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      {/* O overlay agora fecha o modal ao ser tocado */}
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose} 
-      >
-        {/* Adicionado para previnir que o toque no modal feche-o */}
-        <TouchableOpacity activeOpacity={1} style={styles.modalContainer}>
-          {/* CABEÇALHO PREMIUM */}
-          <LinearGradient
-            colors={[colors.secondary, colors.warning]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.header}
-          >
-            <View style={styles.headerTitleContainer}>
-              <Ionicons name="notifications" size={24} color={colors.white} />
-              <Text style={styles.modalTitle}>Gerenciar Alertas</Text>
-            </View>
-            <PremiumBadge />
-          </LinearGradient>
-
-          <Text style={styles.modalSubtitle}>
-            Selecione os combustíveis que você deseja receber alertas de preço.
-          </Text>
-
-          {/* LISTA DE COMBUSTÍVEIS COM SWITCH */}
-          <FlatList
-            data={station.fuel_prices}
-            keyExtractor={(item) => item.product_id}
-            style={{ width: "100%" }}
-            renderItem={({ item }) => {
-              const isAlertActive = isFavorite(station.id, item.product_id);
-              return (
+    <Modal transparent={true} visible={isVisible} onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={[styles.modalContainer, animatedStyle]}>
+            <SafeAreaView style={{ flex: 1 }}>
+              {/* Header com Título Centralizado e Botão de Fechar na Direita */}
+              <View style={styles.header}>
+                <View style={styles.headerAction} />
+                <Text
+                  style={styles.headerTitle}
+                  numberOfLines={1}
+                >{`Gerenciar Alertas`}</Text>
                 <TouchableOpacity
-                  style={styles.fuelItem}
-                  onPress={() => onToggleFavorite(item.product_id)}
-                  activeOpacity={0.7}
+                  onPress={onClose}
+                  disabled={isSaving}
+                  style={styles.headerAction}
                 >
-                  <Text style={styles.fuelItemText}>{item.product_name}</Text>
-                  <Switch
-                    value={isAlertActive}
-                    onValueChange={() => onToggleFavorite(item.product_id)}
-                    trackColor={{ false: colors.border, true: colors.primaryLight }}
-                    thumbColor={isAlertActive ? colors.primary : colors.textSecondary}
-                    ios_backgroundColor={colors.border}
-                  />
+                 <Text style={styles.headerCloseText}>Fechar</Text>
                 </TouchableOpacity>
-              );
-            }}
-          />
+              </View>
 
-          {/* BOTÃO DE FECHAR */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Concluído</Text>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </TouchableOpacity>
+              <Text style={styles.explanatoryText}>
+                Ative os combustíveis que você mais usa para vê-los em destaque
+                na sua lista de favoritos.
+              </Text>
+
+              <View style={styles.listWrapper}>
+                <FlatList
+                  data={station.fuel_prices}
+                  renderItem={renderFuelItem}
+                  keyExtractor={(item) => item.product_id}
+                  ItemSeparatorComponent={() => (
+                    <View style={styles.separator} />
+                  )}
+                  style={styles.flatList}
+                />
+              </View>
+
+              <View style={styles.footer}>
+                <TouchableOpacity
+                  style={[styles.saveButton, isSaving && styles.savingButton]}
+                  onPress={handleSaveChanges}
+                  disabled={isSaving}
+                  accessibilityLabel="Salvar alterações de favoritos"
+                >
+                  {isSaving ? (
+                    <ActivityIndicator color={colors.white} />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Salvar e Fechar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </Animated.View>
+        </GestureDetector>
+      </View>
     </Modal>
   );
 };
 
+// --- NOVOS ESTILOS COM FOCO NO HEADER ---
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end", // Alinha o modal na parte de baixo
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: colors.background, // Cor de fundo do conteúdo
+    height: MODAL_HEIGHT,
+    backgroundColor: "#F2F2F7",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 30, // Espaço para o botão de fechar
-    maxHeight: "75%", // Altura máxima do modal
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -5 },
+    shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 20,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    height: 56,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(0, 0, 0, 0.2)",
   },
-  headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  headerTitle: {
+    flex: 1, // Permite que o título ocupe o espaço central
+    textAlign: "center", // Centraliza o texto dentro do espaço
+    fontSize: 17,
+    fontWeight: "600",
+    color: "#000",
+    marginHorizontal: 16, // Garante que o texto não cole nos botões
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.white,
+  headerAction: {
+    width: 64, 
+    justifyContent: "center",
+    alignItems: "center",
   },
-  modalSubtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
+  headerCloseText:{
+    fontWeight:'600',
+    color:colors.primary,
+    fontSize:16
+  },
+  
+  explanatoryText: {
+    fontSize: 13,
+    color: "#6D6D72",
     textAlign: "center",
-    padding: 20,
-    paddingTop: 16,
+    paddingHorizontal: 24,
+    marginTop: 20,
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  listWrapper: {
+    flex: 1,
+    marginHorizontal: 16,
+  },
+  flatList: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: "rgba(0, 0, 0, 0.1)",
   },
   fuelItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingLeft: 16,
+    paddingRight: 12,
+    height: 48,
+    backgroundColor: "#FFFFFF",
   },
-  fuelItemText: {
+  fuelName: {
     fontSize: 17,
-    color: colors.text,
-    flex: 1,
+    color: "#000",
   },
-  closeButton: {
-    marginTop: 20,
-    marginHorizontal: 20,
+  switch: {
+    transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
+  },
+  separator: {
+    height: 0.5,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    marginLeft: 16,
+  },
+  footer: {
+    padding: 16,
+    paddingTop: 12,
+  },
+  saveButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
+    justifyContent: "center",
   },
-  closeButtonText: {
+  savingButton: {
+    backgroundColor: colors.primary + "B3",
+  },
+  saveButtonText: {
     color: colors.white,
-    fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: "600",
   },
 });

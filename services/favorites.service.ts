@@ -7,7 +7,7 @@ export const favoritesAPI = {
    */
   getFavorites: async (): Promise<FavoriteStation[]> => {
     try {
-      const response = await apiRequest('/v1/favorites');
+      const response = await apiRequest("/v1/favorites");
       // A API retorna um objeto com uma propriedade 'data' que contém a lista
       return response.data || [];
     } catch (error) {
@@ -17,34 +17,36 @@ export const favoritesAPI = {
   },
 
   /**
-   * Adiciona um produto de um posto aos favoritos.
+   * Adiciona uma lista de produtos favoritos de um posto em uma única requisição.
    */
-  addFavorite: async (station_id: string, product_id: string): Promise<void> => {
+  addFavoritesBulk: async (
+    station_id: string,
+    product_ids: string[]
+  ): Promise<void> => {
     try {
-      await apiRequest('/v1/favorites', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ station_id, product_id }),
+      await apiRequest("/v1/favorites/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ station_id, product_ids }),
       });
     } catch (error) {
-      console.error("Add favorite error:", error);
+      console.error("Add favorites bulk error:", error);
       throw error;
     }
   },
 
-  /**
-   * Remove um produto de um posto dos favoritos.
+   /**
+   * Remove uma lista de produtos favoritos de um posto em uma única requisição.
    */
-  removeFavorite: async (station_id: string, product_id: string): Promise<void> => {
+  removeFavoritesBulk: async (station_id: string, product_ids: string[]): Promise<void> => {
     try {
-      await apiRequest(`/v1/favorites/${station_id}?productId=${product_id}`, {
-        method: 'DELETE'
+      await apiRequest('/v1/favorites/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ station_id, product_ids }),
       });
-      
     } catch (error) {
-      console.error("Remove favorite error:", error);
+      console.error("Remove favorites bulk error:", error);
       throw error;
     }
   },

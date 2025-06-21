@@ -60,7 +60,7 @@ export default function GasStationDetailScreen() {
     clearError,
   } = useGasStationStore();
 
-  const { addFavorite, unfavoriteProduct, isFavorite, fetchFavorites } =
+  const { isFavorite, fetchFavorites } =
     useFavoriteStore();
 
   useEffect(() => {
@@ -75,15 +75,7 @@ export default function GasStationDetailScreen() {
     }
   };
 
-  const handleToggleProductFavorite = (productId: string) => {
-    if (!selectedStation) return;
 
-    if (isFavorite(selectedStation.id, productId)) {
-      unfavoriteProduct(selectedStation.id, productId);
-    } else {
-      addFavorite(selectedStation.id, productId);
-    }
-  };
 
   const scrollY = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
@@ -203,12 +195,11 @@ export default function GasStationDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <FavoriteFuelModal
+     <FavoriteFuelModal
         isVisible={isFavoriteModalVisible}
         onClose={() => setFavoriteModalVisible(false)}
         station={selectedStation}
-        onToggleFavorite={handleToggleProductFavorite}
-        isFavorite={isFavorite}
+       
       />
       <Animated.ScrollView
         onScroll={scrollHandler}
