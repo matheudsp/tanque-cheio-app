@@ -2,7 +2,6 @@ import {
   GasStation,
   NearbyStationsParams,
   GetNearbyStationsResponse,
-  
 } from "@/types";
 import { apiRequest } from "./api";
 import type { ProductPriceHistory } from "@/types/gas-stations";
@@ -14,15 +13,13 @@ export const gasStationsAPI = {
    */
   getStationDetails: async (station_id: string): Promise<GasStation> => {
     try {
-      // A URL agora é simples, sem parâmetros de query.
-      const url = `/v1/gas-stations/${station_id}`;
-      const response = await apiRequest(url);
+      const data = await apiRequest(`/v1/gas-stations/${station_id}`);
 
-      if (!response.data) {
+      if (!data) {
         throw new Error("Invalid station response: No data received");
       }
 
-      return response.data;
+      return data;
     } catch (error) {
       console.error("Get station details error:", error);
       throw error;
@@ -38,7 +35,8 @@ export const gasStationsAPI = {
   ): Promise<ProductPriceHistory[]> => {
     try {
       const queryParams = new URLSearchParams();
-      if (params?.start_date) queryParams.append("start_date", params.start_date);
+      if (params?.start_date)
+        queryParams.append("start_date", params.start_date);
       if (params?.end_date) queryParams.append("end_date", params.end_date);
       if (params?.product) queryParams.append("product", params.product);
 
@@ -47,9 +45,9 @@ export const gasStationsAPI = {
         queryString ? `?${queryString}` : ""
       }`;
 
-      const response = await apiRequest(url);
+      const data = await apiRequest(url);
 
-      return response.data || [];
+      return data || [];
     } catch (error) {
       console.error("Get price history error:", error);
       throw error;
@@ -84,18 +82,18 @@ export const gasStationsAPI = {
         queryParams.append("product", params.product);
       }
 
-      const response: GetNearbyStationsResponse = await apiRequest(
+      const data: GetNearbyStationsResponse = await apiRequest(
         `/v1/gas-stations/nearby?${queryParams.toString()}`
       );
       // console.log(response)
-      if (!response.data) {
+      if (!data) {
         console.warn("No stations found in response");
         return [];
       }
 
-      return response.data;
+      return data;
     } catch (error) {
-      // console.warn("Get nearby stations error:", error);
+      console.warn("Get nearby stations error:", error);
       throw error;
     }
   },
@@ -106,11 +104,10 @@ export const gasStationsAPI = {
 
   getFuelTypes: async (): Promise<any[]> => {
     try {
-      const response = await apiRequest("/v1/products");
-      return response.data;
+      const data = await apiRequest("/v1/products");
+      return data;
     } catch (error) {
       console.error("Get fuel types error:", error);
-      // Return common fuel types as fallback
       throw error;
     }
   },

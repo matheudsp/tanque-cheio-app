@@ -1,15 +1,29 @@
-import type { LoginResponseDto, RegisterResponseDTO, RegisterUserDto, User } from "@/types";
-import { apiRequest, convertBackendUser, getTokenData, refreshAuthToken, saveTokenData } from "./api";
+import type {
+  LoginResponseDto,
+  RegisterResponseDTO,
+  RegisterUserDto,
+  User,
+} from "@/types";
+import {
+  apiRequest,
+  convertBackendUser,
+  getTokenData,
+  refreshAuthToken,
+  saveTokenData,
+} from "./api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string): Promise<LoginResponseDto> => {
     try {
-      const response: LoginResponseDto = await apiRequest("/auth/local/sign-in", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
+      const response: LoginResponseDto = await apiRequest(
+        "/auth/local/sign-in",
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       // Validate response structure
       if (!response.data || !response.data.access_token) {
@@ -32,17 +46,22 @@ export const authAPI = {
       const backendUserData = {
         email: userData.email,
         password: userData.password,
-        name: `${userData.name}`, 
+        name: `${userData.name}`,
       };
 
-      const response: RegisterResponseDTO = await apiRequest("/auth/local/sign-up", {
-        method: "POST",
-        body: JSON.stringify(backendUserData),
-      });
+      const response: RegisterResponseDTO = await apiRequest(
+        "/auth/local/sign-up",
+        {
+          method: "POST",
+          body: JSON.stringify(backendUserData),
+        }
+      );
 
       // Validate response structure
       if (!response.data || !response.data.access_token) {
-        throw new Error("Invalid registration response: No access token received");
+        throw new Error(
+          "Invalid registration response: No access token received"
+        );
       }
 
       // Save token data
@@ -58,22 +77,21 @@ export const authAPI = {
   getCurrentUser: async (): Promise<User> => {
     try {
       // Assuming you have a profile endpoint
-      const response = await apiRequest("/user/profile");
-      
-      if (response.data && response.data.user) {
-        return convertBackendUser(response.data.user, response.data.role);
+      const data = await apiRequest("/user/profile");
+
+      if (data && data.user) {
+        return convertBackendUser(data.user, data.role);
       }
-      
+
       // If no specific profile endpoint, extract from token or stored data
-      const tokenData = await getTokenData();
-      if (!tokenData) {
-        throw new Error("No authentication data found");
-      }
+      // const tokenData = await getTokenData();
+      // if (!tokenData) {
+      //   throw new Error("No authentication data found");
+      // }
 
       // For now, return basic user info
       // You might want to create a proper /me endpoint in your backend
-      throw new Error("Profile endpoint not implemented");
-      
+      throw new Error("Profile endpoint did not return valid user data");
     } catch (error) {
       console.error("Get current user error:", error);
       throw error;
@@ -87,7 +105,7 @@ export const authAPI = {
   logout: async (): Promise<void> => {
     try {
       const tokenData = await getTokenData();
-      
+
       if (tokenData) {
         // Optional: Call logout endpoint to invalidate token on server
         try {

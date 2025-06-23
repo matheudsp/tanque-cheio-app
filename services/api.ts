@@ -10,7 +10,8 @@ import {
 } from "@/types";
 
 // Base API URL
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.115:3000/api";
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.152:3000/api";
 
 // Token management helpers
 export const getTokenData = async (): Promise<TokenData | null> => {
@@ -106,14 +107,12 @@ export const apiRequest = async (
 
   try {
     const isAuthEndpoint =
-      endpoint.startsWith("/auth/local/") || endpoint.startsWith("/auth/");
+      // endpoint.startsWith("/auth/local/") || endpoint.startsWith("/auth/");
+      endpoint.startsWith("/auth/local/") ||
+      endpoint.startsWith("/auth/logout") ||
+      endpoint.startsWith("/auth/refresh");
 
     const token = isAuthEndpoint ? null : await getToken();
-
-    // --- CORREÇÃO AQUI ---
-    // Adiciona o 'Content-Type' apenas para métodos que têm corpo
-    const hasBody = options.body !== null && options.body !== undefined;
-    // Always use a plain object for headers so we can safely assign string keys
     const headers: Record<string, string> = {
       ...(options.headers instanceof Headers
         ? Object.fromEntries(options.headers.entries())
@@ -124,7 +123,8 @@ export const apiRequest = async (
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    if (hasBody) {
+    const hasBody = options.body !== null && options.body !== undefined;
+    if (hasBody && !headers["Content-Type"]) {
       headers["Content-Type"] = "application/json";
     }
 
@@ -145,11 +145,15 @@ export const apiRequest = async (
 
     if (!response.ok) {
       const errorMessage =
-        responseBody.message || `Erro HTTP ${response.status}`;
+        responseBody.message ||
+        responseBody.statusMessage ||
+        `Erro HTTP: ${response.status}`;
       throw new Error(errorMessage);
     }
-
-    return responseBody;
+    if (isAuthEndpoint) {
+      return responseBody;
+    }
+    return responseBody.data;
   } catch (error) {
     clearTimeout(timeoutId);
 
