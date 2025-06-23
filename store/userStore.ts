@@ -4,6 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LoginResponseDto, RegisterUserDto, User } from "@/types";
 import { authAPI } from "@/services/auth.service";
 
+import { notificationService } from "@/hooks/useNotifications";
+
 interface UserState {
   user: User | null;
   isLoading: boolean;
@@ -11,7 +13,7 @@ interface UserState {
   isAuthenticated: boolean;
 
   // Actions
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password:string) => Promise<void>;
   register: (userData: RegisterUserDto) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
@@ -22,6 +24,7 @@ interface UserState {
 }
 
 const convertLoginResponseToUser = (loginResponse: LoginResponseDto): User => {
+  
   const { user, role } = loginResponse.data;
 
   return {
@@ -51,16 +54,14 @@ export const useUserStore = create<UserState>()(
             password
           );
 
-          // Validate response structure
           if (
             !response.data ||
             !response.data.access_token ||
             !response.data.user
           ) {
-            throw new Error("Invalid login response format");
+            throw new Error("Resposta de login inválida");
           }
 
-          // Convert backend response to frontend user format
           const userData = convertLoginResponseToUser(response);
 
           set({
@@ -70,11 +71,19 @@ export const useUserStore = create<UserState>()(
             error: null,
           });
 
-          console.log("Login successful:", userData.email);
+          console.log("Login bem-sucedido:", userData.email);
         } catch (error) {
-          console.error("Login error:", error);
+          const errorMessage = error instanceof Error ? error.message : "E-mail ou senha inválidos";
+          
+        
+          notificationService.error({
+            title: 'Falha no Login',
+            description: errorMessage,
+          });
+
+          console.error("Erro no login:", error);
           set({
-            error: error instanceof Error ? error.message : "Login failed",
+            error: errorMessage,
             isLoading: false,
             isAuthenticated: false,
             user: null,
@@ -83,6 +92,7 @@ export const useUserStore = create<UserState>()(
         }
       },
 
+      
       register: async (userData: RegisterUserDto) => {
         set({ isLoading: true, error: null });
         try {
@@ -109,9 +119,16 @@ export const useUserStore = create<UserState>()(
 
           console.log("Registration successful:", newUser.email);
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Não foi possível criar a conta. Tente novamente.";
+          
+          notificationService.error({
+            title: 'Falha no Cadastro',
+            description: errorMessage,
+          });
+
           console.error("Registration error:", error);
           set({
-            error: error instanceof Error ? error.message : "Login failed",
+            error: errorMessage,
             isLoading: false,
             isAuthenticated: false,
             user: null,
@@ -148,8 +165,7 @@ export const useUserStore = create<UserState>()(
       updateProfile: async (userData: Partial<User>) => {
         set({ isLoading: true, error: null });
         try {
-          // For now, we'll update locally since we don't have a dedicated update endpoint
-          // In a real implementation, you would call an API endpoint here
+          // only local, need create endpoint in api
 
           set((state) => {
             if (!state.user) return state;

@@ -61,7 +61,6 @@ export const FavoriteFuelModal = ({
     setLocalSelection(stationSpecificFavorites);
   }, [stationSpecificFavorites]);
 
-  
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
       translateY.value = Math.max(0, event.translationY);
@@ -78,7 +77,6 @@ export const FavoriteFuelModal = ({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
-
 
   const handleToggleSwitch = useCallback((productId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -186,10 +184,7 @@ export const FavoriteFuelModal = ({
 
               <View style={styles.footer}>
                 <TouchableOpacity
-                  style={[
-                    styles.saveButton,
-                    (isLoading) && styles.savingButton,
-                  ]}
+                  style={[styles.saveButton, isLoading && styles.savingButton]}
                   onPress={handleSaveChanges}
                   disabled={isLoading}
                 >

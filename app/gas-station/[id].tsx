@@ -34,13 +34,14 @@ import { MapPin, Milestone } from "lucide-react-native";
 import { FavoriteFuelModal } from "@/components/shared/FavoriteFuelModal";
 import { PremiumBadge } from "@/components/ui/PremiumBadge";
 
+
 const HEADER_MAX_HEIGHT = 360;
 
 export default function GasStationDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
-
+  
   const HEADER_MIN_HEIGHT = top + 60;
   const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
@@ -60,8 +61,7 @@ export default function GasStationDetailScreen() {
     clearError,
   } = useGasStationStore();
 
-  const { isFavorite, fetchFavorites } =
-    useFavoriteStore();
+  const { isFavorite, fetchFavorites } = useFavoriteStore();
 
   useEffect(() => {
     fetchFavorites();
@@ -74,8 +74,6 @@ export default function GasStationDetailScreen() {
       console.warn("Nenhum produto para favoritar neste posto.");
     }
   };
-
-
 
   const scrollY = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
@@ -195,11 +193,10 @@ export default function GasStationDetailScreen() {
 
   return (
     <View style={styles.container}>
-     <FavoriteFuelModal
+      <FavoriteFuelModal
         isVisible={isFavoriteModalVisible}
         onClose={() => setFavoriteModalVisible(false)}
         station={selectedStation}
-       
       />
       <Animated.ScrollView
         onScroll={scrollHandler}
@@ -214,7 +211,7 @@ export default function GasStationDetailScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[ colors.secondary ,colors.warning]}
+              colors={[colors.secondary, colors.warning]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.premiumButton}
