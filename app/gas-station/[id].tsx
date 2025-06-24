@@ -1,39 +1,40 @@
+import { Bell, MapPin } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   ActivityIndicator,
-  TouchableOpacity,
+  Button,
   Linking,
   Platform,
-  Button,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useGasStationStore } from "@/store/gasStationStore";
-import { colors } from "@/constants/colors";
-import { Ionicons } from "@expo/vector-icons";
-import { ChartSkeleton } from "@/components/ChartSkeleton";
-import { getPeriodDates, type Period } from "@/utils/getPeriodDate";
-import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedScrollHandler,
   interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FuelSelector } from "@/components/FuelSelector";
-import { TablePrices } from "@/components/TablePrices";
-import { useFavoriteStore } from "@/store/favoriteStore";
-import { LinearGradient } from "expo-linear-gradient";
-import { Bell } from "lucide-react-native";
-import { BrandLogo } from "@/components/ui/BrandLogo";
-import { MapPin, Milestone } from "lucide-react-native";
-import { FavoriteFuelModal } from "@/components/shared/FavoriteFuelModal";
-import { PremiumBadge } from "@/components/ui/PremiumBadge";
+import { Ionicons } from "@expo/vector-icons";
 
+import { ChartSkeleton } from "@/components/ChartSkeleton";
+import { FuelSelector } from "@/components/FuelSelector";
+import { PriceHistoryChart } from "@/components/PriceHistoryChart";
+import { FavoriteFuelModal } from "@/components/shared/FavoriteFuelModal";
+import { TablePrices } from "@/components/TablePrices";
+import { BrandLogo } from "@/components/ui/BrandLogo";
+import { PremiumBadge } from "@/components/ui/PremiumBadge";
+import { useFavoriteStore } from "@/store/favoriteStore";
+import { useGasStationStore } from "@/store/gasStationStore";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
+import { getPeriodDates, type Period } from "@/utils/getPeriodDate";
 
 const HEADER_MAX_HEIGHT = 360;
 
@@ -41,7 +42,9 @@ export default function GasStationDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { top } = useSafeAreaInsets();
-  
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
+
   const HEADER_MIN_HEIGHT = top + 60;
   const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
@@ -61,7 +64,7 @@ export default function GasStationDetailScreen() {
     clearError,
   } = useGasStationStore();
 
-  const { isFavorite, fetchFavorites } = useFavoriteStore();
+  const { fetchFavorites } = useFavoriteStore();
 
   useEffect(() => {
     fetchFavorites();
@@ -70,8 +73,6 @@ export default function GasStationDetailScreen() {
   const handleOpenFavoriteModal = () => {
     if (selectedStation?.fuel_prices?.length) {
       setFavoriteModalVisible(true);
-    } else {
-      console.warn("Nenhum produto para favoritar neste posto.");
     }
   };
 
@@ -82,7 +83,7 @@ export default function GasStationDetailScreen() {
   useEffect(() => {
     if (id) fetchStationDetails(id);
     return () => clearSelectedStation();
-  }, [id, fetchStationDetails]);
+  }, [id, fetchStationDetails, clearSelectedStation]);
 
   useEffect(() => {
     if (id) {
@@ -104,7 +105,7 @@ export default function GasStationDetailScreen() {
       contentOpacity.value = withTiming(1, { duration: 500 });
       contentTranslateY.value = withTiming(0, { duration: 500 });
     }
-  }, [isDetailsLoading, selectedStation]);
+  }, [isDetailsLoading, selectedStation, contentOpacity, contentTranslateY]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -120,6 +121,7 @@ export default function GasStationDetailScreen() {
       "clamp"
     ),
   }));
+
   const heroContentAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       scrollY.value,
@@ -128,6 +130,7 @@ export default function GasStationDetailScreen() {
       "clamp"
     ),
   }));
+
   const collapsedHeaderContentStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       scrollY.value,
@@ -136,6 +139,7 @@ export default function GasStationDetailScreen() {
       "clamp"
     ),
   }));
+
   const cardsAnimatedStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
     transform: [{ translateY: contentTranslateY.value }],
@@ -169,24 +173,33 @@ export default function GasStationDetailScreen() {
   if (isDetailsLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator
+          size="large"
+          color={themeState.colors.primary.main}
+        />
       </View>
     );
   }
+
   if (error) {
     return (
       <View style={styles.centered}>
-        <Ionicons name="cloud-offline-outline" size={48} color={colors.error} />
+        <Ionicons
+          name="cloud-offline-outline"
+          size={48}
+          color={themeState.colors.error}
+        />
         <Text style={styles.errorTitle}>Ocorreu um Erro</Text>
         <Text style={styles.errorText}>{error}</Text>
         <Button
           title="Tentar Novamente"
           onPress={handleRetry}
-          color={colors.primary}
+          color={themeState.colors.primary.main}
         />
       </View>
     );
   }
+
   if (!selectedStation) {
     return null;
   }
@@ -211,7 +224,10 @@ export default function GasStationDetailScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[colors.secondary, colors.warning]}
+              colors={[
+                themeState.colors.secondary.main,
+                themeState.colors.warning,
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.premiumButton}
@@ -219,7 +235,7 @@ export default function GasStationDetailScreen() {
               <View style={styles.premiumButtonContent}>
                 <Bell
                   size={20}
-                  color={colors.white}
+                  color={themeState.colors.secondary.text}
                   style={styles.premiumButtonIcon}
                 />
                 <Text style={styles.premiumButtonText}>
@@ -291,7 +307,11 @@ export default function GasStationDetailScreen() {
             onPress={() => router.back()}
             style={styles.headerButton}
           >
-            <Ionicons name="arrow-back" size={18} color={colors.white} />
+            <Ionicons
+              name="arrow-back"
+              size={18}
+              color={themeState.colors.primary.text}
+            />
           </TouchableOpacity>
           <Animated.View
             style={[
@@ -310,7 +330,7 @@ export default function GasStationDetailScreen() {
             <Ionicons
               name={"ellipsis-vertical"}
               size={18}
-              color={colors.white}
+              color={themeState.colors.primary.text}
             />
           </TouchableOpacity>
         </View>
@@ -319,48 +339,32 @@ export default function GasStationDetailScreen() {
           style={[styles.heroContentContainer, heroContentAnimatedStyle]}
           pointerEvents="box-none"
         >
-          {/* GRUPO 1: IDENTIDADE DO POSTO (LOGO + NOMES) */}
           <View style={styles.identityContainer}>
             <BrandLogo
               brandName={selectedStation.brand}
               style={styles.brandLogo}
             />
-            {/* A View foi removida, o Text agora é filho direto */}
             <Text style={styles.stationName} numberOfLines={2}>
               {selectedStation.trade_name || selectedStation.legal_name}
             </Text>
           </View>
-
-          {/* GRUPO 2: INFORMAÇÕES RÁPIDAS (STATS EM PILLS) */}
           <View style={styles.statsContainer}>
-            {/* {selectedStation.distance && (
-              <View style={styles.statPill}>
-                <Milestone
-                  size={14}
-                  color={colors.white}
-                  style={styles.statIcon}
-                />
-                <Text style={styles.statText}>
-                  Aprox. {`${selectedStation.distance.toFixed(1)} km`}
-                </Text>
-              </View>
-            )} */}
             <View style={styles.statPill}>
-              <MapPin size={14} color={colors.white} style={styles.statIcon} />
+              <MapPin
+                size={14}
+                color={themeState.colors.primary.text}
+                style={styles.statIcon}
+              />
               <Text style={styles.statText}>
                 {`${selectedStation.localization.address}, ${selectedStation.localization.number}`}
               </Text>
             </View>
           </View>
-
-          {/* GRUPO 3: ENDEREÇO COMPLETO */}
           <Text style={styles.fullAddressText}>
             {`${selectedStation.localization.neighborhood}, ${
               selectedStation.localization.city
             } - ${selectedStation.localization.state.substring(0, 2)}`}
           </Text>
-
-          {/* GRUPO 4: BOTÃO DE AÇÃO PRINCIPAL */}
           <TouchableOpacity
             style={styles.directionsButton}
             onPress={handleGetDirections}
@@ -368,7 +372,7 @@ export default function GasStationDetailScreen() {
             <Ionicons
               name="navigate-outline"
               size={22}
-              color={colors.primary}
+              color={themeState.colors.primary.main}
             />
             <Text style={styles.directionsButtonText}>Traçar Rota</Text>
           </TouchableOpacity>
@@ -378,227 +382,208 @@ export default function GasStationDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  errorText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-
-  brandLogo: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    padding: 4,
-    marginBottom: 12,
-  },
-
-  stationName: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: colors.white,
-    marginBottom: 2,
-    textAlign: "center",
-  },
-
-  statPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-  },
-  statIcon: {
-    marginRight: 6,
-  },
-  statText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  headerContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.primary,
-    zIndex: 1,
-    overflow: "hidden",
-
-    justifyContent: "flex-end",
-  },
-
-  topNavContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    width: "100%",
-  },
-
-  heroContentContainer: {
-    width: "100%",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-
-  identityContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-
-    marginBottom: 12,
-  },
-
-  statsContainer: {
-    flexDirection: "row",
-
-    marginBottom: 10,
-    gap: 10,
-  },
-
-  fullAddressText: {
-    color: "rgba(255, 255, 255, 0.9)",
-    fontSize: 14,
-    width: "100%",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-
-  headerButton: {
-    backgroundColor: "rgba(0,0,0,0.3)",
-    width: 38,
-    height: 38,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  collapsedTitleContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 10,
-  },
-  collapsedTitle: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  premiumButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 8,
-    marginBottom: 16,
-  },
-  premiumButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  premiumButtonIcon: {
-    marginRight: 10,
-  },
-  premiumButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-
-  infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  heroInfoText: { marginLeft: 8, fontSize: 16, color: colors.white },
-  directionsButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.white,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-  },
-  directionsButtonText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 10,
-  },
-  contentContainer: { padding: 20, backgroundColor: colors.background },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.text,
-    marginBottom: 16,
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.textSecondary,
-    marginBottom: 10,
-    marginLeft: 4,
-  },
-  filterContainer: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  filterButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: colors.background,
-    marginHorizontal: 4,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  filterButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: "transparent",
-  },
-  filterButtonText: {
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  filterButtonTextActive: {
-    color: colors.white,
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background.default },
+    centered: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: theme.spacing.xl,
+    },
+    errorTitle: {
+      fontSize: 22,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.sm,
+    },
+    errorText: {
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+      textAlign: "center",
+      marginBottom: theme.spacing.xl,
+    },
+    brandLogo: {
+      width: 60,
+      height: 60,
+      borderRadius: theme.borderRadius.large,
+      backgroundColor: theme.colors.background.paper,
+      padding: theme.spacing.xs,
+      marginBottom: theme.spacing.md,
+    },
+    stationName: {
+      fontSize: 22,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.primary.text,
+      marginBottom: theme.spacing.xs,
+      textAlign: "center",
+    },
+    statPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.action.hover,
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.round,
+    },
+    statIcon: {
+      marginRight: theme.spacing.xs,
+    },
+    statText: {
+      color: theme.colors.primary.text,
+      fontSize: 13,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    headerContainer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: theme.colors.primary.main,
+      zIndex: 1,
+      overflow: "hidden",
+      justifyContent: "flex-end",
+    },
+    topNavContainer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 15,
+      width: "100%",
+    },
+    heroContentContainer: {
+      width: "100%",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+    },
+    identityContainer: {
+      flexDirection: "column",
+      alignItems: "center",
+      marginBottom: theme.spacing.md,
+    },
+    statsContainer: {
+      flexDirection: "row",
+      marginBottom: theme.spacing.sm,
+      gap: theme.spacing.sm,
+    },
+    fullAddressText: {
+      color: theme.colors.primary.text + "E6",
+      fontSize: 14,
+      width: "100%",
+      textAlign: "center",
+      marginBottom: theme.spacing.lg,
+    },
+    headerButton: {
+      backgroundColor: "rgba(0,0,0,0.3)",
+      width: 38,
+      height: 38,
+      borderRadius: 20,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    collapsedTitleContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 10,
+    },
+    collapsedTitle: {
+      color: theme.colors.primary.text,
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    premiumButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderRadius: theme.borderRadius.large,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      ...theme.shadows.shadowMd,
+      marginBottom: theme.spacing.lg,
+    },
+    premiumButtonContent: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    premiumButtonIcon: {
+      marginRight: theme.spacing.sm,
+    },
+    premiumButtonText: {
+      color: theme.colors.secondary.text,
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    directionsButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.colors.background.paper,
+      paddingVertical: 14,
+      paddingHorizontal: 32,
+      borderRadius: theme.borderRadius.round,
+      ...theme.shadows.shadowMd,
+    },
+    directionsButtonText: {
+      color: theme.colors.primary.main,
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.bold,
+      marginLeft: theme.spacing.sm,
+    },
+    contentContainer: {
+      padding: theme.spacing.lg,
+      backgroundColor: theme.colors.background.default,
+    },
+    card: {
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.xl,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.lg,
+    },
+    filterLabel: {
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing.sm,
+      marginLeft: 4,
+    },
+    filterContainer: {
+      flexDirection: "row",
+      marginBottom: theme.spacing.xl,
+    },
+    filterButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.medium,
+      backgroundColor: theme.colors.background.default,
+      marginHorizontal: 4,
+      alignItems: "center",
+      borderWidth: 1.5,
+      borderColor: theme.colors.border,
+    },
+    filterButtonActive: {
+      backgroundColor: theme.colors.primary.main,
+      borderColor: "transparent",
+    },
+    filterButtonText: {
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    filterButtonTextActive: {
+      color: theme.colors.primary.text,
+    },
+  });

@@ -1,8 +1,12 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { colors } from '@/constants/colors';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 export const ChartSkeleton = () => {
+  const styles = useStylesWithTheme(getStyles);
+
   return (
     <View style={styles.container}>
       <View style={styles.chartArea} />
@@ -16,26 +20,27 @@ export const ChartSkeleton = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-  },
-  chartArea: {
-    height: 180,
-    backgroundColor: colors.border,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  labelPill: {
-    height: 20,
-    width: '20%',
-    backgroundColor: colors.border,
-    borderRadius: 10,
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      padding: theme.spacing.lg,
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+    },
+    chartArea: {
+      height: 180,
+      backgroundColor: theme.colors.divider,
+      borderRadius: theme.borderRadius.medium,
+      marginBottom: theme.spacing.lg,
+    },
+    labelContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    labelPill: {
+      height: 20,
+      width: "20%",
+      backgroundColor: theme.colors.divider,
+      borderRadius: theme.borderRadius.medium,
+    },
+  });

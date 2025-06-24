@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/constants/colors';
-import { AppIcon } from './ui/AppIcon';
-import { getIconNameFromFuel } from '@/utils/getIconNameFromFuel';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
+import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
+import { AppIcon } from "./ui/AppIcon";
 
 type FuelSelectorProps = {
   options: string[];
@@ -13,9 +27,15 @@ type FuelSelectorProps = {
   onSelect: (value: string) => void;
 };
 
-export const FuelSelector: React.FC<FuelSelectorProps> = ({ options, selectedValue, onSelect }) => {
+export const FuelSelector: React.FC<FuelSelectorProps> = ({
+  options,
+  selectedValue,
+  onSelect,
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const translateY = useSharedValue(300);
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   const openModal = () => {
     setModalVisible(true);
@@ -43,15 +63,30 @@ export const FuelSelector: React.FC<FuelSelectorProps> = ({ options, selectedVal
       <TouchableOpacity style={styles.selectorButton} onPress={openModal}>
         <View style={styles.selectorContent}>
           <AppIcon name={iconName} width={24} height={24} />
-          <Text style={styles.selectedValueText}>{selectedValue.toUpperCase()}</Text>
+          <Text style={styles.selectedValueText}>
+            {selectedValue.toUpperCase()}
+          </Text>
         </View>
-        <Ionicons name="chevron-down" size={20} color={colors.primary} />
+        <Ionicons
+          name="chevron-down"
+          size={20}
+          color={themeState.colors.primary.main}
+        />
       </TouchableOpacity>
 
-      <Modal transparent={true} visible={modalVisible} onRequestClose={closeModal} animationType="none">
-        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={closeModal}>
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+        animationType="none"
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={closeModal}
+        >
           <Animated.View style={[styles.modalContainer, modalAnimatedStyle]}>
-            <SafeAreaView edges={['bottom']}>
+            <SafeAreaView edges={["bottom"]}>
               <Text style={styles.modalTitle}>Selecione um Combustível</Text>
               <FlatList
                 data={options}
@@ -60,10 +95,26 @@ export const FuelSelector: React.FC<FuelSelectorProps> = ({ options, selectedVal
                   const itemIconName = getIconNameFromFuel(item);
                   const isSelected = selectedValue === item;
                   return (
-                    <TouchableOpacity style={styles.optionItem} onPress={() => handleSelect(item)}>
+                    <TouchableOpacity
+                      style={styles.optionItem}
+                      onPress={() => handleSelect(item)}
+                    >
                       <AppIcon name={itemIconName} width={28} height={28} />
-                      <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{item.toUpperCase()}</Text>
-                      {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
+                      <Text
+                        style={[
+                          styles.optionText,
+                          isSelected && styles.optionTextSelected,
+                        ]}
+                      >
+                        {item.toUpperCase()}
+                      </Text>
+                      {isSelected && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={24}
+                          color={themeState.colors.primary.main}
+                        />
+                      )}
                     </TouchableOpacity>
                   );
                 }}
@@ -76,68 +127,65 @@ export const FuelSelector: React.FC<FuelSelectorProps> = ({ options, selectedVal
   );
 };
 
-const styles = StyleSheet.create({
-  selectorButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    marginBottom:8
-  },
-  selectorContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectedValueText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    marginLeft: 10,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '60%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginLeft: 16,
-  },
-  optionTextSelected: {
-    color: colors.primary,
-    fontWeight: 'bold',
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    selectorButton: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: theme.colors.background.paper,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      ...theme.shadows.shadowSm,
+      marginBottom: theme.spacing.sm,
+    },
+    selectorContent: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    selectedValueText: {
+      fontSize: theme.typography.fontSize.medium,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.primary.main,
+      marginLeft: theme.spacing.sm,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    modalContainer: {
+      backgroundColor: theme.colors.background.paper,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: theme.spacing.xl,
+      maxHeight: "60%",
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      textAlign: "center",
+      marginBottom: theme.spacing.xl,
+    },
+    optionItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: theme.spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    optionText: {
+      flex: 1,
+      fontSize: theme.typography.fontSize.medium,
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing.lg,
+    },
+    optionTextSelected: {
+      color: theme.colors.primary.main,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+  });

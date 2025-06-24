@@ -1,3 +1,6 @@
+import { differenceInDays, parseISO } from "date-fns";
+import { Clock, MapPin } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import {
   Platform,
@@ -6,14 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { MapPin, Clock, Fuel } from "lucide-react-native";
-import { GasStation, Product } from "@/types";
-import { colors } from "@/constants/colors";
-import { differenceInDays, parseISO } from "date-fns";
-import { AppIcon } from "@/components/ui/AppIcon";
-import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
+
 import { BrandLogo } from "../ui/BrandLogo";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
+import type { GasStation, Product } from "@/types";
+import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 
 type GasStationCardProps = {
   station: GasStation;
@@ -22,17 +25,19 @@ type GasStationCardProps = {
   isSelected?: boolean;
 };
 
-const getUpdateStatus = (dateString?: string) => {
-  if (!dateString) return { text: "Sem data", color: colors.textSecondary };
+const getUpdateStatus = (dateString: string | undefined, theme: ThemeState) => {
+  if (!dateString)
+    return { text: "Sem data", color: theme.colors.text.secondary };
   const daysDiff = differenceInDays(new Date(), parseISO(dateString));
   if (daysDiff <= 15)
-    return { text: `Atualizado há ${daysDiff} dias`, color: colors.success };
-  return { text: `Atualizado há ${daysDiff} dias`, color: colors.warning };
-};
-
-const formatDistance = (distanceInKm: number) => {
-  if (distanceInKm < 1) return `${Math.round(distanceInKm * 1000)} m`;
-  return `${distanceInKm} km`.replace(".", ",");
+    return {
+      text: `Atualizado há ${daysDiff} dias`,
+      color: theme.colors.success,
+    };
+  return {
+    text: `Atualizado há ${daysDiff} dias`,
+    color: theme.colors.warning,
+  };
 };
 
 export const GasStationCard = ({
@@ -42,8 +47,9 @@ export const GasStationCard = ({
   isSelected,
 }: GasStationCardProps) => {
   const router = useRouter();
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
-  // A lógica interna para decidir qual combustível destacar permanece a mesma.
   const cardData = useMemo(() => {
     const prices = station.fuel_prices || [];
     let heroFuel: Product | null = null;
@@ -57,20 +63,11 @@ export const GasStationCard = ({
         ) || null;
       heroLabel = heroFuel?.product_name || filteredFuel;
       otherPricesCount = prices.length - (heroFuel ? 1 : 0);
-    } else if (prices.length === 1) {
-      heroFuel = prices[0];
-      heroLabel = heroFuel.product_name;
-      otherPricesCount = 0;
-    } else if (prices.length > 1) {
+    } else if (prices.length > 0) {
       heroFuel =
         prices.find((p) => p.product_name.toUpperCase().includes("COMUM")) ||
-        null;
-      if (heroFuel) {
-        heroLabel = heroFuel.product_name;
-      } else {
-        heroFuel = prices[0];
-        heroLabel = heroFuel.product_name;
-      }
+        prices[0];
+      heroLabel = heroFuel.product_name;
       otherPricesCount = prices.length - 1;
     }
 
@@ -79,10 +76,10 @@ export const GasStationCard = ({
         ? `R$ ${Number(heroFuel.price).toFixed(2).replace(".", ",")}`
         : "N/A";
 
-    const updateStatus = getUpdateStatus(heroFuel?.collection_date);
-    const distanceText = showDistance ? formatDistance(station.distance!) : "";
-
+    const updateStatus = getUpdateStatus(heroFuel?.collection_date, themeState);
+    const distanceText = showDistance ? `${station.distance!} km` : "";
     const iconName = getIconNameFromFuel(heroFuel?.product_name);
+
     return {
       heroLabel,
       priceText,
@@ -91,7 +88,7 @@ export const GasStationCard = ({
       distanceText,
       iconName,
     };
-  }, [station, filteredFuel, showDistance]);
+  }, [station, filteredFuel, showDistance, themeState]);
 
   const handlePress = () => {
     router.push({
@@ -104,15 +101,11 @@ export const GasStationCard = ({
     <TouchableOpacity
       style={[
         styles.container,
-        isSelected && {
-          borderWidth: 1.5,
-          borderColor: colors.primaryLight,
-        },
+        isSelected && { borderColor: themeState.colors.primary.main },
       ]}
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      {/* SEÇÃO 1: INFORMAÇÕES GERAIS */}
       <View style={styles.infoSection}>
         <View style={styles.header}>
           <BrandLogo brandName={station.brand} width={35} height={35} />
@@ -124,17 +117,15 @@ export const GasStationCard = ({
           </View>
         </View>
         <View style={styles.locationRow}>
-          <MapPin size={16} color={colors.textSecondary} />
+          <MapPin size={16} color={themeState.colors.text.secondary} />
           <Text style={styles.locationText} numberOfLines={1}>
             {station.localization.city} • {cardData.distanceText}
           </Text>
         </View>
       </View>
 
-      {/* SEÇÃO 2: PREÇO EM DESTAQUE */}
       <View style={styles.priceSection}>
         <View style={styles.priceDetails}>
-          {/* 3. Container para o ícone dinâmico e o nome do combustível */}
           <View style={styles.heroLabelContainer}>
             <AppIcon name={cardData.iconName} width={30} height={30} />
             <Text style={styles.heroLabel}>{cardData.heroLabel}</Text>
@@ -171,107 +162,99 @@ export const GasStationCard = ({
   );
 };
 
-// 4. Estilos ajustados para a nova estrutura
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-      },
-      android: { elevation: 3 },
-    }),
-  },
-  infoSection: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  titleInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  stationName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  stationBrand: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  locationText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginLeft: 8,
-    flex: 1,
-  },
-  priceSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: colors.primary + "10",
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  priceDetails: {
-    flex: 1,
-  },
-  heroLabelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  heroLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.text,
-    textTransform: "uppercase",
-    marginLeft: 6,
-  },
-  updateStatus: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingLeft: 2,
-  },
-  updateStatusText: {
-    marginLeft: 4,
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  priceValueContainer: {
-    alignItems: "flex-end",
-  },
-  price: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: colors.primary,
-  },
-  priceNA: {
-    fontSize: 18,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  otherPrices: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      marginBottom: theme.spacing.lg,
+      borderWidth: 1.5,
+      borderColor: theme.colors.border,
+      ...theme.shadows.shadowSm,
+    },
+    infoSection: {
+      padding: theme.spacing.lg,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    titleInfo: {
+      marginLeft: theme.spacing.md,
+      flex: 1,
+    },
+    stationName: {
+      fontSize: theme.typography.fontSize.medium,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+    },
+    stationBrand: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+    },
+    locationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: theme.spacing.sm,
+    },
+    locationText: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing.sm,
+      flex: 1,
+    },
+    priceSection: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: theme.spacing.lg,
+      backgroundColor: theme.colors.action.selected,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.divider,
+      borderBottomLeftRadius: theme.borderRadius.large - 1,
+      borderBottomRightRadius: theme.borderRadius.large - 1,
+    },
+    priceDetails: {
+      flex: 1,
+    },
+    heroLabelContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: theme.spacing.xs,
+    },
+    heroLabel: {
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+      textTransform: "uppercase",
+      marginLeft: theme.spacing.sm,
+    },
+    updateStatus: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingLeft: 2,
+    },
+    updateStatusText: {
+      marginLeft: theme.spacing.xs,
+      fontSize: 12,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    priceValueContainer: {
+      alignItems: "flex-end",
+    },
+    price: {
+      fontSize: 22,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.primary.main,
+    },
+    priceNA: {
+      fontSize: 18,
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    otherPrices: {
+      fontSize: 12,
+      color: theme.colors.text.secondary,
+      marginTop: 2,
+    },
+  });

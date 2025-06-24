@@ -1,23 +1,26 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { Filter, Fuel } from "lucide-react-native";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  Alert,
   FlatList,
   RefreshControl,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Filter, Fuel } from "lucide-react-native";
-import * as Location from "expo-location";
-import { useGasStationStore } from "@/store/gasStationStore";
-import { GasStationCard } from "@/components/shared/GasStationCard";
+
 import { ActiveFilters } from "@/components/ActiveFilters";
-import { FiltersModal } from "@/components/shared/FiltersModal";
-import { colors } from "@/constants/colors";
-import { GasStation, NearbyStationsParams } from "@/types";
 import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
+import { GasStationCard } from "@/components/shared/GasStationCard";
+import { FiltersModal } from "@/components/shared/FiltersModal";
+import { useGasStationStore } from "@/store/gasStationStore";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
+import type { GasStation, NearbyStationsParams } from "@/types";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function SearchScreen() {
   const {
@@ -31,11 +34,10 @@ export default function SearchScreen() {
     clearError,
   } = useGasStationStore();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<GasStation[]>([]);
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-
   const [selectedFuelType, setSelectedFuelType] = useState("");
   const [radius, setRadius] = useState(50);
   const [sort, setSort] = useState<
@@ -53,13 +55,11 @@ export default function SearchScreen() {
   useEffect(() => {
     fetchFuelTypes();
   }, [fetchFuelTypes]);
+
   const handleSearchWithFilters = (
     overrideParams?: Partial<NearbyStationsParams>
   ) => {
     if (!userLocation) {
-      // Se por algum motivo a localização ainda não estiver disponível, não faz nada.
-      // Isso previne chamadas de API inválidas.
-      console.warn("Aguardando localização para iniciar a busca...");
       return;
     }
     const params: NearbyStationsParams = {
@@ -89,28 +89,22 @@ export default function SearchScreen() {
     handleSearchWithFilters();
   };
 
-  const displayedStations = searchQuery.trim() ? searchResults : nearbyStations;
- 
   const renderStation = ({ item }: { item: GasStation }) => (
-    <GasStationCard
-      station={item}
-      showDistance={!searchQuery.trim()}
-      filteredFuel={selectedFuelType}
-    />
+    <GasStationCard station={item} filteredFuel={selectedFuelType} />
   );
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.headerContainer}>
         <View style={styles.titleContainer}>
-          <Fuel size={22} color={colors.textSecondary} />
+          <Fuel size={22} color={themeState.colors.text.secondary} />
           <Text style={styles.titleText}>Próximos a você</Text>
         </View>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setShowFiltersModal(true)}
         >
-          <Filter size={20} color={colors.primary} />
+          <Filter size={20} color={themeState.colors.primary.main} />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -121,7 +115,7 @@ export default function SearchScreen() {
 
       <ActiveFilters
         selectedFuelType={selectedFuelType}
-        sortBy={sort}
+        sort={sort}
         radius={radius}
         onClearFuel={() => {
           const newFuel = "";
@@ -146,7 +140,7 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {isLoading && !searchQuery.trim() && (
+      {isLoading && (
         <FlatList
           data={Array.from({ length: 5 }, (_, i) => i)}
           renderItem={() => <GasStationCardSkeleton />}
@@ -157,7 +151,7 @@ export default function SearchScreen() {
       )}
       {!isLoading && (
         <FlatList
-          data={displayedStations}
+          data={nearbyStations}
           renderItem={renderStation}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
@@ -166,18 +160,20 @@ export default function SearchScreen() {
             <RefreshControl
               refreshing={isLoading}
               onRefresh={handleRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
+              colors={[themeState.colors.secondary.main]}
+              tintColor={themeState.colors.secondary.main}
             />
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Fuel size={48} color={colors.textSecondary} />
-              <Text style={styles.emptyText}>Nenhum posto encontrado</Text>
-              <Text style={styles.emptySubtext}>
-                Tente ajustar os filtros ou a sua busca.
-              </Text>
-            </View>
+            <EmptyState
+              lottieAnimation={require("@/assets/animations/sad-circle.json")}
+              title="Nenhum posto encontrado"
+              description="Tente ajustar os filtros ou a sua busca."
+              actionLabel="Alterar filtros"
+              onAction={() => {
+                setShowFiltersModal(true);
+              }}
+            />
           }
         />
       )}
@@ -208,81 +204,82 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  titleContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  titleText: {
-    marginLeft: 12,
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.text,
-  },
-  filterButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  filterBadge: {
-    position: "absolute",
-    right: 2,
-    top: 2,
-    backgroundColor: colors.error,
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  filterBadgeText: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: "bold",
-  },
-  errorContainer: {
-    backgroundColor: colors.error,
-    padding: 12,
-    alignItems: "center",
-  },
-  errorText: {
-    color: colors.white,
-  },
-  listContainer: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-    marginTop: "20%",
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text,
-    textAlign: "center",
-    marginTop: 12,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: "center",
-    marginTop: 4,
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+    },
+    headerContainer: {
+      flexDirection: "row",
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      alignItems: "center",
+      backgroundColor: theme.colors.background.paper,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    titleContainer: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    titleText: {
+      marginLeft: theme.spacing.md,
+      fontSize: 20,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+    },
+    filterButton: {
+      padding: theme.spacing.sm,
+      marginLeft: theme.spacing.sm,
+    },
+    filterBadge: {
+      position: "absolute",
+      right: 2,
+      top: 2,
+      backgroundColor: theme.colors.error,
+      borderRadius: 10,
+      width: 18,
+      height: 18,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    filterBadgeText: {
+      color: theme.colors.primary.text,
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    errorContainer: {
+      backgroundColor: theme.colors.error,
+      padding: theme.spacing.md,
+      alignItems: "center",
+    },
+    errorText: {
+      color: theme.colors.primary.text,
+    },
+    listContainer: {
+      padding: theme.spacing.lg,
+      paddingBottom: 80,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: theme.spacing.xl,
+      marginTop: "20%",
+    },
+    emptyText: {
+      fontSize: 18,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      textAlign: "center",
+      marginTop: theme.spacing.md,
+    },
+    emptySubtext: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      textAlign: "center",
+      marginTop: theme.spacing.xs,
+    },
+  });

@@ -1,10 +1,11 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect } from "react";
 import {
   Image,
+  ImageSourcePropType,
   StyleSheet,
   Text,
   View,
-  ImageSourcePropType,
 } from "react-native";
 import Animated, {
   Easing,
@@ -15,10 +16,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
-import { colors } from "@/constants/colors"; // Certifique-se que o caminho está correto
 
-// --- Tipos e Configuração do Badge ---
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 interface BadgeConfig {
   label: string;
@@ -28,27 +29,23 @@ interface BadgeConfig {
   showShineEffect: boolean;
 }
 
-// Lógica interna que mapeia o nome do plano à sua aparência
 const badgeConfigMap: Record<string, BadgeConfig> = {
   premium: {
     label: "PREMIUM",
     icon: require("@/assets/images/premium.png"),
-    gradientColors: [colors.secondary, colors.warning], // Gradiente dourado/amarelo
-    textColor: colors.white,
+    gradientColors: ["#FFD700", "#FFA500"], // dourado vibrante para premium
+    textColor: "white",
     showShineEffect: true,
   },
   free: {
     label: "FREE",
     icon: require("@/assets/images/free.png"),
-    gradientColors: ["#DA8A67", "#B87333"],
-    textColor: colors.white,
+    gradientColors: ["#C0C0C0", "#A9A9A9"], // prateado para free
+    textColor: "white",
     showShineEffect: false,
   },
-  // Adicione outros planos aqui no futuro
-  // pro: { ... }
 };
 
-// --- Efeito de Brilho (Componente Interno) ---
 const ShineEffect = () => {
   const shinePosition = useSharedValue(-150);
 
@@ -63,11 +60,13 @@ const ShineEffect = () => {
       ),
       -1
     );
-  }, []);
+  }, [shinePosition]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shinePosition.value }, { rotate: "-45deg" }],
   }));
+
+  const styles = useStylesWithTheme(getShineStyles);
 
   return (
     <Animated.View style={[styles.shine, animatedStyle]}>
@@ -81,25 +80,20 @@ const ShineEffect = () => {
   );
 };
 
-// --- Props do Componente ---
 interface SubscriptionBadgeProps {
-  /** O nome do plano de assinatura (ex: "premium", "free"). */
   planName?: string;
-  /** Estilos customizados para o container. */
   style?: object;
 }
 
-// --- Componente Principal ---
 export const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = ({
   planName,
   style,
 }) => {
   if (!planName) return null;
-
+  const styles = useStylesWithTheme(getBadgeStyles);
   const normalizedPlan = planName.toLowerCase();
   const config = badgeConfigMap[normalizedPlan];
 
-  // Se o plano não for encontrado no mapa de configuração, não renderiza nada
   if (!config) return null;
 
   return (
@@ -115,43 +109,47 @@ export const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = ({
   );
 };
 
-// --- Estilos ---
-const styles = StyleSheet.create({
-  badgeContainer: {
-    borderRadius: 8,
-    overflow: "hidden",
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-    alignSelf: "flex-start",
-  },
-  gradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-  },
-  badgeIcon: {
-    width: 18,
-    height: 18,
-    marginRight: 2,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.2,
-  },
-  shine: {
-    position: "absolute",
-    height: "200%",
-    width: 30,
-    top: "-50%",
-    zIndex: 1,
-  },
-  shineGradient: {
-    flex: 1,
-  },
-});
+const getBadgeStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    badgeContainer: {
+      borderRadius: theme.borderRadius.medium,
+      overflow: "hidden",
+      shadowColor: theme.colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 5,
+      elevation: 8,
+      alignSelf: "flex-start",
+    },
+    gradient: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 2,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    badgeIcon: {
+      width: 18,
+      height: 18,
+      marginRight: theme.spacing.xs,
+    },
+    badgeText: {
+      fontSize: 12,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.2,
+    },
+  });
+
+const getShineStyles = () =>
+  StyleSheet.create({
+    shine: {
+      position: "absolute",
+      height: "200%",
+      width: 30,
+      top: "-50%",
+      zIndex: 1,
+    },
+    shineGradient: {
+      flex: 1,
+    },
+  });

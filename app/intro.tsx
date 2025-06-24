@@ -1,22 +1,26 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
-import { colors } from '@/constants/colors';
+import { ChevronRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import React from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 export default function IntroScreen() {
   const router = useRouter();
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   const handlePress = () => {
-    // Navigate to the next screen in the intro flow, or auth screen
-    router.replace('splash' as any); // Or 'auth' or another intro step
+    router.replace("splash" as any);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Image
-        source={require('@/assets/images/intro.png')}
+        source={require("@/assets/images/intro.png")}
         style={styles.illustration}
         resizeMode="contain"
       />
@@ -26,7 +30,6 @@ export default function IntroScreen() {
         <Text style={styles.subtitle}>para manter seu tanque cheio!</Text>
       </View>
 
-      {/* Placeholder for dots and button */}
       <View style={styles.bottomContainer}>
         <View style={styles.paginationDots}>
           <View style={[styles.dot, styles.activeDot]} />
@@ -35,68 +38,69 @@ export default function IntroScreen() {
         </View>
 
         <TouchableOpacity style={styles.nextButton} onPress={handlePress}>
-          <ChevronRight size={24} color={colors.white} />
+          <ChevronRight size={24} color={themeState.colors.primary.text} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 24,
-  },
-  illustration: {
-    width: '100%',
-    height: '50%', // Adjust height as needed
-    marginBottom: 32,
-  },
-  textContainer: {
-    alignItems: 'flex-start',
-    paddingHorizontal: 24,
-    width: '100%',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: colors.textSecondary,
-  },
-  bottomContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 24,
-  },
-  paginationDots: {
-    flexDirection: 'row',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.border,
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: colors.primary,
-  },
-  nextButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-}); 
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.xl,
+    },
+    illustration: {
+      width: "100%",
+      height: "50%",
+      marginBottom: theme.spacing["2xl"],
+    },
+    textContainer: {
+      alignItems: "flex-start",
+      paddingHorizontal: theme.spacing.xl,
+      width: "100%",
+      marginBottom: theme.spacing["3xl"],
+    },
+    title: {
+      fontSize: theme.typography.fontSize.h1,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.sm,
+    },
+    subtitle: {
+      fontSize: 18,
+      color: theme.colors.text.secondary,
+    },
+    bottomContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      width: "100%",
+      paddingHorizontal: theme.spacing.xl,
+    },
+    paginationDots: {
+      flexDirection: "row",
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.divider,
+      marginHorizontal: theme.spacing.xs,
+    },
+    activeDot: {
+      backgroundColor: theme.colors.primary.main,
+    },
+    nextButton: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.colors.primary.main,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  });

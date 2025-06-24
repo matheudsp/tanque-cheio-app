@@ -14,8 +14,11 @@ import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react-native";
 import { useUserStore } from "@/store/userStore";
-import { colors } from "@/constants/colors";
+
 import { Button } from "@/components/Button";
+import type { ThemeState } from "@/types/theme";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import { useTheme } from "@/providers/themeProvider";
 
 export default function RegisterScreen() {
   useEffect(() => {
@@ -25,7 +28,8 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { register, isLoading, error } = useUserStore();
   const [formError, setFormError] = useState("");
-
+  const styles = useStylesWithTheme(getStyles);
+  const {themeState} = useTheme()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -102,26 +106,24 @@ export default function RegisterScreen() {
             </View>
           ) : null}
 
-          <View style={styles.inputContainer}>
-            <User size={20} color={colors.primary} />
+            <View style={styles.inputContainer}>
+            <User size={20} color={styles.icon.color} />
             <TextInput
               style={styles.input}
               placeholder="Nome"
-              placeholderTextColor={colors.primary}
+              placeholderTextColor={themeState.colors.text.hint}
               value={formData.firstName}
-              onChangeText={(text) =>
-                setFormData({ ...formData, firstName: text })
-              }
+              onChangeText={(text) => setFormData({ ...formData, firstName: text })}
               autoCapitalize="words"
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <User size={20} color={colors.primary} />
+            <User size={20} color={styles.icon.color} />
             <TextInput
               style={styles.input}
               placeholder="Sobrenome"
-              placeholderTextColor={colors.primary}
+              placeholderTextColor={themeState.colors.text.hint}
               value={formData.lastName}
               onChangeText={(text) =>
                 setFormData({ ...formData, lastName: text })
@@ -131,11 +133,11 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Mail size={20} color={colors.primary} />
+            <Mail size={20} color={styles.icon.color} />
             <TextInput
               style={styles.input}
               placeholder="Email"
-              placeholderTextColor={colors.primary}
+              placeholderTextColor={themeState.colors.text.hint}
               value={formData.email}
               onChangeText={(text) => setFormData({ ...formData, email: text })}
               autoCapitalize="none"
@@ -144,11 +146,11 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Phone size={20} color={colors.primary} />
+            <Phone size={20} color={styles.icon.color} />
             <TextInput
               style={styles.input}
               placeholder="Numero de Celular"
-              placeholderTextColor={colors.primary}
+              placeholderTextColor={themeState.colors.text.hint}
               value={formData.phone}
               onChangeText={(text) => setFormData({ ...formData, phone: text })}
               keyboardType="phone-pad"
@@ -156,11 +158,11 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Lock size={20} color={colors.primary} />
+            <Lock size={20} color={styles.icon.color} />
             <TextInput
               style={styles.input}
               placeholder="Senha"
-              placeholderTextColor={colors.primary}
+              placeholderTextColor={themeState.colors.text.hint}
               value={formData.password}
               onChangeText={(text) =>
                 setFormData({ ...formData, password: text })
@@ -172,19 +174,19 @@ export default function RegisterScreen() {
               style={styles.eyeIcon}
             >
               {showPassword ? (
-                <EyeOff size={20} color={colors.primary} />
+                <EyeOff size={20} color={styles.icon.color} />
               ) : (
-                <Eye size={20} color={colors.primary} />
+                <Eye size={20} color={styles.icon.color} />
               )}
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>
-            <Lock size={20} color={colors.primary} />
+            <Lock size={20} color={styles.icon.color} />
             <TextInput
               style={styles.input}
               placeholder="Confirme a Senha"
-              placeholderTextColor={colors.primary}
+              placeholderTextColor={themeState.colors.text.hint}
               value={formData.confirmPassword}
               onChangeText={(text) =>
                 setFormData({ ...formData, confirmPassword: text })
@@ -196,9 +198,9 @@ export default function RegisterScreen() {
               style={styles.eyeIcon}
             >
               {showConfirmPassword ? (
-                <EyeOff size={20} color={colors.primary} />
+                <EyeOff size={20} color={styles.icon.color} />
               ) : (
-                <Eye size={20} color={colors.primary} />
+                <Eye size={20} color={styles.icon.color} />
               )}
             </TouchableOpacity>
           </View>
@@ -224,88 +226,94 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 24,
-  },
-  errorContainer: {
-    backgroundColor: colors.error + "20",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: 14,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    height: 56,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: colors.primary,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  registerButton: {
-    marginBottom: 24,
-  },
-  loginContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  loginText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  loginLink: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+    },
+    keyboardAvoidingView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      padding: 24,
+      justifyContent: "center",
+    },
+    logoContainer: {
+      alignItems: "center",
+      marginBottom: 32,
+    },
+    logo: {
+      width: 80,
+      height: 80,
+      marginBottom: 16,
+    },
+    appName: {
+      fontSize: 24,
+      fontWeight: "600",
+      color: theme.colors.text.primary,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: theme.colors.text.primary,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+      marginBottom: 24,
+    },
+    errorContainer: {
+      backgroundColor: theme.colors.error + "20", // Adiciona opacidade à cor de erro
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 16,
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 14,
+    },
+    inputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.background.paper,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 16,
+      marginBottom: 16,
+      height: 56,
+    },
+    input: {
+      flex: 1,
+      marginLeft: 12,
+      fontSize: 16,
+      color: theme.colors.text.primary,
+    },
+    icon: {
+      color: theme.colors.text.secondary,
+    },
+    eyeIcon: {
+      padding: 4,
+    },
+    registerButton: {
+      marginBottom: 24,
+    },
+    loginContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 4,
+    },
+    loginText: {
+      color: theme.colors.text.secondary,
+      fontSize: 14,
+    },
+    loginLink: {
+      color: theme.colors.primary.main,
+      fontSize: 14,
+      fontWeight: "500",
+    },
+  });

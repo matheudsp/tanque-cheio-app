@@ -1,4 +1,16 @@
-import React from "react";
+import {
+  Bell,
+  ChevronRight,
+  CreditCard,
+  Fuel,
+  HelpCircle,
+  LogOut,
+  Settings,
+  Trash2,
+  User,
+} from "lucide-react-native";
+import { useRouter } from "expo-router";
+import React, { useMemo } from "react";
 import {
   Alert,
   Platform,
@@ -9,26 +21,19 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import {
-  Bell,
-  ChevronRight,
-  CreditCard,
-  FuelIcon,
-  HelpCircle,
-  LogOut,
-  Settings,
-  Trash2,
-  User,
-} from "lucide-react-native";
-import { useUserStore } from "@/store/userStore";
-import { colors } from "@/constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { SubscriptionBadge } from "@/components/ui/SubscriptionBadge";
+import { useUserStore } from "@/store/userStore";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useUserStore();
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   const handleLogout = () => {
     if (Platform.OS === "web") {
@@ -36,10 +41,7 @@ export default function ProfileScreen() {
       router.replace("/");
     } else {
       Alert.alert("Sair", "Você tem certeza que quer sair?", [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
+        { text: "Cancelar", style: "cancel" },
         {
           text: "Sair",
           onPress: () => {
@@ -55,28 +57,21 @@ export default function ProfileScreen() {
   const handleClearStorage = () => {
     Alert.alert(
       "Limpar Todos os Dados",
-      "Esta ação é irreversível e apagará todos os dados salvos no aplicativo, incluindo suas informações de login e favoritos. Deseja continuar?",
+      "Esta ação é irreversível e apagará todos os dados salvos no aplicativo. Deseja continuar?",
       [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
+        { text: "Cancelar", style: "cancel" },
         {
           text: "Limpar Tudo",
           onPress: async () => {
             try {
-              // Limpa todo o AsyncStorage
               await AsyncStorage.clear();
-              // Faz o logout para limpar o estado do Zustand e redirecionar
               logout();
               router.replace("/auth/login");
-              // Alerta de sucesso (opcional)
               Alert.alert(
                 "Sucesso",
                 "Todos os dados do aplicativo foram limpos."
               );
             } catch (e) {
-              console.error("Falha ao limpar o AsyncStorage.", e);
               Alert.alert(
                 "Erro",
                 "Não foi possível limpar os dados do aplicativo."
@@ -89,63 +84,70 @@ export default function ProfileScreen() {
     );
   };
 
-  const menuItems = [
-    {
-      title: "Conta",
-      items: [
-        {
-          icon: <FuelIcon size={20} color={colors.primary} />,
-          label: "Meus Alertas de Preço",
-          onPress: () => router.push("/profile/favorites"),
-        },
-        {
-          icon: <User size={20} color={colors.primary} />,
-          label: "Informações Pessoais",
-          onPress: () => router.push("/profile/personal-info"),
-        },
-        {
-          icon: <Settings size={20} color={colors.primary} />,
-          label: "Preferências",
-          onPress: () => router.push("/profile/preferences"),
-        },
-        {
-          icon: <CreditCard size={20} color={colors.primary} />,
-          label: "Métodos de Pagamento",
-          onPress: () => router.push("/profile/payment"),
-        },
-      ],
-    },
-    {
-      title: "Outros",
-      items: [
-        {
-          icon: <Bell size={20} color={colors.primary} />,
-          label: "Notificações",
-          onPress: () => router.push("/profile/notifications"),
-        },
-        {
-          icon: <HelpCircle size={20} color={colors.primary} />,
-          label: "Ajuda & Suporte",
-          onPress: () => router.push("/profile/help"), // Changed from "/profile/support" to existing route
-        },
-        {
-          icon: <Trash2 size={20} color={colors.error} />,
-          label: "Limpar Dados do App",
-          onPress: handleClearStorage,
-          textColor: colors.error,
-        },
-        {
-          icon: <LogOut size={20} color={colors.error} />,
-          label: "Sair",
-          onPress: handleLogout,
-          textColor: colors.error,
-        },
-      ],
-    },
-  ];
+  const menuItems = useMemo(
+    () => [
+      {
+        title: "Conta",
+        items: [
+          {
+            icon: <Fuel size={20} color={themeState.colors.primary.main} />,
+            label: "Meus Alertas de Preço",
+            onPress: () => router.push("/profile/favorites"),
+          },
+          {
+            icon: <User size={20} color={themeState.colors.primary.main} />,
+            label: "Informações Pessoais",
+            onPress: () => router.push("/profile/personal-info"),
+          },
+          {
+            icon: <Settings size={20} color={themeState.colors.primary.main} />,
+            label: "Preferências",
+            onPress: () => router.push("/profile/preferences"),
+          },
+          {
+            icon: (
+              <CreditCard size={20} color={themeState.colors.primary.main} />
+            ),
+            label: "Métodos de Pagamento",
+            onPress: () => router.push("/profile/payment"),
+          },
+        ],
+      },
+      {
+        title: "Outros",
+        items: [
+          {
+            icon: <Bell size={20} color={themeState.colors.primary.main} />,
+            label: "Notificações",
+            onPress: () => router.push("/profile/notifications"),
+          },
+          {
+            icon: (
+              <HelpCircle size={20} color={themeState.colors.primary.main} />
+            ),
+            label: "Ajuda & Suporte",
+            onPress: () => router.push("/profile/help"),
+          },
+          {
+            icon: <Trash2 size={20} color={themeState.colors.error} />,
+            label: "Limpar Dados do App",
+            onPress: handleClearStorage,
+            textColor: themeState.colors.error,
+          },
+          {
+            icon: <LogOut size={20} color={themeState.colors.error} />,
+            label: "Sair",
+            onPress: handleLogout,
+            textColor: themeState.colors.error,
+          },
+        ],
+      },
+    ],
+    [themeState, router, handleLogout, handleClearStorage]
+  );
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -153,20 +155,16 @@ export default function ProfileScreen() {
       >
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
-            <User size={40} color={colors.primary} />
+            <User size={40} color={themeState.colors.primary.main} />
           </View>
 
           <View style={styles.profileNameContainer}>
             <Text style={styles.profileName}>{user?.name || "Usuário"}</Text>
-            <SubscriptionBadge
-              // planName={user?.role?.name}
-              planName={'premium'}
-              style={styles.badge}
-            />
+            <SubscriptionBadge planName={"premium"} style={styles.badge} />
           </View>
 
           <Text style={styles.profileEmail}>
-            {user?.email || "guest@mail.com"}
+            {user?.email || "guest@tanquecheio.app"}
           </Text>
 
           <TouchableOpacity
@@ -180,7 +178,6 @@ export default function ProfileScreen() {
         {menuItems.map((section, sectionIndex) => (
           <View key={sectionIndex} style={styles.menuSection}>
             <Text style={styles.menuSectionTitle}>{section.title}</Text>
-
             {section.items.map((item, itemIndex) => (
               <TouchableOpacity
                 key={itemIndex}
@@ -198,7 +195,10 @@ export default function ProfileScreen() {
                     {item.label}
                   </Text>
                 </View>
-                <ChevronRight size={20} color={colors.textSecondary} />
+                <ChevronRight
+                  size={20}
+                  color={themeState.colors.text.secondary}
+                />
               </TouchableOpacity>
             ))}
           </View>
@@ -212,104 +212,93 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingTop: 32,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 50,
-    marginVertical: 16,
-  },
-  profileNameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center", 
-    gap: 8, 
-  },
-  profileName: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  badge: {
-    
-  },
-
-  profileEmail: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginTop: 4, 
-    marginBottom: 16,
-  },
-
-  avatar: {
-    marginVertical: 20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primaryLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  editProfileButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
-  },
-  editProfileText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.primary,
-  },
-  menuSection: {
-    marginBottom: 24,
-  },
-  menuSectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: 12,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  menuItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuItemLabel: {
-    fontSize: 16,
-    color: colors.text,
-    marginLeft: 12,
-  },
-  versionContainer: {
-    alignItems: "center",
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  versionText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: theme.spacing.lg,
+    },
+    profileHeader: {
+      alignItems: "center",
+      marginBottom: theme.spacing.xl,
+    },
+    profileNameContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: theme.spacing.sm,
+    },
+    profileName: {
+      fontSize: 24,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+    },
+    badge: {},
+    profileEmail: {
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.xs,
+      marginBottom: theme.spacing.lg,
+    },
+    avatar: {
+      marginVertical: theme.spacing.xl,
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: theme.colors.action.selected,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    editProfileButton: {
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.lg,
+      borderRadius: theme.borderRadius.round,
+      backgroundColor: theme.colors.action.selected,
+    },
+    editProfileText: {
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.primary.main,
+    },
+    menuSection: {
+      marginBottom: theme.spacing.xl,
+    },
+    menuSectionTitle: {
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.md,
+    },
+    menuItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    menuItemLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    menuItemLabel: {
+      fontSize: 16,
+      color: theme.colors.text.primary,
+      marginLeft: theme.spacing.md,
+    },
+    versionContainer: {
+      alignItems: "center",
+      marginTop: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
+    },
+    versionText: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+    },
+  });

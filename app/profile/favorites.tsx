@@ -1,57 +1,66 @@
-import React, { useEffect, useMemo, useCallback, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl,
-  SafeAreaView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import { colors } from "@/constants/colors";
-import { useFavoriteStore } from "@/store/favoriteStore";
-import { useGasStationStore } from "@/store/gasStationStore";
-import type { FavoriteStation, Product, GasStation } from "@/types/index";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  RefreshControl,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Loading } from "@/components/ui/Loading";
 import { FavoriteFuelModal } from "@/components/shared/FavoriteFuelModal";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { useFavoriteStore } from "@/store/favoriteStore";
+import { useGasStationStore } from "@/store/gasStationStore";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
+import type { FavoriteStation, GasStation, Product } from "@/types/index";
 import { formatCollectionDate } from "@/utils/formatCollectionDate";
-import { Loading } from "@/components/ui/Loading";
-import { ErrorState } from "@/components/ui/ErrorState";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
 
 const PriceTrendBadge = React.memo(
   ({
     trend,
     percentage,
+    theme,
+    styles,
   }: {
     trend: Product["trend"];
     percentage: Product["percentage_change"];
+    theme: ThemeState;
+    styles: any;
   }) => {
-    const percentageValue = percentage;
-    const trendInfo = {
-      UP: {
-        icon: "trending-up" as const,
-        color: colors.error,
-        text: `${percentageValue}%`,
-      },
-      DOWN: {
-        icon: "trending-down" as const,
-        color: colors.success,
-        text: `${percentageValue}%`,
-      },
-      STABLE: {
-        icon: "minus" as const,
-        color: colors.textSecondary,
-        text: "Estável",
-      },
-    }[trend];
+    const trendInfo = useMemo(() => {
+      const percentageValue = percentage;
+      return {
+        UP: {
+          icon: "trending-up" as const,
+          color: theme.colors.error,
+          text: `${percentageValue}%`,
+        },
+        DOWN: {
+          icon: "trending-down" as const,
+          color: theme.colors.success,
+          text: `${percentageValue}%`,
+        },
+        STABLE: {
+          icon: "minus" as const,
+          color: theme.colors.text.secondary,
+          text: "Estável",
+        },
+      }[trend];
+    }, [trend, percentage, theme]);
+
     if (!trendInfo) return null;
     const displayText = trend === "STABLE" ? trendInfo.text : trendInfo.text;
     return (
@@ -70,39 +79,55 @@ const PriceTrendBadge = React.memo(
   }
 );
 
-const FavoriteProductRow = React.memo(({ product }: { product: Product }) => {
-  const iconName = getIconNameFromFuel(product.product_name);
+const FavoriteProductRow = React.memo(
+  ({
+    product,
+    theme,
+    styles,
+  }: {
+    product: Product;
+    theme: ThemeState;
+    styles: any;
+  }) => {
+    const iconName = getIconNameFromFuel(product.product_name);
 
-  return (
-    <View style={styles.productRow}>
-      <View style={styles.productInfo}>
-        <AppIcon name={iconName} width={24} height={24} />
-        <View style={styles.productTextContainer}>
-          <Text style={styles.productName}>{product.product_name}</Text>
-          <Text style={styles.lastUpdatedText}>
-            {`R$ ${parseFloat(product.price).toFixed(
-              2
-            )} • ${formatCollectionDate(product.collection_date)}`}
-          </Text>
+    return (
+      <View style={styles.productRow}>
+        <View style={styles.productInfo}>
+          <AppIcon name={iconName} width={24} height={24} />
+          <View style={styles.productTextContainer}>
+            <Text style={styles.productName}>{product.product_name}</Text>
+            <Text style={styles.lastUpdatedText}>
+              {`R$ ${parseFloat(product.price).toFixed(
+                2
+              )} • ${formatCollectionDate(product.collection_date)}`}
+            </Text>
+          </View>
         </View>
+        <PriceTrendBadge
+          trend={product.trend}
+          percentage={product.percentage_change}
+          theme={theme}
+          styles={styles}
+        />
       </View>
-      <PriceTrendBadge
-        trend={product.trend}
-        percentage={product.percentage_change}
-      />
-    </View>
-  );
-});
+    );
+  }
+);
 
 const StationFavoritesCard = React.memo(
   ({
     station_data,
     onManage,
     isManaging,
+    theme,
+    styles,
   }: {
     station_data: { station_info: FavoriteStation; products: Product[] };
     onManage: (gas_station_id: string) => void;
     isManaging: boolean;
+    theme: ThemeState;
+    styles: any;
   }) => {
     const router = useRouter();
     const { station_info, products } = station_data;
@@ -115,7 +140,6 @@ const StationFavoritesCard = React.memo(
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <BrandLogo brandName={station_info.gas_station_brand} />
-
           <View style={styles.cardHeaderInfo}>
             <Text style={styles.cardTitle} numberOfLines={1}>
               {station_info.gas_station_name}
@@ -131,16 +155,13 @@ const StationFavoritesCard = React.memo(
           <TouchableOpacity
             style={styles.actionButton}
             onPress={navigateToDetails}
-            // Prop de acessibilidade para leitores de tela
             accessibilityLabel="Ver detalhes do posto"
             accessibilityRole="button"
           >
-            <Feather name="info" size={16} color={colors.primary} />
+            <Feather name="info" size={16} color={theme.colors.primary.main} />
             <Text style={styles.actionButtonText}>Ver Detalhes</Text>
           </TouchableOpacity>
-
           <View style={styles.actionSeparator} />
-
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => onManage(station_info.gas_station_id)}
@@ -149,10 +170,17 @@ const StationFavoritesCard = React.memo(
             accessibilityRole="button"
           >
             {isManaging ? (
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ActivityIndicator
+                size="small"
+                color={theme.colors.primary.main}
+              />
             ) : (
               <>
-                <Feather name="settings" size={16} color={colors.primary} />
+                <Feather
+                  name="settings"
+                  size={16}
+                  color={theme.colors.primary.main}
+                />
                 <Text style={styles.actionButtonText}>Gerenciar</Text>
               </>
             )}
@@ -164,7 +192,11 @@ const StationFavoritesCard = React.memo(
             <React.Fragment
               key={`${station_info.gas_station_id}-${product.product_id}`}
             >
-              <FavoriteProductRow product={product} />
+              <FavoriteProductRow
+                product={product}
+                theme={theme}
+                styles={styles}
+              />
               {index < products.length - 1 && <View style={styles.separator} />}
             </React.Fragment>
           ))}
@@ -182,6 +214,9 @@ export default function FavoritesScreen() {
     isDetailsLoading,
   } = useGasStationStore();
 
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
+
   const [isModalVisible, setModalVisible] = useState(false);
   const [stationForModal, setStationForModal] = useState<GasStation | null>(
     null
@@ -196,8 +231,8 @@ export default function FavoritesScreen() {
 
   const handleManageFavorites = useCallback(
     (stationId: string) => {
-      setStationIdToManage(stationId); // Define qual posto estamos gerenciando
-      fetchStationDetails(stationId); // Dispara a busca pelos detalhes completos
+      setStationIdToManage(stationId);
+      fetchStationDetails(stationId);
     },
     [fetchStationDetails]
   );
@@ -238,8 +273,7 @@ export default function FavoritesScreen() {
     return Object.values(groups);
   }, [favorites]);
 
-  if (isLoading && favorites.length === 0) return Loading;
-
+  if (isLoading && favorites.length === 0) return <Loading />;
   if (error && !isLoading) return <ErrorState onRetry={fetchFavorites} />;
 
   return (
@@ -250,7 +284,6 @@ export default function FavoritesScreen() {
           headerBackTitle: "Voltar",
         }}
       />
-
       <FavoriteFuelModal
         isVisible={isModalVisible}
         onClose={() => {
@@ -259,7 +292,6 @@ export default function FavoritesScreen() {
         }}
         station={stationForModal}
       />
-
       <FlatList
         data={groupedFavorites}
         renderItem={({ item }) => (
@@ -270,6 +302,8 @@ export default function FavoritesScreen() {
               isDetailsLoading &&
               stationIdToManage === item.station_info.gas_station_id
             }
+            styles={styles}
+            theme={themeState}
           />
         )}
         keyExtractor={(item) => item.station_info.gas_station_id}
@@ -289,8 +323,8 @@ export default function FavoritesScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={onRefresh}
-            colors={[colors.secondary]}
-            tintColor={colors.secondary}
+            colors={[themeState.colors.secondary.main]}
+            tintColor={themeState.colors.secondary.main}
           />
         }
       />
@@ -298,100 +332,119 @@ export default function FavoritesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-
-  listContainer: { paddingHorizontal: 16, paddingVertical: 20, flexGrow: 1 },
-
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: colors.border + "80",
-      },
-    }),
-  },
-  cardHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  cardHeaderInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  cardTitle: { fontSize: 16, fontWeight: "bold", color: colors.primary },
-  cardAddress: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-
-  cardActions: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: `${colors.primary}08`,
-  },
-  actionButtonText: {
-    marginLeft: 8,
-    fontSize: 15,
-    fontWeight: "600",
-    color: colors.primary,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  actionSeparator: {
-    width: 1,
-    backgroundColor: colors.border,
-  },
-
-  productsList: {
-    paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  productRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-  },
-  productInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    marginRight: 8,
-  },
-  productTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: colors.text,
-    marginBottom: 4,
-  },
-  lastUpdatedText: { fontSize: 13, color: colors.textSecondary },
-  separator: { height: 1, backgroundColor: colors.border },
-  badgeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-  },
-  badgeText: { marginLeft: 6, fontSize: 14, fontWeight: "bold" },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background.default },
+    listContainer: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.xl,
+      flexGrow: 1,
+    },
+    card: {
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 3,
+          borderWidth: 1,
+          borderColor: theme.colors.border + "80",
+        },
+      }),
+    },
+    cardHeader: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    cardHeaderInfo: {
+      flex: 1,
+      marginLeft: theme.spacing.md,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.primary.main,
+    },
+    cardAddress: {
+      fontSize: 13,
+      color: theme.colors.text.secondary,
+      marginTop: 2,
+    },
+    cardActions: {
+      flexDirection: "row",
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.divider,
+      backgroundColor: theme.colors.action.selected,
+    },
+    actionButtonText: {
+      marginLeft: theme.spacing.sm,
+      fontSize: 15,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.primary.main,
+    },
+    actionButton: {
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: theme.spacing.md,
+    },
+    actionSeparator: {
+      width: 1,
+      backgroundColor: theme.colors.divider,
+    },
+    productsList: {
+      paddingHorizontal: theme.spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.divider,
+    },
+    productRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 14,
+    },
+    productInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+      marginRight: theme.spacing.sm,
+    },
+    productTextContainer: {
+      marginLeft: theme.spacing.md,
+      flex: 1,
+    },
+    productName: {
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+      marginBottom: 4,
+    },
+    lastUpdatedText: {
+      fontSize: 13,
+      color: theme.colors.text.secondary,
+    },
+    separator: {
+      height: 1,
+      backgroundColor: theme.colors.divider,
+    },
+    badgeContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: theme.borderRadius.round,
+    },
+    badgeText: {
+      marginLeft: 6,
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+  });

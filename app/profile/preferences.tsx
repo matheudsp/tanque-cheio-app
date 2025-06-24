@@ -1,123 +1,144 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
-import { Bell, Moon, Globe, Shield } from 'lucide-react-native';
-import { colors } from '@/constants/colors';
+import { Globe, Moon, Sun } from "lucide-react-native";
+import { Stack } from "expo-router";
+import React from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import { ThemePreference, type ThemeState } from "@/types/theme";
+
+// Componente para o botão de opção de tema
+const ThemeOptionButton = ({
+  label,
+  onPress,
+  isActive,
+}: {
+  label: string;
+  onPress: () => void;
+  isActive: boolean;
+}) => {
+  const styles = useStylesWithTheme(getStyles);
+  return (
+    <TouchableOpacity
+      style={[styles.optionButton, isActive && styles.optionButtonActive]}
+      onPress={onPress}
+    >
+      <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function PreferencesScreen() {
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('Português');
-  
-  
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState, themePreference, setTheme } = useTheme();
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen 
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <Stack.Screen
         options={{
-          title: 'Preferências',
-          headerBackTitle: 'Back',
+          title: "Preferências",
+          headerBackTitle: "Voltar",
         }}
       />
-      
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.section}>
-          {/* <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Bell size={20} color={colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Notificações Push</Text>
-                <Text style={styles.preferenceDescription}>
-                  Receba notificações sobre os postos que segue e atualizações do app
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={notifications}
-              onValueChange={setNotifications}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
-          </View> */}
-          
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
-              <Moon size={20} color={colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Modo Noturno</Text>
-                <Text style={styles.preferenceDescription}>
-                  Alterne entre tema claro e escuro
-                </Text>
-              </View>
+              <Moon size={20} color={themeState.colors.primary.main} />
+              <Text style={styles.preferenceTitle}>Aparência</Text>
             </View>
-            <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{ false: colors.border, true: colors.primary }}
-            />
-          </View>
-          
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Globe size={20} color={colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceTitle}>Linguagem</Text>
-                <Text style={styles.preferenceDescription}>
-                  {language}
-                </Text>
-              </View>
+            <View style={styles.optionsContainer}>
+              <ThemeOptionButton
+                label="Claro"
+                isActive={themePreference === ThemePreference.LIGHT}
+                onPress={() => setTheme(ThemePreference.LIGHT)}
+              />
+              <ThemeOptionButton
+                label="Escuro"
+                isActive={themePreference === ThemePreference.DARK}
+                onPress={() => setTheme(ThemePreference.DARK)}
+              />
+              <ThemeOptionButton
+                label="Sistema"
+                isActive={themePreference === ThemePreference.SYSTEM}
+                onPress={() => setTheme(ThemePreference.SYSTEM)}
+              />
             </View>
           </View>
-          
-         
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingTop: 32,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
-  section: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  preferenceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  preferenceInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  preferenceContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  preferenceTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  preferenceDescription: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-}); 
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    content: {
+      padding: theme.spacing.lg,
+    },
+    section: {
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
+    },
+    preferenceItem: {
+      paddingVertical: theme.spacing.md,
+    },
+    preferenceInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: theme.spacing.md,
+    },
+    preferenceTitle: {
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+      marginLeft: theme.spacing.md,
+    },
+    optionsContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      backgroundColor: theme.colors.background.default,
+      borderRadius: theme.borderRadius.medium,
+      padding: theme.spacing.xs,
+    },
+    optionButton: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.small,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    optionButtonActive: {
+      backgroundColor: theme.colors.background.paper,
+      ...theme.shadows.shadowSm,
+    },
+    optionText: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    optionTextActive: {
+      color: theme.colors.primary.main,
+    },
+  });

@@ -1,29 +1,25 @@
+import { X } from "lucide-react-native";
 import React from "react";
 import {
-  View,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
+  View,
 } from "react-native";
-import { X } from "lucide-react-native";
-import { colors } from "@/constants/colors";
+
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 type ActiveFilterPillProps = {
   label: string;
   onRemove: () => void;
 };
 
-const ActiveFilterPill = ({ label, onRemove }: ActiveFilterPillProps) => (
-  <TouchableOpacity style={styles.pill} onPress={onRemove}>
-    <Text style={styles.pillText}>{label}</Text>
-    <X size={14} color={colors.primary} />
-  </TouchableOpacity>
-);
-
 type ActiveFiltersProps = {
   selectedFuelType: string;
-  sortBy: string;
+  sort: string;
   radius: number;
   onClearFuel: () => void;
   onClearSort: () => void;
@@ -39,24 +35,38 @@ const sortLabels: { [key: string]: string } = {
 
 export const ActiveFilters = ({
   selectedFuelType,
-  sortBy,
+  sort,
   radius,
   onClearFuel,
   onClearSort,
   onClearRadius,
 }: ActiveFiltersProps) => {
-  const hasActiveFilters = selectedFuelType || sortBy || radius;
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
+
+  const ActiveFilterPill = ({ label, onRemove }: ActiveFilterPillProps) => (
+    <TouchableOpacity style={styles.pill} onPress={onRemove}>
+      <Text style={styles.pillText}>{label}</Text>
+      <X size={14} color={themeState.colors.primary.main} />
+    </TouchableOpacity>
+  );
+
+  const hasActiveFilters = selectedFuelType || sort || radius;
 
   if (!hasActiveFilters) return null;
 
   return (
     <View style={styles.container}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
         {selectedFuelType && (
           <ActiveFilterPill label={selectedFuelType} onRemove={onClearFuel} />
         )}
-        {sortLabels[sortBy] && (
-          <ActiveFilterPill label={sortLabels[sortBy]} onRemove={onClearSort} />
+        {sortLabels[sort] && (
+          <ActiveFilterPill label={sortLabels[sort]} onRemove={onClearSort} />
         )}
         {radius && (
           <ActiveFilterPill
@@ -69,27 +79,32 @@ export const ActiveFilters = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 8,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginRight: 8,
-  },
-  pillText: {
-    color: colors.primary,
-    fontWeight: "500",
-    marginRight: 6,
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      paddingVertical: theme.spacing.sm,
+      backgroundColor: theme.colors.background.default,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    scrollViewContent: {
+      paddingHorizontal: theme.spacing.lg,
+    },
+    pill: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.action.selected,
+      borderColor: theme.colors.primary.light,
+      borderWidth: 1,
+      borderRadius: theme.borderRadius.round,
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      marginRight: theme.spacing.sm,
+    },
+    pillText: {
+      color: theme.colors.primary.main,
+      fontWeight: theme.typography.fontWeight.semibold,
+      marginRight: theme.spacing.xs,
+      fontSize: 13,
+    },
+  });

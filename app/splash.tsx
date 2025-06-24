@@ -1,47 +1,42 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Animated } from 'react-native';
-import { colors } from '@/constants/colors';
+import React, { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Image, Animated } from "react-native";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 export default function SplashScreen() {
-  const fadeAnim = new Animated.Value(0);
-  // A animação de escala agora começará em 1 e pulsará em torno desse valor.
-  const scaleAnim = new Animated.Value(1);
+  const styles = useStylesWithTheme(getStyles);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Define a animação de pulsação que se repetirá em loop.
     const pulseAnimation = Animated.loop(
       Animated.sequence([
-        // Aumenta a escala em 5%
         Animated.timing(scaleAnim, {
           toValue: 1.05,
-          duration: 1000, // Duração para aumentar
+          duration: 1000,
           useNativeDriver: true,
         }),
-        // Retorna à escala original
         Animated.timing(scaleAnim, {
           toValue: 1,
-          duration: 1000, // Duração para diminuir
+          duration: 1000,
           useNativeDriver: true,
         }),
       ])
     );
 
-    // Inicia a animação de fade-in (apenas uma vez)
-    // e a animação de pulsação (em loop) ao mesmo tempo.
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 1000,
         useNativeDriver: true,
       }),
-      pulseAnimation, // Inicia o loop
+      pulseAnimation,
     ]).start();
 
-    // Função de limpeza para parar a animação quando o componente for desmontado
     return () => {
       pulseAnimation.stop();
     };
-  }, []);
+  }, [fadeAnim, scaleAnim]);
 
   return (
     <View style={styles.container}>
@@ -49,13 +44,13 @@ export default function SplashScreen() {
         style={[
           styles.content,
           {
-            opacity: fadeAnim, // Aplica o fade-in
-            transform: [{ scale: scaleAnim }], // Aplica a pulsação
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
           },
         ]}
       >
         <Image
-          source={require('@/assets/images/playstore.png')}
+          source={require("@/assets/images/playstore.png")}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -66,30 +61,31 @@ export default function SplashScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    alignItems: 'center',
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 24,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    content: {
+      alignItems: "center",
+    },
+    logo: {
+      width: 120,
+      height: 120,
+      marginBottom: theme.spacing.xl,
+    },
+    appName: {
+      fontSize: theme.typography.fontSize.h1,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.sm,
+    },
+    tagline: {
+      fontSize: theme.typography.fontSize.medium,
+      color: theme.colors.text.secondary,
+      textAlign: "center",
+    },
+  });

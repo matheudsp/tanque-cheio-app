@@ -1,35 +1,33 @@
+import { Feather } from "@expo/vector-icons";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { useRouter } from "expo-router";
 import React, {
-  useEffect,
-  useState,
   useCallback,
+  useEffect,
+  useMemo,
   useRef,
-  useMemo, // NOVO: Para otimizar os snap points do BottomSheet
+  useState,
 } from "react";
 import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
   StyleSheet,
   Text,
-  View,
-  ActivityIndicator,
-  Image,
-  Dimensions,
   TouchableOpacity,
-  Platform,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MapView, {
-  Marker,
-  PROVIDER_GOOGLE,
-  Region,
-} from "react-native-maps";
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { Feather } from '@expo/vector-icons';
-import { useGasStationStore } from "@/store/gasStationStore";
-import { useUserStore } from "@/store/userStore";
-import { GasStationCard } from "@/components/shared/GasStationCard";
-import { colors } from "@/constants/colors";
+
 import markerImage from "@/assets/images/marker.png";
 import markerSelectedImage from "@/assets/images/playstore.png";
+import { GasStationCard } from "@/components/shared/GasStationCard";
+import { useGasStationStore } from "@/store/gasStationStore";
+import { useUserStore } from "@/store/userStore";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 const { height, width } = Dimensions.get("window");
 
@@ -37,9 +35,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUserStore();
   const mapRef = useRef<MapView>(null);
-  
-  // NOVO: Referência para o BottomSheet
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   const {
     nearbyStations,
@@ -51,13 +50,15 @@ export default function HomeScreen() {
     clearError,
   } = useGasStationStore();
 
-  const [currentMapRegion, setCurrentMapRegion] = useState<Region | undefined>();
+  const [currentMapRegion, setCurrentMapRegion] = useState<
+    Region | undefined
+  >();
   const [showSearchAreaButton, setShowSearchAreaButton] = useState(false);
-  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(
+    null
+  );
 
-  // NOVO: Define os "snap points" ou pontos de parada do BottomSheet
-  // 25% da tela para o modo "peek" e 70% para o modo expandido.
-  const snapPoints = useMemo(() => ['25%', '70%'], []);
+  const snapPoints = useMemo(() => ["25%", "70%"], []);
 
   useEffect(() => {
     if (userLocation && mapRef.current) {
@@ -73,7 +74,9 @@ export default function HomeScreen() {
   }, [userLocation]);
 
   useEffect(() => {
-    return () => { if (error) clearError(); };
+    return () => {
+      if (error) clearError();
+    };
   }, [error, clearError]);
 
   const handleSearch = useCallback(
@@ -81,8 +84,11 @@ export default function HomeScreen() {
       if (!region) return;
       setShowSearchAreaButton(false);
       setSelectedStationId(null);
-      
-      const radiusInKm = Math.max(5, Math.round((region.latitudeDelta * 111) / 2));
+
+      const radiusInKm = Math.max(
+        5,
+        Math.round((region.latitudeDelta * 111) / 2)
+      );
 
       await fetchNearbyStations({
         ...searchParams,
@@ -91,35 +97,37 @@ export default function HomeScreen() {
         radius: radiusInKm,
         sort: searchParams?.sort || "distanceAsc",
       });
-      // NOVO: Ao buscar, abre o BottomSheet para a posição inicial (peek)
       bottomSheetRef.current?.snapToIndex(0);
     },
     [searchParams, fetchNearbyStations]
   );
-  
-  // ALTERADO: A lógica de seleção agora interage com o mapa e o BottomSheet
+
   const handleSelectStation = (station: any) => {
     if (!station || station.id === selectedStationId) {
-        setSelectedStationId(null);
-        mapRef.current?.animateToRegion({
-            ...currentMapRegion!,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02
-        }, 600);
-        return;
+      setSelectedStationId(null);
+      mapRef.current?.animateToRegion(
+        {
+          ...currentMapRegion!,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        600
+      );
+      return;
     }
-    
+
     setSelectedStationId(station.id);
 
-    // Centraliza o mapa no posto selecionado
-    mapRef.current?.animateToRegion({
+    mapRef.current?.animateToRegion(
+      {
         latitude: station.localization.coordinates!.coordinates[1],
         longitude: station.localization.coordinates!.coordinates[0],
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
-    }, 600);
+      },
+      600
+    );
 
-    // Garante que o BottomSheet esteja aberto
     bottomSheetRef.current?.snapToIndex(0);
   };
 
@@ -138,44 +146,64 @@ export default function HomeScreen() {
 
   const renderEmptyList = () => {
     if (isLoading) {
-        return (
-            <View style={styles.emptyContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Buscando postos...</Text>
-            </View>
-        );
-    }
-    
-    return (
+      return (
         <View style={styles.emptyContainer}>
-            <Feather name="map-pin" size={40} color={colors.textSecondary} />
-            <Text style={styles.emptyText}>Nenhum posto encontrado</Text>
-            <Text style={styles.emptySubtext}>
-                Tente mover o mapa para outra área ou ajuste seus filtros.
-                {error ? `\nErro: ${error}` : ""}
-            </Text>
+          <ActivityIndicator
+            size="large"
+            color={themeState.colors.primary.main}
+          />
+          <Text style={styles.loadingText}>Buscando postos...</Text>
         </View>
+      );
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <Feather
+          name="map-pin"
+          size={40}
+          color={themeState.colors.text.secondary}
+        />
+        <Text style={styles.emptyText}>Nenhum posto encontrado</Text>
+        <Text style={styles.emptySubtext}>
+          Tente mover o mapa para outra área ou ajuste seus filtros.
+          {error ? `\nErro: ${error}` : ""}
+        </Text>
+      </View>
     );
   };
-  
-  // NOVO: Componente para o cabeçalho do BottomSheet
+
   const renderBottomSheetHeader = () => (
-      <View style={styles.bottomSheetHeader}>
-        <View>
-            <Text style={styles.listTitle}>Resultados Próximos</Text>
-            {!isLoading && <Text style={styles.resultsCount}>{nearbyStations.length} postos encontrados</Text>}
-        </View>
-        <TouchableOpacity style={styles.filterButton} onPress={() => console.log("Abrir filtros")}>
-            <Feather name="sliders" size={20} color={colors.primary} />
-            <Text style={styles.filterButtonText}>Filtros</Text>
-        </TouchableOpacity>
+    <View style={styles.bottomSheetHeader}>
+      <View>
+        <Text style={styles.listTitle}>Resultados Próximos</Text>
+        {!isLoading && (
+          <Text style={styles.resultsCount}>
+            {nearbyStations.length} postos encontrados
+          </Text>
+        )}
       </View>
+      <TouchableOpacity
+        style={styles.filterButton}
+        onPress={() => router.push("/search")}
+      >
+        <Feather
+          name="sliders"
+          size={20}
+          color={themeState.colors.primary.main}
+        />
+        <Text style={styles.filterButtonText}>Filtros</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   if (!userLocation) {
     return (
       <SafeAreaView style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator
+          size="large"
+          color={themeState.colors.primary.main}
+        />
         <Text style={styles.loadingText}>Obtendo sua localização...</Text>
       </SafeAreaView>
     );
@@ -183,11 +211,14 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* O cabeçalho foi simplificado, pois os filtros irão para o BottomSheet */}
       <View style={styles.header}>
         <Text style={styles.greeting}>Olá, {user?.name || "Usuário"}</Text>
-        <TouchableOpacity onPress={() => router.push('/profile')}>
-            <Feather name="user" size={26} color={colors.text} />
+        <TouchableOpacity onPress={() => router.push("/profile")}>
+          <Feather
+            size={26}
+            color={themeState.colors.text.primary}
+            name="user"
+          />
         </TouchableOpacity>
       </View>
 
@@ -222,87 +253,113 @@ export default function HomeScreen() {
               zIndex={selectedStationId === station.id ? 99 : 1}
             >
               <Image
-                source={selectedStationId === station.id ? markerSelectedImage : markerImage}
-                style={selectedStationId === station.id ? styles.customMarkerSelected : styles.customMarker}
+                source={
+                  selectedStationId === station.id
+                    ? markerSelectedImage
+                    : markerImage
+                }
+                style={
+                  selectedStationId === station.id
+                    ? styles.customMarkerSelected
+                    : styles.customMarker
+                }
                 resizeMode="contain"
               />
             </Marker>
           ))}
         </MapView>
-        
+
         {showSearchAreaButton && !isLoading && (
-             <TouchableOpacity
-                style={styles.searchAreaButton}
-                onPress={() => currentMapRegion && handleSearch(currentMapRegion)}
-            >
-                <Feather name="search" size={18} color={colors.white} />
-                <Text style={styles.searchAreaButtonText}>Buscar nesta área</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.searchAreaButton}
+            onPress={() => currentMapRegion && handleSearch(currentMapRegion)}
+          >
+            <Feather
+              name="search"
+              size={18}
+              color={themeState.colors.primary.text}
+            />
+            <Text style={styles.searchAreaButtonText}>Buscar nesta área</Text>
+          </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.myLocationButton} onPress={centerOnUserLocation}>
-            <Feather name="crosshair" size={24} color={colors.text} />
+        <TouchableOpacity
+          style={styles.myLocationButton}
+          onPress={centerOnUserLocation}
+        >
+          <Feather
+            name="crosshair"
+            size={24}
+            color={themeState.colors.text.primary}
+          />
         </TouchableOpacity>
       </View>
 
-      {/* NOVO: Implementação do BottomSheet */}
       <BottomSheet
         ref={bottomSheetRef}
-        index={-1} // Começa fechado
+        index={-1}
         snapPoints={snapPoints}
         handleComponent={() => (
-            // Handle customizado para um visual mais limpo
-            <View style={styles.bottomSheetHandleContainer}>
-                <View style={styles.bottomSheetHandle} />
-            </View>
+          <View style={styles.bottomSheetHandleContainer}>
+            <View style={styles.bottomSheetHandle} />
+          </View>
         )}
+        backgroundStyle={{
+          backgroundColor: themeState.colors.background.paper,
+        }}
       >
         <BottomSheetFlatList
-            data={nearbyStations}
-            keyExtractor={(item) => item.id}
-            ListHeaderComponent={renderBottomSheetHeader}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handleSelectStation(item)} style={styles.cardContainer}>
-                  <GasStationCard station={item} isSelected={selectedStationId === item.id} />
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={renderEmptyList}
-            contentContainerStyle={styles.listContent}
+          data={nearbyStations}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderBottomSheetHeader}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => handleSelectStation(item)}
+              style={styles.cardContainer}
+            >
+              <GasStationCard
+                station={item}
+                isSelected={selectedStationId === item.id}
+              />
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={renderEmptyList}
+          contentContainerStyle={styles.listContent}
         />
       </BottomSheet>
     </SafeAreaView>
   );
 }
 
-// ESTILOS AJUSTADOS E NOVOS ESTILOS
-const styles = StyleSheet.create({
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: theme.colors.background.default,
     },
     centerContent: {
       justifyContent: "center",
       alignItems: "center",
     },
     loadingText: {
-      marginTop: 10,
+      marginTop: theme.spacing.sm,
       fontSize: 16,
-      color: colors.textSecondary,
+      color: theme.colors.text.secondary,
     },
     header: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      backgroundColor: colors.white,
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.md,
+      backgroundColor: theme.colors.background.paper,
       borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      borderBottomColor: theme.colors.divider,
     },
     greeting: {
       fontSize: 22,
-      fontWeight: "bold",
-      color: colors.text,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
     },
     mapContainer: {
       flex: 1,
@@ -315,8 +372,8 @@ const styles = StyleSheet.create({
       height: 40,
     },
     customMarkerSelected: {
-        width: 55,
-        height: 55,
+      width: 55,
+      height: 55,
     },
     searchAreaButton: {
       position: "absolute",
@@ -324,113 +381,105 @@ const styles = StyleSheet.create({
       alignSelf: "center",
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.primary, // Cor alterada para maior destaque
-      paddingVertical: 12,
-      paddingHorizontal: 24,
-      borderRadius: 30,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 5,
+      backgroundColor: theme.colors.primary.main,
+      paddingVertical: theme.spacing.md,
+      paddingHorizontal: theme.spacing.xl,
+      borderRadius: theme.borderRadius.round,
+      ...theme.shadows.shadowMd,
     },
     searchAreaButtonText: {
-      marginLeft: 8,
-      color: colors.white, // Cor do texto ajustada
-      fontWeight: "bold",
+      marginLeft: theme.spacing.sm,
+      color: theme.colors.primary.text,
+      fontWeight: theme.typography.fontWeight.bold,
       fontSize: 16,
     },
     myLocationButton: {
       position: "absolute",
-      // Posição ajustada para ficar acima do "peek state" do bottom sheet
-      bottom: (height * 0.25) + 20, 
+      bottom: height * 0.25 + 20,
       right: 20,
-      backgroundColor: colors.white,
+      backgroundColor: theme.colors.background.paper,
       width: 50,
       height: 50,
       borderRadius: 25,
       justifyContent: "center",
       alignItems: "center",
-      elevation: 4,
+      ...theme.shadows.shadowMd,
     },
-    // Removido: listPanel e estilos relacionados, substituídos pelo BottomSheet
-    
-    // --- Novos estilos para o BottomSheet ---
     bottomSheetHandleContainer: {
-        backgroundColor: colors.white,
-        paddingTop: 12,
-        paddingBottom: 6,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        alignItems: 'center',
+      backgroundColor: theme.colors.background.paper,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.xs,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      alignItems: "center",
     },
     bottomSheetHandle: {
-        width: 40,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: colors.border,
+      width: 40,
+      height: 5,
+      borderRadius: 2.5,
+      backgroundColor: theme.colors.divider,
     },
     bottomSheetHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        backgroundColor: colors.white,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: theme.spacing.xl,
+      paddingBottom: theme.spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+      backgroundColor: theme.colors.background.paper,
     },
     listTitle: {
       fontSize: 20,
-      fontWeight: "bold",
-      color: colors.text,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
     },
     resultsCount: {
-        fontSize: 14,
-        color: colors.textSecondary,
-        marginTop: 2,
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginTop: 2,
     },
     filterButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 20,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.action.selected,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.round,
     },
     filterButtonText: {
-        marginLeft: 6,
-        color: colors.primary,
-        fontWeight: 'bold',
-        fontSize: 14,
+      marginLeft: theme.spacing.xs,
+      color: theme.colors.primary.main,
+      fontWeight: theme.typography.fontWeight.bold,
+      fontSize: 14,
     },
     cardContainer: {
-        paddingHorizontal: 20,
-        paddingVertical: 8, // Espaçamento entre os cards
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.sm,
     },
     listContent: {
-        backgroundColor: colors.white,
-        paddingBottom: 40, // Espaço no final da lista
+      backgroundColor: theme.colors.background.paper,
+      paddingBottom: 40,
     },
     emptyContainer: {
-        width: width,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-        height: height * 0.4, // Ocupa um espaço maior para ser mais visível
-        backgroundColor: colors.white,
+      width: width,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: theme.spacing.xl,
+      height: height * 0.4,
+      backgroundColor: theme.colors.background.paper,
     },
     emptyText: {
       fontSize: 18,
-      fontWeight: "bold",
-      color: colors.text,
-      marginTop: 16,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary,
+      marginTop: theme.spacing.lg,
     },
     emptySubtext: {
       fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 8,
+      color: theme.colors.text.secondary,
+      marginTop: theme.spacing.sm,
       textAlign: "center",
       paddingHorizontal: 30,
     },
-});
+  });

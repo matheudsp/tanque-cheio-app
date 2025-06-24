@@ -1,20 +1,25 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Mail, User } from "lucide-react-native";
 import { Stack } from "expo-router";
-import { User, Mail, Phone, MapPin } from "lucide-react-native";
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useUserStore } from "@/store/userStore";
-import { colors } from "@/constants/colors";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
 
 export default function PersonalInfoScreen() {
   const { user } = useUserStore();
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       <Stack.Screen
         options={{
           title: "Informações Pessoais",
-          headerBackTitle: "Back",
+          headerBackTitle: "Voltar",
         }}
       />
 
@@ -24,79 +29,62 @@ export default function PersonalInfoScreen() {
       >
         <View style={styles.section}>
           <View style={styles.infoItem}>
-            <User size={20} color={colors.primary} />
+            <User size={20} color={themeState.colors.primary.main} />
             <View style={styles.infoContent}>
               <Text style={styles.label}>Nome</Text>
-              <Text style={styles.value}>{user?.name || "Not set"}</Text>
+              <Text style={styles.value}>{user?.name || "Não definido"}</Text>
             </View>
           </View>
 
-          <View style={styles.infoItem}>
-            <Mail size={20} color={colors.primary} />
+          <View style={[styles.infoItem, { borderBottomWidth: 0 }]}>
+            <Mail size={20} color={themeState.colors.primary.main} />
             <View style={styles.infoContent}>
               <Text style={styles.label}>E-mail</Text>
-              <Text style={styles.value}>{user?.email || "Not set"}</Text>
+              <Text style={styles.value}>{user?.email || "Não definido"}</Text>
             </View>
           </View>
-
-          {/* <View style={styles.infoItem}>
-            <Phone size={20} color={colors.primary} />
-            <View style={styles.infoContent}>
-              <Text style={styles.label}>Phone Number</Text>
-              <Text style={styles.value}>{user?.phone || 'Not set'}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.infoItem}>
-            <MapPin size={20} color={colors.primary} />
-            <View style={styles.infoContent}>
-              <Text style={styles.label}>Address</Text>
-              <Text style={styles.value}>{user?.address || 'Not set'}</Text>
-            </View> 
-          </View>*/}
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingTop: 32,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
-  section: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  infoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  infoContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  label: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  value: {
-    fontSize: 16,
-    color: colors.text,
-    fontWeight: "500",
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.default,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    content: {
+      padding: theme.spacing.lg,
+    },
+    section: {
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      paddingHorizontal: theme.spacing.lg,
+    },
+    infoItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: theme.spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    infoContent: {
+      marginLeft: theme.spacing.md,
+      flex: 1,
+    },
+    label: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginBottom: 4,
+    },
+    value: {
+      fontSize: 16,
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+  });

@@ -1,41 +1,30 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
-import { useFonts } from "expo-font";
+// import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { DarkTheme, DefaultTheme } from "@react-navigation/native";
+// import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
-import { useEffect } from "react";
-import { useColorScheme } from "react-native";
+import { useEffect, useState } from "react";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NotificationsProvider } from "@/hooks/useNotifications";
+import { ThemeProvider } from "@/providers/themeProvider";
 
 export const unstable_settings = {
   initialRouteName: "splash",
 };
 
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    ...FontAwesome.font,
-  });
-
-  const colorScheme = useColorScheme();
+  const [isThemeReady, setIsThemeReady] = useState(false);
 
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync().catch(console.error);
+    if (isThemeReady) {
+      SplashScreen.hideAsync();
     }
-  }, [loaded]);
-
-  if (!loaded) return null;
+  }, [isThemeReady]);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider onThemeLoaded={() => setIsThemeReady(true)}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NotificationsProvider>
           <Stack screenOptions={{ headerShown: false }}>

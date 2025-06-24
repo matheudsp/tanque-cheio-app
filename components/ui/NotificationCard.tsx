@@ -1,42 +1,53 @@
 // src/components/ui/NotificationCard.tsx
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNotificationController } from 'react-native-notificated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/constants/colors';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNotificationController } from 'react-native-notificated';
 
-// Interface para as propriedades do nosso componente de notificação
+import { useTheme } from '@/providers/themeProvider';
+import { useStylesWithTheme } from '@/hooks/useStylesWithTheme';
+import type { ThemeState } from '@/types/theme';
+
+// A interface de props permanece a mesma.
 export interface NotificationCardProps {
   title: string;
   description: string;
   type: 'success' | 'error' | 'info' | 'warning';
 }
 
-// Mapeamento de tipos para cores e ícones para fácil customização
-const notificationStyles = {
+
+const getNotificationTypeStyles = (theme: ThemeState) => ({
   success: {
     icon: 'checkmark-circle' as const,
-    color: colors.success,
+    color: theme.colors.success,
   },
   error: {
     icon: 'close-circle' as const,
-    color: colors.error,
+    color: theme.colors.error,
   },
   info: {
     icon: 'information-circle' as const,
-    color: colors.primary,
+    color: theme.colors.info,
   },
   warning: {
     icon: 'warning' as const,
-    color: colors.warning,
+    color: theme.colors.warning,
   },
-};
+});
 
-export const NotificationCard = ({ title, description, type }: NotificationCardProps) => {
-  // Hook da biblioteca para controlar a notificação (ex: fechar)
+export const NotificationCard = ({
+  title,
+  description,
+  type,
+}: NotificationCardProps) => {
+  
   const { remove } = useNotificationController();
-  const styleConfig = notificationStyles[type];
+  const { themeState } = useTheme();
+  const styles = useStylesWithTheme(getStyles);
+
+  
+  const styleConfig = getNotificationTypeStyles(themeState)[type];
 
   return (
     <View style={[styles.container, { borderLeftColor: styleConfig.color }]}>
@@ -48,44 +59,48 @@ export const NotificationCard = ({ title, description, type }: NotificationCardP
         <Text style={styles.description}>{description}</Text>
       </View>
       <TouchableOpacity onPress={() => remove()} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color={colors.textSecondary} />
+        
+        <Ionicons
+          name="close"
+          size={24}
+          color={themeState.colors.text.secondary}
+        />
       </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 12,
-    marginHorizontal: 16,
-    borderLeftWidth: 5,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  iconContainer: {
-    marginRight: 12,
-  },
-  contentContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  description: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  closeButton: {
-    padding: 4,
-  },
-});
+
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background.paper, 
+      borderRadius: theme.borderRadius.medium, 
+      padding: theme.spacing.md,
+      marginHorizontal: theme.spacing.lg,
+      borderLeftWidth: 5,
+      
+      ...theme.shadows.shadowMd,
+    },
+    iconContainer: {
+      marginRight: theme.spacing.md,
+    },
+    contentContainer: {
+      flex: 1,
+      marginRight: theme.spacing.md,
+    },
+    title: {
+      fontSize: theme.typography.fontSize.medium,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.text.primary, 
+    },
+    description: {
+      fontSize: theme.typography.fontSize.small,
+      color: theme.colors.text.secondary,
+    },
+    closeButton: {
+      padding: theme.spacing.xs,
+    },
+  });

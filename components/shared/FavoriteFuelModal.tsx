@@ -1,28 +1,31 @@
-import React, { useState, useEffect, useCallback } from "react";
+import * as Haptics from "expo-haptics";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Modal,
-  TouchableOpacity,
-  View,
-  Text,
+  ActivityIndicator,
+  Dimensions,
   FlatList,
+  Modal,
+  SafeAreaView,
   StyleSheet,
   Switch,
-  ActivityIndicator,
-  SafeAreaView,
-  Dimensions,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import type { GasStation } from "@/types/gas-stations";
-import { colors } from "@/constants/colors";
-import { useFavoriteStore } from "@/store/favoriteStore";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  useSharedValue,
+  runOnJS,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
   withTiming,
-  runOnJS,
 } from "react-native-reanimated";
-import * as Haptics from "expo-haptics";
+
+import { useFavoriteStore } from "@/store/favoriteStore";
+import { useTheme } from "@/providers/themeProvider";
+import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { ThemeState } from "@/types/theme";
+import type { GasStation } from "@/types/gas-stations";
 
 interface FavoriteFuelModalProps {
   isVisible: boolean;
@@ -38,7 +41,8 @@ export const FavoriteFuelModal = ({
   onClose,
   station,
 }: FavoriteFuelModalProps) => {
-  if (!station) return null;
+  const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   const {
     updateFavoritesInBulk,
@@ -52,14 +56,18 @@ export const FavoriteFuelModal = ({
   useEffect(() => {
     if (isVisible && station) {
       translateY.value = withSpring(0, { damping: 15 });
-
       fetchFavoritesByStation(station.id);
     }
-  }, [isVisible, station, fetchFavoritesByStation]);
+  }, [isVisible, station, fetchFavoritesByStation, translateY]);
 
   useEffect(() => {
     setLocalSelection(stationSpecificFavorites);
   }, [stationSpecificFavorites]);
+
+  const handleClose = useCallback(() => {
+    translateY.value = withTiming(MODAL_HEIGHT, { duration: 250 });
+    runOnJS(onClose)();
+  }, [onClose, translateY]);
 
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -67,8 +75,7 @@ export const FavoriteFuelModal = ({
     })
     .onEnd(() => {
       if (translateY.value > CLOSE_THRESHOLD) {
-        translateY.value = withTiming(MODAL_HEIGHT, { duration: 250 });
-        runOnJS(onClose)();
+        handleClose();
       } else {
         translateY.value = withSpring(0, { damping: 15 });
       }
@@ -95,7 +102,6 @@ export const FavoriteFuelModal = ({
     if (!station) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Compara o estado inicial com a seleção local para determinar o que mudou
     const productsToAdd = [...localSelection].filter(
       (id) => !stationSpecificFavorites.has(id)
     );
@@ -103,19 +109,18 @@ export const FavoriteFuelModal = ({
       (id) => !localSelection.has(id)
     );
 
-    // Só chama a API se houver mudanças
     if (productsToAdd.length > 0 || productsToRemove.length > 0) {
       await updateFavoritesInBulk(station.id, productsToAdd, productsToRemove);
     }
 
-    runOnJS(onClose)(); // A função de fechar precisa ser chamada via runOnJS
+    handleClose();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [
     station?.id,
     localSelection,
     stationSpecificFavorites,
     updateFavoritesInBulk,
-    onClose,
+    handleClose,
   ]);
 
   const renderFuelItem = useCallback(
@@ -123,188 +128,203 @@ export const FavoriteFuelModal = ({
       <View style={styles.fuelItem}>
         <Text style={styles.fuelName}>{item.product_name}</Text>
         <Switch
-          trackColor={{ false: "#E9E9EA", true: colors.primary }}
-          thumbColor={colors.white}
+          trackColor={{
+            false: themeState.colors.divider,
+            true: themeState.colors.primary.main,
+          }}
+          thumbColor={themeState.colors.background.paper}
           onValueChange={() => handleToggleSwitch(item.product_id)}
-          value={localSelection.has(item.product_id)} // Usa a seleção local
+          value={localSelection.has(item.product_id)}
           style={styles.switch}
-          disabled={isLoading} // Desabilita durante o carregamento inicial
+          disabled={isLoading}
         />
       </View>
     ),
-    [localSelection, handleToggleSwitch, isLoading]
+    [localSelection, handleToggleSwitch, isLoading, styles, themeState]
   );
 
-  // --- RENDERIZAÇÃO DO COMPONENTE ---
+  if (!station) {
+    return null;
+  }
 
   return (
-    <Modal transparent={true} visible={isVisible} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <GestureDetector gesture={panGesture}>
-          <Animated.View style={[styles.modalContainer, animatedStyle]}>
-            <SafeAreaView style={{ flex: 1 }}>
-              <View style={styles.header}>
-                <View style={styles.headerAction} />
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                  Gerenciar Alertas
+    <Modal transparent={true} visible={isVisible} onRequestClose={handleClose}>
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={handleClose}
+      >
+        <TouchableOpacity activeOpacity={1}>
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.modalContainer, animatedStyle]}>
+              <SafeAreaView style={{ flex: 1 }}>
+                <View style={styles.header}>
+                  <View style={styles.headerAction} />
+                  <Text style={styles.headerTitle} numberOfLines={1}>
+                    Gerenciar Alertas
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleClose}
+                    disabled={isLoading}
+                    style={styles.headerAction}
+                  >
+                    <Text style={styles.headerCloseText}>Fechar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.explanatoryText}>
+                  Ative os combustíveis que você deseja seguir para receber
+                  alertas sobre os preços.
                 </Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  disabled={isLoading}
-                  style={styles.headerAction}
-                >
-                  <Text style={styles.headerCloseText}>Fechar</Text>
-                </TouchableOpacity>
-              </View>
 
-              <Text style={styles.explanatoryText}>
-                Ative os combustíveis que você deseja seguir para receber
-                alertas sobre os preços.
-              </Text>
-
-              <View style={styles.listWrapper}>
-                {isLoading ? (
-                  <ActivityIndicator
-                    size="large"
-                    color={colors.primary}
-                    style={{ marginTop: 40 }}
-                  />
-                ) : (
-                  <FlatList
-                    data={station.fuel_prices}
-                    renderItem={renderFuelItem}
-                    keyExtractor={(item) => item.product_id}
-                    ItemSeparatorComponent={() => (
-                      <View style={styles.separator} />
-                    )}
-                    style={styles.flatList}
-                  />
-                )}
-              </View>
-
-              <View style={styles.footer}>
-                <TouchableOpacity
-                  style={[styles.saveButton, isLoading && styles.savingButton]}
-                  onPress={handleSaveChanges}
-                  disabled={isLoading}
-                >
+                <View style={styles.listWrapper}>
                   {isLoading ? (
-                    <ActivityIndicator color={colors.white} />
+                    <ActivityIndicator
+                      size="large"
+                      color={themeState.colors.primary.main}
+                      style={{ marginTop: 40 }}
+                    />
                   ) : (
-                    <Text style={styles.saveButtonText}>Salvar</Text>
+                    <FlatList
+                      data={station.fuel_prices}
+                      renderItem={renderFuelItem}
+                      keyExtractor={(item) => item.product_id}
+                      ItemSeparatorComponent={() => (
+                        <View style={styles.separator} />
+                      )}
+                      style={styles.flatList}
+                    />
                   )}
-                </TouchableOpacity>
-              </View>
-            </SafeAreaView>
-          </Animated.View>
-        </GestureDetector>
-      </View>
+                </View>
+
+                <View style={styles.footer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.saveButton,
+                      isLoading && styles.savingButton,
+                    ]}
+                    onPress={handleSaveChanges}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator
+                        color={themeState.colors.primary.text}
+                      />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Salvar</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </SafeAreaView>
+            </Animated.View>
+          </GestureDetector>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 };
 
-// ESTILOS (Os estilos permanecem os mesmos do arquivo original)
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "flex-end",
-  },
-  modalContainer: {
-    height: MODAL_HEIGHT,
-    backgroundColor: "#F2F2F7",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    height: 56,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(0, 0, 0, 0.2)",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#000",
-    marginHorizontal: 16,
-  },
-  headerAction: {
-    width: 64,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerCloseText: {
-    fontWeight: "600",
-    color: colors.primary,
-    fontSize: 16,
-  },
-
-  explanatoryText: {
-    fontSize: 13,
-    color: "#6D6D72",
-    textAlign: "center",
-    paddingHorizontal: 24,
-    marginTop: 20,
-    marginBottom: 16,
-    lineHeight: 18,
-  },
-  listWrapper: {
-    flex: 1,
-    marginHorizontal: 16,
-  },
-  flatList: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 0.5,
-    borderColor: "rgba(0, 0, 0, 0.1)",
-  },
-  fuelItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingLeft: 16,
-    paddingRight: 12,
-    height: 48,
-    backgroundColor: "#FFFFFF",
-  },
-  fuelName: {
-    fontSize: 17,
-    color: "#000",
-  },
-  switch: {
-    transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
-  },
-  separator: {
-    height: 0.5,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    marginLeft: 16,
-  },
-  footer: {
-    padding: 16,
-    paddingTop: 12,
-  },
-  saveButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  savingButton: {
-    backgroundColor: colors.primary + "B3",
-  },
-  saveButtonText: {
-    color: colors.white,
-    fontSize: 17,
-    fontWeight: "600",
-  },
-});
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.4)",
+      justifyContent: "flex-end",
+    },
+    modalContainer: {
+      height: MODAL_HEIGHT,
+      backgroundColor: theme.colors.background.default,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      shadowColor: theme.colors.shadow,
+      shadowOffset: { width: 0, height: -10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.lg,
+      height: 56,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
+    headerTitle: {
+      flex: 1,
+      textAlign: "center",
+      fontSize: 17,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.text.primary,
+      marginHorizontal: theme.spacing.lg,
+    },
+    headerAction: {
+      width: 64,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    headerCloseText: {
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.primary.main,
+      fontSize: 16,
+    },
+    explanatoryText: {
+      fontSize: 13,
+      color: theme.colors.text.secondary,
+      textAlign: "center",
+      paddingHorizontal: theme.spacing.xl,
+      marginTop: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
+      lineHeight: 18,
+    },
+    listWrapper: {
+      flex: 1,
+      marginHorizontal: theme.spacing.lg,
+    },
+    flatList: {
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    fuelItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingLeft: theme.spacing.lg,
+      paddingRight: theme.spacing.md,
+      height: 48,
+      backgroundColor: theme.colors.background.paper,
+    },
+    fuelName: {
+      fontSize: 17,
+      color: theme.colors.text.primary,
+    },
+    switch: {
+      transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
+    },
+    separator: {
+      height: 1,
+      backgroundColor: theme.colors.divider,
+      marginLeft: theme.spacing.lg,
+    },
+    footer: {
+      padding: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+    },
+    saveButton: {
+      backgroundColor: theme.colors.button.primary,
+      borderRadius: theme.borderRadius.large,
+      paddingVertical: theme.spacing.lg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    savingButton: {
+      backgroundColor: theme.colors.button.disabled,
+    },
+    saveButtonText: {
+      color: theme.colors.primary.text,
+      fontSize: 17,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+  });
