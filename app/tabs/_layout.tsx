@@ -48,7 +48,7 @@ export default function TabLayout() {
           left: themeState.spacing.sm,
           right: themeState.spacing.sm,
           marginHorizontal: themeState.spacing.sm,
-          bottom: themeState.spacing.lg,
+          bottom: themeState.spacing["2xl"],
           backgroundColor: themeState.colors.background.paper,
           borderRadius: 32,
           height: 72,
@@ -71,7 +71,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Início",
           tabBarIcon: ({ color }) => <Home size={24} color={color} />,
         }}
       />

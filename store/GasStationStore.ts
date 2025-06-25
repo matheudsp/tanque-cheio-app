@@ -7,7 +7,7 @@ import { gasStationsAPI } from "@/services/gas-station.service";
 import type { ProductPriceHistory } from "@/types/gas-stations";
 
 interface GasStationState {
-  
+  recentlyViewedStations: GasStation[];
   nearbyStations: GasStation[];
   priceHistory: ProductPriceHistory[];
   isDetailsLoading: boolean;
@@ -35,9 +35,8 @@ interface GasStationState {
   error: string | null;
 
   // Actions
-
+  addRecentlyViewedStation: (station: GasStation) => void;
   fetchNearbyStations: (params: NearbyStationsParams) => Promise<void>;
-  
   fetchStationDetails: (gas_station_id: string) => Promise<void>;
   fetchPriceHistory: (
     gas_station_id: string,
@@ -52,7 +51,7 @@ interface GasStationState {
 export const useGasStationStore = create<GasStationState>()(
   persist(
     (set, get) => ({
-    
+      recentlyViewedStations: [],
       nearbyStations: [],
       selectedStation: null,
       priceHistory: [],
@@ -65,7 +64,18 @@ export const useGasStationStore = create<GasStationState>()(
       isLoading: false,
       error: null,
 
-     
+      addRecentlyViewedStation: (stationToAdd) => {
+        const { recentlyViewedStations } = get();
+        // Remove a estação se ela já existir para evitar duplicatas e movê-la para o topo.
+        const filteredStations = recentlyViewedStations.filter(
+          (station) => station.id !== stationToAdd.id
+        );
+        // Adiciona a nova estação ao início da lista.
+        const newHistory = [stationToAdd, ...filteredStations];
+        // Limita o histórico a 10 itens para não sobrecarregar.
+        const limitedHistory = newHistory.slice(0, 5);
+        set({ recentlyViewedStations: limitedHistory });
+      },
 
       fetchNearbyStations: async (params: NearbyStationsParams) => {
         set({ isLoading: true, error: null, searchParams: params });
@@ -92,11 +102,14 @@ export const useGasStationStore = create<GasStationState>()(
       fetchStationDetails: async (gas_station_id: string) => {
         set({ isDetailsLoading: true, error: null });
         try {
-          const station = await gasStationsAPI.getStationDetails(gas_station_id);
+          const station = await gasStationsAPI.getStationDetails(
+            gas_station_id
+          );
           set({
             selectedStation: station,
             isDetailsLoading: false,
           });
+          get().addRecentlyViewedStation(station);
         } catch (error) {
           console.error("Error fetching station details:", error);
           set({
@@ -192,6 +205,7 @@ export const useGasStationStore = create<GasStationState>()(
         fuelTypes: state.fuelTypes,
         userLocation: state.userLocation,
         searchParams: state.searchParams,
+        recentlyViewedStations: state.recentlyViewedStations,
       }),
     }
   )

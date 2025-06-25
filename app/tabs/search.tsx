@@ -1,26 +1,25 @@
-import { Filter, Fuel } from "lucide-react-native";
+import { Filter } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  RefreshControl,
+  ActivityIndicator,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { Region } from "react-native-maps";
 
 import { ActiveFilters } from "@/components/ActiveFilters";
-import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
-import { GasStationCard } from "@/components/shared/GasStationCard";
 import { FiltersModal } from "@/components/shared/FiltersModal";
+import { StationListView } from "@/components/search/StationListView";
+import { StationMapView } from "@/components/search/StationMapView";
+import { ViewModeToggle } from "@/components/search/ViewModeToggle";
 import { useGasStationStore } from "@/store/gasStationStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import type { GasStation, NearbyStationsParams } from "@/types";
-import { EmptyState } from "@/components/ui/EmptyState";
 
 export default function SearchScreen() {
   const {
@@ -37,31 +36,41 @@ export default function SearchScreen() {
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
 
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  
+  // Estado dos filtros
   const [selectedFuelType, setSelectedFuelType] = useState("");
-  const [radius, setRadius] = useState(50);
-  const [sort, setSort] = useState<
-    "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc"
-  >("distanceAsc");
+  const [radius, setRadius] = useState(10); // Raio inicial menor
+  const [sort, setSort] = useState<"distanceAsc" | "priceAsc">("distanceAsc");
+
+  // Estado para o mapa
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedFuelType) count++;
-    if (sort) count++;
-    if (radius) count++;
+    if (sort !== "distanceAsc") count++;
+    if (radius !== 10) count++;
     return count;
   }, [selectedFuelType, sort, radius]);
 
   useEffect(() => {
     fetchFuelTypes();
-  }, [fetchFuelTypes]);
+    // Realiza a busca inicial quando a localização do usuário estiver disponível
+    if (userLocation) {
+      handleSearchWithFilters();
+    }
+  }, [userLocation]);
 
   const handleSearchWithFilters = (
     overrideParams?: Partial<NearbyStationsParams>
   ) => {
-    if (!userLocation) {
-      return;
-    }
+    if (!userLocation) return;
+
+    // Limpa a seleção de posto ao fazer nova busca
+    setSelectedStationId(null); 
+
     const params: NearbyStationsParams = {
       lat: userLocation.latitude,
       lng: userLocation.longitude,
@@ -72,39 +81,60 @@ export default function SearchScreen() {
     };
     fetchNearbyStations(params);
   };
+  
+  const handleSearchInMapArea = (region: Region) => {
+     if (!userLocation) return;
+     
+     const radiusInKm = Math.max(
+        2, // Mínimo de 2km
+        Math.round((region.latitudeDelta * 111) / 2) // Raio aproximado da área visível
+      );
+
+     handleSearchWithFilters({
+        lat: region.latitude,
+        lng: region.longitude,
+        radius: radiusInKm
+     });
+  }
 
   const handleRefresh = () => {
     clearError();
     handleSearchWithFilters();
   };
-
-  const clearFilters = () => {
-    setSelectedFuelType("");
-    setSort("distanceAsc");
-    setRadius(50);
-  };
+  
+  const handleSelectStation = (station: GasStation | null) => {
+    if (!station) {
+        setSelectedStationId(null);
+        return;
+    }
+    setSelectedStationId(station.id);
+  }
 
   const applyFiltersAndSearch = () => {
     setShowFiltersModal(false);
     handleSearchWithFilters();
   };
 
-  const renderStation = ({ item }: { item: GasStation }) => (
-    <GasStationCard station={item} filteredFuel={selectedFuelType} />
-  );
+  if (!userLocation) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={themeState.colors.primary.main} />
+        <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.headerContainer}>
         <View style={styles.titleContainer}>
-          <Fuel size={22} color={themeState.colors.text.secondary} />
-          <Text style={styles.titleText}>Próximos a você</Text>
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </View>
         <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setShowFiltersModal(true)}
         >
-          <Filter size={20} color={themeState.colors.primary.main} />
+          <Filter size={24} color={themeState.colors.primary.main} />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -118,65 +148,45 @@ export default function SearchScreen() {
         sort={sort}
         radius={radius}
         onClearFuel={() => {
-          const newFuel = "";
-          setSelectedFuelType(newFuel);
-          handleSearchWithFilters({ product: newFuel || undefined });
+          setSelectedFuelType("");
+          handleSearchWithFilters({ product: undefined });
         }}
         onClearSort={() => {
-          const newSort = "distanceAsc";
-          setSort(newSort);
-          handleSearchWithFilters({ sort: newSort });
+          setSort("distanceAsc");
+          handleSearchWithFilters({ sort: "distanceAsc" });
         }}
         onClearRadius={() => {
-          const newRadius = 50;
-          setRadius(newRadius);
-          handleSearchWithFilters({ radius: newRadius });
+          setRadius(10);
+          handleSearchWithFilters({ radius: 10 });
         }}
       />
-
+      
       {error && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
 
-      {isLoading && (
-        <FlatList
-          data={Array.from({ length: 5 }, (_, i) => i)}
-          renderItem={() => <GasStationCardSkeleton />}
-          keyExtractor={(item) => item.toString()}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-      {!isLoading && (
-        <FlatList
-          data={nearbyStations}
-          renderItem={renderStation}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={handleRefresh}
-              colors={[themeState.colors.secondary.main]}
-              tintColor={themeState.colors.secondary.main}
-            />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              lottieAnimation={require("@/assets/animations/sad-circle.json")}
-              title="Nenhum posto encontrado"
-              description="Tente ajustar os filtros ou a sua busca."
-              actionLabel="Alterar filtros"
-              onAction={() => {
-                setShowFiltersModal(true);
-              }}
-            />
-          }
-        />
-      )}
+      <View style={styles.content}>
+        {viewMode === "list" ? (
+          <StationListView
+            stations={nearbyStations}
+            isLoading={isLoading}
+            onRefresh={handleRefresh}
+            filteredFuel={selectedFuelType}
+            onShowFilters={() => setShowFiltersModal(true)}
+          />
+        ) : (
+          <StationMapView 
+            stations={nearbyStations}
+            isLoading={isLoading}
+            userLocation={userLocation}
+            onSelectStation={handleSelectStation}
+            selectedStationId={selectedStationId}
+            onSearchInArea={handleSearchInMapArea}
+          />
+        )}
+      </View>
 
       <FiltersModal
         visible={showFiltersModal}
@@ -190,12 +200,14 @@ export default function SearchScreen() {
         setRadius={setRadius}
         onApply={applyFiltersAndSearch}
         onClear={() => {
-          clearFilters();
+          setSelectedFuelType("");
+          setSort("distanceAsc");
+          setRadius(10);
           setShowFiltersModal(false);
           handleSearchWithFilters({
             product: undefined,
             sort: "distanceAsc",
-            radius: 50,
+            radius: 10,
           });
         }}
         activeFilterCount={activeFilterCount}
@@ -210,10 +222,19 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       flex: 1,
       backgroundColor: theme.colors.background.default,
     },
+    centerContent: {
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    loadingText: {
+      marginTop: theme.spacing.sm,
+      fontSize: 16,
+      color: theme.colors.text.secondary,
+    },
     headerContainer: {
       flexDirection: "row",
       paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
       alignItems: "center",
       backgroundColor: theme.colors.background.default,
       borderBottomWidth: 1,
@@ -223,12 +244,6 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
-    },
-    titleText: {
-      marginLeft: theme.spacing.md,
-      fontSize: 20,
-      fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
     },
     filterButton: {
       padding: theme.spacing.sm,
@@ -258,28 +273,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     errorText: {
       color: theme.colors.primary.text,
     },
-    listContainer: {
-      padding: theme.spacing.lg,
-      paddingBottom: 80,
-    },
-    emptyContainer: {
+    content: {
       flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      padding: theme.spacing.xl,
-      marginTop: "20%",
-    },
-    emptyText: {
-      fontSize: 18,
-      fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
-      textAlign: "center",
-      marginTop: theme.spacing.md,
-    },
-    emptySubtext: {
-      fontSize: 14,
-      color: theme.colors.text.secondary,
-      textAlign: "center",
-      marginTop: theme.spacing.xs,
-    },
+    }
   });
