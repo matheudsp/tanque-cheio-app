@@ -35,6 +35,8 @@ import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import { getPeriodDates, type Period } from "@/utils/getPeriodDate";
+import { Loading } from "@/components/ui/Loading";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 const HEADER_MAX_HEIGHT = 360;
 
@@ -171,37 +173,27 @@ export default function GasStationDetailScreen() {
   };
 
   if (isDetailsLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator
-          size="large"
-          color={themeState.colors.primary.main}
-        />
-      </View>
-    );
+    return <Loading />;
   }
 
-  if (error) {
+  if (error || !selectedStation) {
     return (
-      <View style={styles.centered}>
-        <Ionicons
-          name="cloud-offline-outline"
-          size={48}
-          color={themeState.colors.error}
-        />
-        <Text style={styles.errorTitle}>Ocorreu um Erro</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <Button
-          title="Tentar Novamente"
-          onPress={handleRetry}
-          color={themeState.colors.primary.main}
-        />
-      </View>
+      // <View style={styles.centered}>
+      //   <Ionicons
+      //     name="cloud-offline-outline"
+      //     size={48}
+      //     color={themeState.colors.error}
+      //   />
+      //   <Text style={styles.errorTitle}>Ocorreu um Erro</Text>
+      //   <Text style={styles.errorText}>{error}</Text>
+      //   <Button
+      //     title="Tentar Novamente"
+      //     onPress={handleRetry}
+      //     color={themeState.colors.primary.main}
+      //   />
+      // </View>
+      <ErrorState onRetry={handleRetry} />
     );
-  }
-
-  if (!selectedStation) {
-    return null;
   }
 
   return (
@@ -390,6 +382,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       justifyContent: "center",
       alignItems: "center",
       padding: theme.spacing.xl,
+      backgroundColor: theme.colors.background.default,
     },
     errorTitle: {
       fontSize: 22,

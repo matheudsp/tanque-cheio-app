@@ -1,6 +1,3 @@
-// import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { DarkTheme, DefaultTheme } from "@react-navigation/native";
-// import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -9,7 +6,7 @@ import { NotificationsProvider } from "@/hooks/useNotifications";
 import { ThemeProvider } from "@/providers/themeProvider";
 
 export const unstable_settings = {
-  initialRouteName: "splash",
+  initialRouteName: "intro",
 };
 
 SplashScreen.preventAutoHideAsync();
@@ -37,7 +34,10 @@ export default function RootLayout() {
                 gestureEnabled: false,
               }}
             />
-            <Stack.Screen name="gas-station/[id]" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="gas-station/[id]"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="profile" options={{ headerShown: false }} />
           </Stack>
         </NotificationsProvider>
