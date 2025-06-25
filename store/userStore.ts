@@ -11,9 +11,10 @@ interface UserState {
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  isPremium: boolean;
 
   // Actions
-  login: (email: string, password:string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterUserDto) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
@@ -21,10 +22,10 @@ interface UserState {
   updatePreferences: (preferences: User["preferences"]) => Promise<void>;
   checkAuthStatus: () => Promise<boolean>;
   refreshToken: () => Promise<boolean>;
+  setIsPremium: (isPremium: boolean) => void;
 }
 
 const convertLoginResponseToUser = (loginResponse: LoginResponseDto): User => {
-  
   const { user, role } = loginResponse.data;
 
   return {
@@ -45,6 +46,11 @@ export const useUserStore = create<UserState>()(
       isLoading: false,
       error: null,
       isAuthenticated: false,
+      isPremium: false,
+
+      setIsPremium: (isPremium: boolean) => {
+        set({ isPremium });
+      },
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -73,11 +79,13 @@ export const useUserStore = create<UserState>()(
 
           console.log("Login bem-sucedido:", userData.email);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "E-mail ou senha inválidos";
-          
-        
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "E-mail ou senha inválidos";
+
           notificationService.error({
-            title: 'Falha no Login',
+            title: "Falha no Login",
             description: errorMessage,
           });
 
@@ -92,7 +100,6 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      
       register: async (userData: RegisterUserDto) => {
         set({ isLoading: true, error: null });
         try {
@@ -119,10 +126,13 @@ export const useUserStore = create<UserState>()(
 
           console.log("Registration successful:", newUser.email);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Não foi possível criar a conta. Tente novamente.";
-          
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Não foi possível criar a conta. Tente novamente.";
+
           notificationService.error({
-            title: 'Falha no Cadastro',
+            title: "Falha no Cadastro",
             description: errorMessage,
           });
 
@@ -158,6 +168,7 @@ export const useUserStore = create<UserState>()(
             isAuthenticated: false,
             isLoading: false,
             error: null,
+            isPremium: false,
           });
         }
       },
@@ -313,6 +324,7 @@ export const useUserStore = create<UserState>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        isPremium: state.isPremium,
       }),
     }
   )

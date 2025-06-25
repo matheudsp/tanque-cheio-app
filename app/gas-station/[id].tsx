@@ -4,8 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Button,
   Linking,
   Platform,
   StyleSheet,
@@ -37,6 +35,8 @@ import type { ThemeState } from "@/types/theme";
 import { getPeriodDates, type Period } from "@/utils/getPeriodDate";
 import { Loading } from "@/components/ui/Loading";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useUserStore } from "@/store/userStore";
+import { PaywallModal } from "@/components/shared/PaywallModal";
 
 const HEADER_MAX_HEIGHT = 360;
 
@@ -53,7 +53,7 @@ export default function GasStationDetailScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("month");
   const [selectedProduct, setSelectedProduct] = useState<string>("TODOS");
   const [isFavoriteModalVisible, setFavoriteModalVisible] = useState(false);
-
+  const [isPaywallVisible, setPaywallVisible] = useState(false);
   const {
     selectedStation,
     priceHistory,
@@ -65,7 +65,7 @@ export default function GasStationDetailScreen() {
     clearSelectedStation,
     clearError,
   } = useGasStationStore();
-
+  const { isPremium } = useUserStore(); // Obter o status premium
   const { fetchFavorites } = useFavoriteStore();
 
   useEffect(() => {
@@ -73,8 +73,12 @@ export default function GasStationDetailScreen() {
   }, [fetchFavorites]);
 
   const handleOpenFavoriteModal = () => {
-    if (selectedStation?.fuel_prices?.length) {
-      setFavoriteModalVisible(true);
+    if (isPremium) {
+      if (selectedStation?.fuel_prices?.length) {
+        setFavoriteModalVisible(true);
+      }
+    } else {
+      setPaywallVisible(true); // If not premium, open Paywall
     }
   };
 
@@ -202,6 +206,10 @@ export default function GasStationDetailScreen() {
         isVisible={isFavoriteModalVisible}
         onClose={() => setFavoriteModalVisible(false)}
         station={selectedStation}
+      />
+      <PaywallModal
+        isVisible={isPaywallVisible}
+        onClose={() => setPaywallVisible(false)}
       />
       <Animated.ScrollView
         onScroll={scrollHandler}

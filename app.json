@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tanquecheio.app"
+      "bundleIdentifier": "com.matheudsp.tanquecheio"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/playstore.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.tanquecheio.app"
+      "package": "com.matheudsp.tanquecheio"
     },
     "plugins": [
       "expo-router",
@@ -30,6 +30,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4b089e2b-ba45-45f3-83f5-e3f8e1d237b5"
+      }
+    },
+    "owner": "matheudsp"
   }
 }
