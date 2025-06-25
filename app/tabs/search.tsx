@@ -215,9 +215,9 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       alignItems: "center",
-      backgroundColor: theme.colors.background.paper,
+      backgroundColor: theme.colors.background.default,
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.divider,
+      borderBottomColor: theme.colors.border,
     },
     titleContainer: {
       flex: 1,

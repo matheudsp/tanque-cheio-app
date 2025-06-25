@@ -1,103 +1,126 @@
-import { ColorTheme, Theme } from '@/types/theme';
+import { ColorTheme, Theme } from "@/types/theme";
 
-// Paleta de cores moderna e customizável
+// =================================================================================
+// PALETA DE CORES "HORIZONTE DIGITAL" PARA O APP TANQUE-CHEIO
+//
+// CONCEITO:
+// Uma fusão entre a jornada na estrada e a tecnologia. O azul do céu e o
+// laranja do sol no horizonte criam uma paleta confiável e energética,
+// ideal para um app de navegação e consulta de preços.
+//
+// - PRIMÁRIA (Azul Céu Digital): Representa confiança, inteligência e o caminho
+//   a ser percorrido. É a base para a navegação e ações principais.
+// - SECUNDÁRIA (Laranja Horizonte): Cor vibrante para destacar o mais
+//   importante: preços, economia e alertas. Captura a atenção do usuário.
+// - UI/UX: Foco em consistência, acessibilidade (WCAG) e hierarquia visual clara.
+// =================================================================================
+
 export const colors: Record<Theme, Readonly<ColorTheme>> = {
+  // --- TEMA CLARO ---
   [Theme.LIGHT]: {
-    // COR PRIMÁRIA: Azul confiável e tecnológico
+    // COR PRIMÁRIA: Azul moderno e acessível.
     primary: {
-      main: '#3B82F6', // Azul padrão, excelente para UI
-      light: '#60A5FA',
-      dark: '#2563EB',
-      text: '#FFFFFF', // Texto branco para alto contraste
+      main: "#3B82F6", // Tailwind Blue 500
+      light: "#60A5FA",
+      dark: "#2563EB",
+      text: "#FFFFFF", // Texto branco para máximo contraste e legibilidade.
     },
-    // COR SECUNDÁRIA: Laranja energético para destaque
+    // COR SECUNDÁRIA: Laranja energético para destaque.
     secondary: {
-      main: '#F97316', // Laranja vibrante
-      light: '#FB923C',
-      dark: '#EA580C',
-      text: '#FFFFFF',
+      main: "#F97316", // Tailwind Orange 500
+      light: "#FB923C",
+      dark: "#EA580C",
+      text: "#FFFFFF", // Texto branco para máximo contraste.
     },
+    // FUNDOS: Tons neutros para focar no conteúdo.
     background: {
-      default: '#F9FAFB', // Fundo principal quase branco
-      paper: '#FFFFFF',   // Fundo de cards e modais
-      elevated: '#FFFFFF',
+      default: "#F8FAFC", // Fundo principal suave (Tailwind Slate 50)
+      paper: "#FFFFFF", // Cards e superfícies brancos para destaque.
+      elevated: "#FFFFFF",
     },
+    // TEXTOS: Cinzas escuros para conforto de leitura e hierarquia.
     text: {
-      primary: '#1F2937',   // Texto principal escuro
-      secondary: '#6B7280', // Texto secundário/cinza
-      disabled: '#9CA3AF',
-      hint: '#9CA3AF',
+      primary: "#0F172A", // Cinza-azulado escuro, mais sofisticado que preto (Slate 900)
+      secondary: "#64748B", // Tom médio para informações de apoio (Slate 500)
+      disabled: "#94A3B8", // (Slate 400)
+      hint: "#94A3B8",
     },
-    // Cor do botão primário reflete a cor primária
+    // BOTÕES: Cores consistentes com a paleta.
     button: {
-      primary: '#3B82F6',
-      secondary: '#F3F4F6',
-      disabled: '#E5E7EB',
-      text: '#FFFFFF',
+      primary: "#3B82F6", // Usa a cor primária diretamente para consistência.
+      secondary: "#E2E8F0", // Botão secundário neutro (Slate 200)
+      disabled: "#F1F5F9", // (Slate 100)
+      text: "#FFFFFF", // Texto do botão primário.
     },
-    border: '#E5E7EB',
-    divider: '#F3F4F6',
-    // Cores de feedback universais
-    error: '#EF4444',
-    warning: '#F59E0B',
-    info: '#0EA5E9',
-    success: '#10B981',
+    // OUTROS ELEMENTOS DE UI:
+    border: "#E2E8F0", // Borda sutil (Slate 200)
+    divider: "#F1F5F9", // Divisor quase invisível (Slate 100)
+    // CORES DE FEEDBACK: Vivas e universais.
+    error: "#EF4444", // (Red 500)
+    warning: "#F59E0B", // (Amber 500)
+    info: "#06B6D4", // Ciano para não competir com o primário (Cyan 500)
+    success: "#22C55E", // (Green 500)
+    // AÇÕES DO USUÁRIO:
     action: {
-      active: 'rgba(31, 41, 55, 0.54)',
-      hover: 'rgba(31, 41, 55, 0.04)',
-      selected: 'rgba(31, 41, 55, 0.08)',
-      disabled: 'rgba(31, 41, 55, 0.26)',
+      active: "rgba(59, 130, 246, 0.2)",
+      hover: "rgba(59, 130, 246, 0.08)",
+      selected: "rgba(59, 130, 246, 0.12)",
+      disabled: "rgba(15, 23, 42, 0.1)",
     },
-    shadow: 'rgba(0, 0, 0, 0.1)',
+    shadow: "rgba(15, 23, 42, 0.08)",
   },
+
   // --- TEMA ESCURO ---
   [Theme.DARK]: {
-    // COR PRIMÁRIA (MODO ESCURO): Azul mais claro para visibilidade
+    // COR PRIMÁRIA: Azul mais claro para se destacar no fundo escuro.
     primary: {
-      main: '#60A5FA',
-      light: '#93C5FD',
-      dark: '#3B82F6',
-      text: '#111827', // Texto escuro para contraste no botão azul claro
+      main: "#60A5FA", // Tailwind Blue 400
+      light: "#93C5FD",
+      dark: "#3B82F6",
+      text: "#FFFFFF", // Texto branco sempre, para máxima legibilidade.
     },
-    // COR SECUNDÁRIA (MODO ESCURO): Laranja mais claro
+    // COR SECUNDÁRIA: Laranja claro e vibrante.
     secondary: {
-      main: '#FB923C',
-      light: '#FDBA74',
-      dark: '#F97316',
-      text: '#431407', // Texto laranja bem escuro
+      main: "#FB923C", // Tailwind Orange 400
+      light: "#FDBA74",
+      dark: "#F97316",
+      text: "#FFFFFF", // Texto branco sempre.
     },
+    // FUNDOS: Tons de ardósia (azul-acinzentado) para um look tech.
     background: {
-      default: '#111827', // Fundo principal escuro
-      paper: '#1F2937',   // Fundo de cards escuro
-      elevated: '#374151',
+      default: "#0F172A", // Fundo principal azul-ardósia escuro (Slate 900)
+      paper: "#1E293B", // Fundo de cards (Slate 800)
+      elevated: "#293548",
     },
+    // TEXTOS: Brancos e cinzas claros para conforto visual.
     text: {
-      primary: '#F9FAFB',   // Texto principal claro
-      secondary: '#D1D5DB', // Texto secundário claro
-      disabled: '#6B7280',
-      hint: '#9CA3AF',
+      primary: "#F1F5F9", // Branco "quebrado", mais confortável (Slate 100)
+      secondary: "#94A3B8", // Cinza claro para informações secundárias (Slate 400)
+      disabled: "#475569", // (Slate 600)
+      hint: "#64748B",
     },
-    // Cor do botão primário para o modo escuro
+    // BOTÕES: Cores consistentes com a paleta escura.
     button: {
-      primary: '#60A5FA',
-      secondary: '#374151',
-      disabled: '#4B5563',
-      text: '#111827',
+      primary: "#60A5FA", // Usa a cor primária escura diretamente.
+      secondary: "#334155", // (Slate 700)
+      disabled: "#1E293B", // (Slate 800)
+      text: "#FFFFFF", // Texto branco no botão primário.
     },
-    border: '#374151',
-    divider: '#1F2937',
-    // Cores de feedback mais claras para o modo escuro
-    error: '#F87171',
-    warning: '#FBBF24',
-    info: '#38BDF8',
-    success: '#34D399',
+    border: "#475569", // ALTERADO: (Slate 600) Tom mais claro para uma borda visível.
+    divider: "#334155", // ALTERADO: (Slate 700) Agora visível sobre os fundos.
+    // CORES DE FEEDBACK: Claras para se destacar no escuro.
+    error: "#F87171", // (Red 400)
+    warning: "#FBBF24", // (Amber 400)
+    info: "#22D3EE", // (Cyan 400)
+    success: "#4ADE80", // (Green 400)
+    // AÇÕES DO USUÁRIO:
     action: {
-      active: 'rgba(249, 250, 251, 0.7)',
-      hover: 'rgba(249, 250, 251, 0.08)',
-      selected: 'rgba(249, 250, 251, 0.16)',
-      disabled: 'rgba(249, 250, 251, 0.3)',
+      active: "rgba(96, 165, 250, 0.25)",
+      hover: "rgba(96, 165, 250, 0.08)",
+      selected: "rgba(96, 165, 250, 0.16)",
+      disabled: "rgba(241, 245, 249, 0.15)",
     },
-    shadow: 'rgba(0, 0, 0, 0.5)',
+    shadow: "rgba(0, 0, 0, 0.3)",
   },
 };
 

@@ -29,12 +29,6 @@ const ShimmerPlaceholder = ({ style }: { style?: any }) => {
     };
   });
 
-  const shimmerColors = [
-    "transparent",
-    themeState.colors.action.hover,
-    "transparent",
-  ];
-
   return (
     <View style={[styles.placeholder, style]}>
       <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>

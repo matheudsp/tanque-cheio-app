@@ -37,7 +37,7 @@ export default function RootLayout() {
                 gestureEnabled: false,
               }}
             />
-            <Stack.Screen name="gas-station" options={{ headerShown: false }} />
+            <Stack.Screen name="gas-station/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="profile" options={{ headerShown: false }} />
           </Stack>
         </NotificationsProvider>

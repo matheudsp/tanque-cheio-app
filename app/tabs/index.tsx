@@ -28,6 +28,8 @@ import { useUserStore } from "@/store/userStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
 
 const { height, width } = Dimensions.get("window");
 
@@ -144,35 +146,6 @@ export default function HomeScreen() {
     }
   };
 
-  const renderEmptyList = () => {
-    if (isLoading) {
-      return (
-        <View style={styles.emptyContainer}>
-          <ActivityIndicator
-            size="large"
-            color={themeState.colors.primary.main}
-          />
-          <Text style={styles.loadingText}>Buscando postos...</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.emptyContainer}>
-        <Feather
-          name="map-pin"
-          size={40}
-          color={themeState.colors.text.secondary}
-        />
-        <Text style={styles.emptyText}>Nenhum posto encontrado</Text>
-        <Text style={styles.emptySubtext}>
-          Tente mover o mapa para outra área ou ajuste seus filtros.
-          {error ? `\nErro: ${error}` : ""}
-        </Text>
-      </View>
-    );
-  };
-
   const renderBottomSheetHeader = () => (
     <View style={styles.bottomSheetHeader}>
       <View>
@@ -277,7 +250,7 @@ export default function HomeScreen() {
             <Feather
               name="search"
               size={18}
-              color={themeState.colors.primary.text}
+              color={themeState.colors.primary.main}
             />
             <Text style={styles.searchAreaButtonText}>Buscar nesta área</Text>
           </TouchableOpacity>
@@ -305,27 +278,59 @@ export default function HomeScreen() {
           </View>
         )}
         backgroundStyle={{
-          backgroundColor: themeState.colors.background.paper,
+          backgroundColor: themeState.colors.background.default,
         }}
       >
-        <BottomSheetFlatList
-          data={nearbyStations}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderBottomSheetHeader}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => handleSelectStation(item)}
-              style={styles.cardContainer}
-            >
-              <GasStationCard
-                station={item}
-                isSelected={selectedStationId === item.id}
+        {isLoading && (
+          <BottomSheetFlatList
+            data={Array.from({ length: 5 }, (_, i) => i)}
+            keyExtractor={(item) => item.toString()}
+            renderItem={(
+              { item } 
+            ) => (
+              <TouchableOpacity style={styles.cardContainer} key={item}>
+                <GasStationCardSkeleton />
+              </TouchableOpacity>
+            )}
+            ListHeaderComponent={renderBottomSheetHeader}
+          />
+        )}
+        {!isLoading && (
+          <BottomSheetFlatList
+            data={nearbyStations}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={renderBottomSheetHeader}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => handleSelectStation(item)}
+                style={styles.cardContainer}
+              >
+                <GasStationCard
+                  station={item}
+                  isSelected={selectedStationId === item.id}
+                />
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              <EmptyState
+                icon={
+                  <Feather
+                    name="map-pin"
+                    size={40}
+                    color={themeState.colors.text.secondary}
+                  />
+                }
+                fullScreen
+                title="Nenhum posto encontrado"
+                description={`Tente mover o mapa para outra área ou ajuste seus filtros. ${
+                  error ? `\nErro: ${error}` : ""
+                }`}
               />
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={renderEmptyList}
-          contentContainerStyle={styles.listContent}
-        />
+            }
+            refreshing={isLoading}
+            contentContainerStyle={styles.listContent}
+          />
+        )}
       </BottomSheet>
     </SafeAreaView>
   );
@@ -352,7 +357,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       alignItems: "center",
       paddingHorizontal: theme.spacing.xl,
       paddingVertical: theme.spacing.md,
-      backgroundColor: theme.colors.background.paper,
+      backgroundColor: theme.colors.background.default,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.divider,
     },
@@ -381,7 +386,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       alignSelf: "center",
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.colors.primary.main,
+      backgroundColor: theme.colors.background.default,
       paddingVertical: theme.spacing.md,
       paddingHorizontal: theme.spacing.xl,
       borderRadius: theme.borderRadius.round,
@@ -389,7 +394,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     searchAreaButtonText: {
       marginLeft: theme.spacing.sm,
-      color: theme.colors.primary.text,
+      color: theme.colors.primary.main,
       fontWeight: theme.typography.fontWeight.bold,
       fontSize: 16,
     },
@@ -397,7 +402,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       position: "absolute",
       bottom: height * 0.25 + 20,
       right: 20,
-      backgroundColor: theme.colors.background.paper,
+      backgroundColor: theme.colors.background.default,
       width: 50,
       height: 50,
       borderRadius: 25,
@@ -406,7 +411,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       ...theme.shadows.shadowMd,
     },
     bottomSheetHandleContainer: {
-      backgroundColor: theme.colors.background.paper,
+      backgroundColor: theme.colors.background.default,
       paddingTop: theme.spacing.md,
       paddingBottom: theme.spacing.xs,
       borderTopLeftRadius: 20,
@@ -417,7 +422,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       width: 40,
       height: 5,
       borderRadius: 2.5,
-      backgroundColor: theme.colors.divider,
+      backgroundColor: theme.colors.text.hint,
     },
     bottomSheetHeader: {
       flexDirection: "row",
@@ -427,7 +432,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       paddingBottom: theme.spacing.lg,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.divider,
-      backgroundColor: theme.colors.background.paper,
+      backgroundColor: theme.colors.background.default,
     },
     listTitle: {
       fontSize: 20,
@@ -458,28 +463,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       paddingVertical: theme.spacing.sm,
     },
     listContent: {
-      backgroundColor: theme.colors.background.paper,
+      backgroundColor: theme.colors.background.default,
       paddingBottom: 40,
-    },
-    emptyContainer: {
-      width: width,
-      alignItems: "center",
-      justifyContent: "center",
-      padding: theme.spacing.xl,
-      height: height * 0.4,
-      backgroundColor: theme.colors.background.paper,
-    },
-    emptyText: {
-      fontSize: 18,
-      fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
-      marginTop: theme.spacing.lg,
-    },
-    emptySubtext: {
-      fontSize: 14,
-      color: theme.colors.text.secondary,
-      marginTop: theme.spacing.sm,
-      textAlign: "center",
-      paddingHorizontal: 30,
     },
   });

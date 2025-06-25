@@ -305,8 +305,8 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     separator: {
       height: 1,
-      backgroundColor: theme.colors.divider,
-      marginLeft: theme.spacing.lg,
+      backgroundColor: theme.colors.divider, 
+      marginHorizontal: theme.spacing.lg,
     },
     footer: {
       padding: theme.spacing.lg,
