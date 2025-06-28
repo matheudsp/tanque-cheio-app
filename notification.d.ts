@@ -1,4 +1,4 @@
-import { AppNotificationVariants } from "@/hooks/useNotifications";
+import { AppNotificationVariants } from "@/hooks/useToast";
 
 declare global {
   namespace Notificated {

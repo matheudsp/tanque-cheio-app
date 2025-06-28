@@ -4,11 +4,11 @@ export {
   ProductPriceHistory,
   GetNearbyStationsResponse,
 } from "./gas-stations";
-export { responseBase } from "./base";
+export { responseBase, ApiErrorResponse } from "./base";
 export { Product, ProductResponse } from "./products";
 export {
   LoginResponseDto,
-  ApiErrorResponse,
+  RegisterPushTokenDTO,
   LoginUserDto,
   RegisterResponseDTO,
   RegisterUserDto,

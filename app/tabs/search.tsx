@@ -15,7 +15,7 @@ import { FiltersModal } from "@/components/shared/FiltersModal";
 import { StationListView } from "@/components/search/StationListView";
 import { StationMapView } from "@/components/search/StationMapView";
 import { ViewModeToggle } from "@/components/search/ViewModeToggle";
-import { useGasStationStore } from "@/store/gasStationStore";
+import { useGasStationStore } from "@/stores/gasStationStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
@@ -41,7 +41,7 @@ export default function SearchScreen() {
   
   // Estado dos filtros
   const [selectedFuelType, setSelectedFuelType] = useState("");
-  const [radius, setRadius] = useState(10); // Raio inicial menor
+  const [radius, setRadius] = useState(50); // Raio inicial menor
   const [sort, setSort] = useState<"distanceAsc" | "priceAsc">("distanceAsc");
 
   // Estado para o mapa
@@ -156,8 +156,8 @@ export default function SearchScreen() {
           handleSearchWithFilters({ sort: "distanceAsc" });
         }}
         onClearRadius={() => {
-          setRadius(10);
-          handleSearchWithFilters({ radius: 10 });
+          setRadius(50);
+          handleSearchWithFilters({ radius: 50 });
         }}
       />
       

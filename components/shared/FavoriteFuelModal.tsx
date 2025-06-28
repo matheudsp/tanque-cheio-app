@@ -21,7 +21,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { useFavoriteStore } from "@/store/favoriteStore";
+import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";

@@ -4,7 +4,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LoginResponseDto, RegisterUserDto, User } from "@/types";
 import { authAPI } from "@/services/auth.service";
 
-import { notificationService } from "@/hooks/useNotifications";
+import { toast } from "@/hooks/useToast";
+import { pushNotificationService } from "@/services/push-notification.service";
+import { usersAPI } from "@/services/user.service";
+import { Platform } from "react-native";
+import { getTokenData } from "@/services/api";
 
 interface UserState {
   user: User | null;
@@ -20,9 +24,10 @@ interface UserState {
   updateProfile: (userData: Partial<User>) => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   updatePreferences: (preferences: User["preferences"]) => Promise<void>;
-  checkAuthStatus: () => Promise<boolean>;
+  checkAuthStatus: () => void;
   refreshToken: () => Promise<boolean>;
   setIsPremium: (isPremium: boolean) => void;
+  setUser: (user: User | null) => void;
 }
 
 const convertLoginResponseToUser = (loginResponse: LoginResponseDto): User => {
@@ -47,6 +52,7 @@ export const useUserStore = create<UserState>()(
       error: null,
       isAuthenticated: false,
       isPremium: false,
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
 
       setIsPremium: (isPremium: boolean) => {
         set({ isPremium });
@@ -77,14 +83,24 @@ export const useUserStore = create<UserState>()(
             error: null,
           });
 
-          console.log("Login bem-sucedido:", userData.email);
+          const pushToken =
+            await pushNotificationService.registerForPushNotificationsAsync();
+          if (pushToken) {
+            // Se obtivermos um token, o enviamos para o backend.
+            await usersAPI.registerPushToken({
+              token: pushToken,
+              device_type: Platform.OS,
+            });
+          }
+
+          // console.log("Login bem-sucedido:", userData.email);
         } catch (error) {
           const errorMessage =
             error instanceof Error
               ? error.message
               : "E-mail ou senha inválidos";
 
-          notificationService.error({
+          toast.error({
             title: "Falha no Login",
             description: errorMessage,
           });
@@ -124,14 +140,23 @@ export const useUserStore = create<UserState>()(
             error: null,
           });
 
-          console.log("Registration successful:", newUser.email);
+          const pushToken =
+            await pushNotificationService.registerForPushNotificationsAsync();
+          if (pushToken) {
+            await usersAPI.registerPushToken({
+              token: pushToken,
+              device_type: Platform.OS,
+            });
+          }
+
+          // console.log("Registration successful:", newUser.email);
         } catch (error) {
           const errorMessage =
             error instanceof Error
               ? error.message
               : "Não foi possível criar a conta. Tente novamente.";
 
-          notificationService.error({
+          toast.error({
             title: "Falha no Cadastro",
             description: errorMessage,
           });
@@ -146,23 +171,16 @@ export const useUserStore = create<UserState>()(
           throw error;
         }
       },
-
       logout: async () => {
         set({ isLoading: true });
+
         try {
           await authAPI.logout();
 
-          set({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: null,
-          });
-
-          console.log("Logout successful");
+          pushNotificationService.removeListeners();
         } catch (error) {
-          console.error("Logout error:", error);
-          // Even if logout fails on server, clear local state
+          console.error("Erro durante o processo de logout:", error);
+        } finally {
           set({
             user: null,
             isAuthenticated: false,
@@ -258,62 +276,32 @@ export const useUserStore = create<UserState>()(
       },
 
       checkAuthStatus: async () => {
-        set({ isLoading: true });
         try {
-          // Check if we have valid token in storage
-          const tokenDataString = await AsyncStorage.getItem("auth_token_data");
-
-          if (!tokenDataString) {
-            set({ isAuthenticated: false, isLoading: false });
-            return false;
+          const tokenData = await getTokenData();
+          if (!tokenData) {
+            throw new Error("Nenhum token válido encontrado.");
           }
 
-          const tokenData = JSON.parse(tokenDataString);
-
-          // Check if token is expired
-          if (Date.now() >= tokenData.expires_at) {
-            console.log("Token expired, attempting refresh");
-            const refreshSuccess = await get().refreshToken();
-            if (!refreshSuccess) {
-              set({ isAuthenticated: false, isLoading: false });
-              return false;
-            }
-          }
-
-          // If we have a valid token but no user data, try to get current user
-          if (!get().user) {
-            try {
-              const userData = await authAPI.getCurrentUser();
-              set({
-                user: userData,
-                isAuthenticated: true,
-                isLoading: false,
-              });
-            } catch (error) {
-              console.warn("Could not fetch current user data:", error);
-              // Token might be valid but user endpoint not implemented
-              // Keep authenticated state but without user data
-              set({
-                isAuthenticated: true,
-                isLoading: false,
-              });
-            }
-          } else {
-            set({ isAuthenticated: true, isLoading: false });
-          }
-
-          return true;
+          // Se temos um token, tentamos buscar os dados do usuário para validar a sessão.
+          const currentUser = await usersAPI.getCurrentUser();
+          set({
+            user: currentUser,
+            isAuthenticated: true,
+            error: null,
+            isLoading: false,
+          });
         } catch (error) {
-          console.error("Auth check error:", error);
-          // Clear invalid token data
-          await AsyncStorage.removeItem("auth_token_data");
+          // Se qualquer passo falhar (token expirado, erro de rede, etc.), deslogamos o usuário.
           set({
             user: null,
+            error: "Sessão inválida. Por favor, faça login novamente.",
             isAuthenticated: false,
             isLoading: false,
-            error: null,
           });
-          return false;
+          // Limpa o token inválido do storage
+          await get().logout();
+        } finally {
+          set({ isLoading: false });
         }
       },
     }),

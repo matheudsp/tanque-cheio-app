@@ -1,7 +1,6 @@
-
 // Auth DTOs
 export interface RegisterUserDto {
-  name:string;
+  name: string;
   email: string;
   password: string;
 }
@@ -10,7 +9,6 @@ export interface LoginUserDto {
   email: string;
   password: string;
 }
-
 
 export interface LoginResponseDto {
   statusCode: number;
@@ -93,13 +91,7 @@ export interface TokenData {
   expires_at: number; // Calculated expiration timestamp
 }
 
-// API Error response structure
-export interface ApiErrorResponse {
-  statusCode: number;
-  statusMessage: string;
-  message: string;
-  error?: string;
+export interface RegisterPushTokenDTO {
+  token: string;
+  device_type?: "ios" | "android" | "windows" | "macos" | "web"
 }
-
-
-

@@ -27,15 +27,15 @@ import { FavoriteFuelModal } from "@/components/shared/FavoriteFuelModal";
 import { TablePrices } from "@/components/TablePrices";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { PremiumBadge } from "@/components/ui/PremiumBadge";
-import { useFavoriteStore } from "@/store/favoriteStore";
-import { useGasStationStore } from "@/store/gasStationStore";
+import { useFavoriteStore } from "@/stores/favoriteStore";
+import { useGasStationStore } from "@/stores/gasStationStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import { getPeriodDates, type Period } from "@/utils/getPeriodDate";
 import { Loading } from "@/components/ui/Loading";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/stores/userStore";
 import { PaywallModal } from "@/components/shared/PaywallModal";
 
 const HEADER_MAX_HEIGHT = 360;
@@ -250,7 +250,7 @@ export default function GasStationDetailScreen() {
             <Text style={styles.sectionTitle}>Histórico de Preços</Text>
             <Text style={styles.filterLabel}>Período</Text>
             <View style={styles.filterContainer}>
-              {(["week", "month", "semester"] as Period[]).map((period) => (
+              {(["month", "semester", "year"] as Period[]).map((period) => (
                 <TouchableOpacity
                   key={period}
                   style={[
@@ -266,8 +266,8 @@ export default function GasStationDetailScreen() {
                         styles.filterButtonTextActive,
                     ]}
                   >
-                    {period === "week"
-                      ? "7d"
+                    {period === "year"
+                      ? "1a"
                       : period === "month"
                       ? "30d"
                       : "6m"}

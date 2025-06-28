@@ -4,8 +4,10 @@ import React, { useEffect } from "react";
 import { Alert, Platform } from "react-native";
 import * as Location from "expo-location";
 
-import { useGasStationStore } from "@/store/gasStationStore";
+import { useGasStationStore } from "@/stores/gasStationStore";
 import { useTheme } from "@/providers/themeProvider";
+import { useUserStore } from "@/stores/userStore";
+import { pushNotificationService } from "@/services/push-notification.service";
 
 export default function TabLayout() {
   const { setUserLocation } = useGasStationStore();
@@ -35,6 +37,15 @@ export default function TabLayout() {
     };
 
     requestLocation();
+
+    // Configura os listeners para notificações push.
+    pushNotificationService.setupNotificationListeners();
+
+    // Retorna uma função de limpeza para remover os listeners
+    // quando o usuário sair dessa parte do app (ex: logout).
+    return () => {
+      pushNotificationService.removeListeners();
+    };
   }, [setUserLocation]);
 
   return (
@@ -48,7 +59,7 @@ export default function TabLayout() {
           left: themeState.spacing.sm,
           right: themeState.spacing.sm,
           marginHorizontal: themeState.spacing.sm,
-          bottom: themeState.spacing["2xl"],
+          bottom: Platform.OS === "ios" ? themeState.spacing.xl : themeState.spacing["5xl"],
           backgroundColor: themeState.colors.background.paper,
           borderRadius: 32,
           height: 72,

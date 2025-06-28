@@ -1,5 +1,9 @@
-import { Redirect } from 'expo-router';
+import { Loading } from "@/components/ui/Loading";
+import { useSession } from "@/hooks/useSession";
+
 
 export default function Index() {
-  return <Redirect href="/auth/login" />;
-} 
+  useSession();
+
+  return <Loading key={"initalizer-app-loading"} />;
+}

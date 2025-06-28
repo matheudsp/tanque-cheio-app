@@ -109,13 +109,13 @@ export const PaywallModal = ({ isVisible, onClose }: PaywallModalProps) => {
               Evolua sua experiência e desbloqueie todos os recursos.
             </Text>
             <View style={styles.upgradePathContainer}>
-              <SubscriptionBadge planName="free" />
+              <SubscriptionBadge />
               <ArrowRight
                 size={24}
                 color={themeState.colors.text.secondary}
                 style={styles.arrow}
               />
-              <SubscriptionBadge planName="premium" />
+              <SubscriptionBadge isPremium />
             </View>
           </View>
 

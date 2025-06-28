@@ -1,11 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   Image,
   ImageSourcePropType,
   StyleSheet,
   Text,
   View,
+  ViewStyle,
+  type ColorValue,
 } from "react-native";
 import Animated, {
   Easing,
@@ -17,7 +19,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 
@@ -29,24 +30,24 @@ interface BadgeConfig {
   showShineEffect: boolean;
 }
 
-const badgeConfigMap: Record<string, BadgeConfig> = {
+const badgeConfigMap: Record<'premium' | 'free', BadgeConfig> = {
   premium: {
     label: "PREMIUM",
     icon: require("@/assets/images/premium.png"),
-    gradientColors: ["#FFD700", "#FFA500"], // dourado vibrante para premium
+    gradientColors: ["#FFD700", "#FFA500"],
     textColor: "white",
     showShineEffect: true,
   },
   free: {
     label: "FREE",
     icon: require("@/assets/images/free.png"),
-    gradientColors: ["#C0C0C0", "#A9A9A9"], // prateado para free
+    gradientColors: ["#C0C0C0", "#A9A9A9"],
     textColor: "white",
     showShineEffect: false,
   },
 };
 
-const ShineEffect = () => {
+const ShineEffect: React.FC = () => {
   const shinePosition = useSharedValue(-150);
 
   useEffect(() => {
@@ -63,7 +64,10 @@ const ShineEffect = () => {
   }, [shinePosition]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shinePosition.value }, { rotate: "-45deg" }],
+    transform: [
+      { translateX: shinePosition.value },
+      { rotate: "-45deg" },
+    ],
   }));
 
   const styles = useStylesWithTheme(getShineStyles);
@@ -81,33 +85,31 @@ const ShineEffect = () => {
 };
 
 interface SubscriptionBadgeProps {
-  planName?: string;
-  style?: object;
+  isPremium?: boolean;
+  style?: ViewStyle;
 }
 
-export const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = ({
-  planName,
-  style,
-}) => {
-  if (!planName) return null;
-  const styles = useStylesWithTheme(getBadgeStyles);
-  const normalizedPlan = planName.toLowerCase();
-  const config = badgeConfigMap[normalizedPlan];
+export const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = React.memo(
+  ({ isPremium, style }) => {
+    const styles = useStylesWithTheme(getBadgeStyles);
+    
+    const config = useMemo<BadgeConfig>(() => {
+      return isPremium ? badgeConfigMap.premium : badgeConfigMap.free;
+    }, [isPremium]);
 
-  if (!config) return null;
-
-  return (
-    <View style={[styles.badgeContainer, style]}>
-      <LinearGradient colors={config.gradientColors} style={styles.gradient}>
-        {config.showShineEffect && <ShineEffect />}
-        <Image source={config.icon} style={styles.badgeIcon} />
-        <Text style={[styles.badgeText, { color: config.textColor }]}>
-          {config.label}
-        </Text>
-      </LinearGradient>
-    </View>
-  );
-};
+    return (
+      <View style={[styles.badgeContainer, style]}>
+        <LinearGradient colors={config.gradientColors as [ColorValue, ColorValue, ...ColorValue[]]} style={styles.gradient}>
+          {config.showShineEffect && <ShineEffect />}
+          <Image source={config.icon} style={styles.badgeIcon} />
+          <Text style={[styles.badgeText, { color: config.textColor }]}>  
+            {config.label}
+          </Text>
+        </LinearGradient>
+      </View>
+    );
+  }
+);
 
 const getBadgeStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({

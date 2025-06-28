@@ -24,14 +24,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { SubscriptionBadge } from "@/components/ui/SubscriptionBadge";
-import { useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/stores/userStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useUserStore();
+  const { user,isPremium, logout } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
 
@@ -160,7 +160,7 @@ export default function ProfileScreen() {
 
           <View style={styles.profileNameContainer}>
             <Text style={styles.profileName}>{user?.name || "Usuário"}</Text>
-            <SubscriptionBadge planName={"premium"} style={styles.badge} />
+            <SubscriptionBadge isPremium={isPremium} style={styles.badge} />
           </View>
 
           <Text style={styles.profileEmail}>

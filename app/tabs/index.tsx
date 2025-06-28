@@ -15,12 +15,13 @@ import { useShallow } from "zustand/react/shallow";
 import { GasStationCard } from "@/components/shared/GasStationCard";
 import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
-import { useFavoriteStore } from "@/store/favoriteStore";
-import { useGasStationStore } from "@/store/gasStationStore";
+import { useFavoriteStore } from "@/stores/favoriteStore";
+import { useGasStationStore } from "@/stores/gasStationStore";
 import type { GasStation } from "@/types/gas-stations";
 import type { ThemeState } from "@/types/theme";
 import { useTheme } from "@/providers/themeProvider";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usersAPI } from "@/services/user.service";
 
 // Componente para renderizar os cabeçalhos das seções
 const SectionHeader = ({
@@ -134,7 +135,7 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={isLoadingFavorites}
             onRefresh={onRefresh}
-            tintColor={themeState.colors.primary.main}
+            tintColor={themeState.colors.secondary.main}
           />
         }
       >
@@ -151,6 +152,8 @@ export default function HomeScreen() {
             title="Postos Favoritados"
             icon={<Heart size={20} color={themeState.colors.primary.main} />}
             onPress={() => router.push("/profile/favorites")}
+            // onPress={() => usersAPI.getCurrentUser()}
+            
           />
           {isLoadingFavorites ? (
             <FlatList

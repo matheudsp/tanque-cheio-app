@@ -74,29 +74,6 @@ export const authAPI = {
     }
   },
 
-  getCurrentUser: async (): Promise<User> => {
-    try {
-      // Assuming you have a profile endpoint
-      const data = await apiRequest("/user/profile");
-
-      if (data && data.user) {
-        return convertBackendUser(data.user, data.role);
-      }
-
-      // If no specific profile endpoint, extract from token or stored data
-      // const tokenData = await getTokenData();
-      // if (!tokenData) {
-      //   throw new Error("No authentication data found");
-      // }
-
-      // For now, return basic user info
-      // You might want to create a proper /me endpoint in your backend
-      throw new Error("Profile endpoint did not return valid user data");
-    } catch (error) {
-      console.error("Get current user error:", error);
-      throw error;
-    }
-  },
 
   refreshToken: async (): Promise<boolean> => {
     return refreshAuthToken();
@@ -111,9 +88,9 @@ export const authAPI = {
         try {
           await apiRequest("/auth/logout", {
             method: "POST",
-            body: JSON.stringify({
-              refresh_token: tokenData.refresh_token,
-            }),
+            // body: JSON.stringify({
+            //   refresh_token: tokenData.refresh_token,
+            // }),
           });
         } catch (error) {
           console.warn("Server logout failed:", error);

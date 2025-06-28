@@ -13,7 +13,7 @@ import {
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
-import { useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/stores/userStore";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { Button } from "@/components/Button";
 import type { ThemeState } from "@/types/theme";
@@ -21,7 +21,7 @@ import { useTheme } from "@/providers/themeProvider";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, error } = useUserStore();
+  const { login, isLoading, error, user, isAuthenticated} = useUserStore();
   const styles = useStylesWithTheme(getStyles);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,6 +66,7 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>
               Desenvolvido com 🧡 por @matheudsp
             </Text>
+            <Text>{user?.name} + {isAuthenticated ? 'SIM' : 'NAO'}</Text>
           </View>
 
           <Text style={styles.title}>Bem-vindo de volta!</Text>
@@ -123,7 +124,6 @@ export default function LoginScreen() {
             loading={isLoading}
             onPress={handleLogin}
             style={styles.loginButton}
-           
           />
 
           <View style={styles.registerContainer}>

@@ -10,14 +10,14 @@ import { useStylesWithTheme } from '@/hooks/useStylesWithTheme';
 import type { ThemeState } from '@/types/theme';
 
 // A interface de props permanece a mesma.
-export interface NotificationCardProps {
+export interface ToastCardProps {
   title: string;
   description: string;
   type: 'success' | 'error' | 'info' | 'warning';
 }
 
 
-const getNotificationTypeStyles = (theme: ThemeState) => ({
+const getToastTypeStyles = (theme: ThemeState) => ({
   success: {
     icon: 'checkmark-circle' as const,
     color: theme.colors.success,
@@ -40,14 +40,14 @@ export const NotificationCard = ({
   title,
   description,
   type,
-}: NotificationCardProps) => {
+}: ToastCardProps) => {
   
   const { remove } = useNotificationController();
   const { themeState } = useTheme();
   const styles = useStylesWithTheme(getStyles);
 
   
-  const styleConfig = getNotificationTypeStyles(themeState)[type];
+  const styleConfig = getToastTypeStyles(themeState)[type];
 
   return (
     <View style={[styles.container, { borderLeftColor: styleConfig.color }]}>

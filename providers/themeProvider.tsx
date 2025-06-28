@@ -76,7 +76,6 @@ export const ThemeProvider = ({
 }: ThemeProviderProps) => {
   const systemColorScheme = useColorScheme();
   const { saveThemePreference, loadThemePreference } = useThemeStorage();
-
   const [isLoading, setIsLoading] = useState(true);
   const [colorScheme, setColorScheme] =
     useState<ColorSchemeName>(systemColorScheme);

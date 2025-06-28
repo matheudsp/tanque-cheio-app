@@ -1,8 +1,8 @@
 import { createNotifications } from "react-native-notificated";
 import {
   NotificationCard,
-  type NotificationCardProps,
-} from "@/components/ui/NotificationCard";
+  type ToastCardProps,
+} from "@/components/ui/ToastCard";
 
 const {
   NotificationsProvider,
@@ -37,9 +37,9 @@ const {
   },
 });
 
-type NotificationServiceParams = Omit<NotificationCardProps, "type">;
+type NotificationServiceParams = Omit<ToastCardProps, "type">;
 
-export const notificationService = {
+export const toast = {
   success: (params: NotificationServiceParams) => {
     notify("customSuccess", { params: { ...params, type: "success" } });
   },
@@ -53,6 +53,6 @@ export const notificationService = {
     notify("customWarning", { params: { ...params, type: "warning" } });
   },
 };
-export { NotificationsProvider, useNotifications };
+export { NotificationsProvider as ToastProvider, useNotifications as useToast};
 
 export type AppNotificationVariants = typeof CustomVariantsTypeHelper;

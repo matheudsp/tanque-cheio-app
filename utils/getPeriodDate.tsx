@@ -1,11 +1,11 @@
-export type Period = "week" | "month" | "semester";
+export type Period = "year" | "month" | "semester";
 
 export const getPeriodDates = (period: Period) => {
   const endDate = new Date();
   const startDate = new Date();
   switch (period) {
-    case "week":
-      startDate.setDate(endDate.getDate() - 7);
+    case "year":
+      startDate.setDate(endDate.getMonth() - 12);
       break;
     case "semester":
       startDate.setMonth(endDate.getMonth() - 6);

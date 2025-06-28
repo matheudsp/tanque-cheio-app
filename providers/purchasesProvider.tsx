@@ -2,7 +2,7 @@ import Purchases, { PurchasesOffering, CustomerInfo } from "react-native-purchas
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Platform } from "react-native";
 
-import { useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/stores/userStore";
 
 // Chave do "Entitlement" que criamos no painel do RevenueCat
 const PREMIUM_ENTITLEMENT = "premium";

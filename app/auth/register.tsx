@@ -13,7 +13,7 @@ import {
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react-native";
-import { useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/stores/userStore";
 
 import { Button } from "@/components/Button";
 import type { ThemeState } from "@/types/theme";
