@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { useShallow } from "zustand/react/shallow";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GasStationCard } from "@/components/shared/GasStationCard";
 import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
@@ -20,10 +21,8 @@ import { useGasStationStore } from "@/stores/gasStationStore";
 import type { GasStation } from "@/types/gas-stations";
 import type { ThemeState } from "@/types/theme";
 import { useTheme } from "@/providers/themeProvider";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { usersAPI } from "@/services/user.service";
 
-// Componente para renderizar os cabeçalhos das seções
+// Componente para renderizar os cabeçalhos das seções (sem alterações)
 const SectionHeader = ({
   title,
   onPress,
@@ -47,7 +46,7 @@ const SectionHeader = ({
   );
 };
 
-// Componente para exibir quando uma lista está vazia
+// Componente para exibir quando uma lista está vazia (sem alterações)
 const EmptyListComponent = ({ message }: { message: string }) => {
   const styles = useStylesWithTheme(getStyles);
   return (
@@ -74,35 +73,41 @@ export default function HomeScreen() {
     }))
   );
 
-  // --- ALTERAÇÃO: Busca o histórico de visualizações ---
   const { recentlyViewedStations } = useGasStationStore(
     useShallow((state) => ({
       recentlyViewedStations: state.recentlyViewedStations,
     }))
   );
 
+  // --- ALTERAÇÃO: Mapeamento de favoritos mais seguro e robusto ---
   const favoriteStations = useMemo(() => {
     const stationsMap = new Map<string, GasStation>();
+    
     favorites.forEach((fav) => {
+      // Garante que o favorito e seu produto associado são válidos
+      if (!fav || !fav.gas_station_id || !fav.product) return;
+
       const existingStation = stationsMap.get(fav.gas_station_id);
+
       if (existingStation) {
         existingStation.fuel_prices.push(fav.product);
       } else {
-        stationsMap.set(fav.gas_station_id, {
+        // Cria um objeto GasStation a partir dos dados do FavoriteStation
+        const newStation: GasStation = {
           id: fav.gas_station_id,
-          trade_name: fav.gas_station_name,
-          legal_name: fav.gas_station_name,
+          trade_name: fav.gas_station_name, // Usa o nome do favorito como nome fantasia
+          legal_name: fav.gas_station_name, // Usa como fallback para o nome legal
           brand: fav.gas_station_brand,
           localization: fav.localization,
           fuel_prices: [fav.product],
-          tax_id: "",
-        });
+          tax_id: "", // Campo obrigatório, mas não disponível nos favoritos
+        };
+        stationsMap.set(fav.gas_station_id, newStation);
       }
     });
     return Array.from(stationsMap.values());
   }, [favorites]);
 
-  // --- SIMPLIFICAÇÃO: A busca de dados agora é mais direta ---
   useEffect(() => {
     fetchFavorites();
   }, [fetchFavorites]);
@@ -146,14 +151,11 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* --- Seção de Postos Favoritados (Sem alterações) --- */}
         <View style={styles.section}>
           <SectionHeader
             title="Postos Favoritados"
             icon={<Heart size={20} color={themeState.colors.primary.main} />}
             onPress={() => router.push("/profile/favorites")}
-            // onPress={() => usersAPI.getCurrentUser()}
-            
           />
           {isLoadingFavorites ? (
             <FlatList
@@ -180,8 +182,7 @@ export default function HomeScreen() {
             />
           )}
         </View>
-
-        {/* --- ALTERAÇÃO: Seção de Últimas Buscas agora usa o histórico --- */}
+        
         <View style={styles.section}>
           <SectionHeader
             title="Últimas Buscas"
@@ -192,8 +193,10 @@ export default function HomeScreen() {
             data={recentlyViewedStations}
             horizontal
             showsHorizontalScrollIndicator={false}
+            // --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
+            // Verifica se a distância existe antes de decidir mostrá-la.
             renderItem={(props) =>
-              renderStationItem({ ...props, showDistance: true })
+              renderStationItem({ ...props, showDistance: props.item.distance != null })
             }
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
@@ -207,7 +210,7 @@ export default function HomeScreen() {
   );
 }
 
-// Estilização (sem alterações)
+// Estilos (sem alterações)
 const getStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({
     container: {

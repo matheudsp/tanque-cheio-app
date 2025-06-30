@@ -1,135 +1,132 @@
 import React, { useState } from "react";
 import {
-  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+  Image,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
+import { Mail, Lock } from "lucide-react-native";
+
 import { useUserStore } from "@/stores/userStore";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { Button } from "@/components/Button";
+import { AuthInput } from "@/components/auth/AuthInput"; // Nosso novo componente
+import { SocialButton } from "@/components/auth/SocialButton"; // Nosso novo componente
 import type { ThemeState } from "@/types/theme";
-import { useTheme } from "@/providers/themeProvider";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, error, user, isAuthenticated} = useUserStore();
+  const { login, isLoading } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const { themeState } = useTheme();
 
   const handleLogin = async () => {
+    // Adicionar validação básica de UI antes de chamar a store
+    if (!email || !password) {
+      // Idealmente, o estado de erro nos inputs cuidaria disso
+      return;
+    }
     try {
       await login(email, password);
-      router.replace("/tabs"); // Using the correct route format
-    } catch (error) {
-      // Error is handled in the store
+      router.replace("/tabs");
+    } catch (e) {
+      // O erro já é tratado na store e exibido pelo toast
     }
   };
 
-  const handleRegister = () => {
-    router.push("/auth/register");
-  };
-
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <Stack.Screen
-        options={{
-          title: "Login",
-          headerShown: false,
-        }}
-      />
-
+    <SafeAreaView style={styles.container} edges={["bottom", "top"]}>
+      <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoidingView}
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <Text style={styles.logoText}>⛽</Text>
-            </View>
-            <Text style={styles.appName}>Tanque Cheio</Text>
+          <View style={styles.header}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logo}
+            />
+            <Text style={styles.title}>Bem-vindo!</Text>
             <Text style={styles.subtitle}>
-              Desenvolvido com 🧡 por @matheudsp
+              Economize no seu próximo abastecimento.
             </Text>
-            <Text>{user?.name} + {isAuthenticated ? 'SIM' : 'NAO'}</Text>
           </View>
 
-          <Text style={styles.title}>Bem-vindo de volta!</Text>
-          <Text style={styles.subtitle}>Acesse para continuar</Text>
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          <View style={styles.inputContainer}>
-            <Mail size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
+          <View style={styles.formContainer}>
+            <AuthInput
+              label="E-mail"
+              icon={Mail}
+              placeholder="seuemail@exemplo.com"
               value={email}
               onChangeText={setEmail}
-              autoCapitalize="none"
-              placeholderTextColor={themeState.colors.text.hint}
               keyboardType="email-address"
+              autoCapitalize="none"
             />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Lock size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
+            <AuthInput
+              label="Senha"
+              icon={Lock}
+              placeholder="Sua senha"
               value={password}
               onChangeText={setPassword}
-              placeholderTextColor={themeState.colors.text.hint}
-              secureTextEntry={!showPassword}
+              isPassword
             />
             <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
+              onPress={() => {
+                /* Lógica de esqueci a senha */
+              }}
             >
-              {showPassword ? (
-                <EyeOff size={20} color={styles.icon.color} />
-              ) : (
-                <Eye size={20} color={styles.icon.color} />
-              )}
+              <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
             </TouchableOpacity>
+
+            <Button
+              title="Entrar"
+              onPress={handleLogin}
+              loading={isLoading}
+              size="large"
+              fullWidth
+              style={{ marginTop: 24 }}
+            />
           </View>
 
-          <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
-          </TouchableOpacity>
+          <View style={styles.separatorContainer}>
+            <View style={styles.line} />
+            <Text style={styles.separatorText}>OU</Text>
+            <View style={styles.line} />
+          </View>
 
-          <Button
-            title="Entrar"
-            variant="primary"
-            size="large"
-            loading={isLoading}
-            onPress={handleLogin}
-            style={styles.loginButton}
-          />
+          <View style={styles.socialContainer}>
+            <SocialButton
+              type="google"
+              onPress={() => {
+                /* Lógica de login com Google */
+              }}
+            />
+            {Platform.OS === "ios" && (
+              <SocialButton
+                type="apple"
+                onPress={() => {
+                  /* Lógica de login com Apple */
+                }}
+              />
+            )}
+          </View>
 
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Ainda não tem conta? </Text>
-            <TouchableOpacity onPress={handleRegister}>
-              <Text style={styles.registerLink}>Criar conta</Text>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Não tem uma conta?</Text>
+            <TouchableOpacity onPress={() => router.push("/auth/register")}>
+              <Text style={styles.footerLink}> Cadastre-se</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -138,113 +135,55 @@ export default function LoginScreen() {
   );
 }
 
-const getStyles = (theme: Readonly<ThemeState>) => {
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.colors.background.default,
-    },
-    keyboardAvoidingView: {
-      flex: 1,
-    },
+const getStyles = (theme: Readonly<ThemeState>) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background.default },
     scrollContent: {
       flexGrow: 1,
-      padding: 24,
+      padding: theme.spacing.xl,
       justifyContent: "center",
     },
-    logoContainer: {
-      alignItems: "center",
-      marginBottom: 40,
-      rowGap: 10,
-    },
+    header: { alignItems: "center", marginBottom: theme.spacing["2xl"] },
     logo: {
       width: 80,
       height: 80,
-      backgroundColor: theme.colors.secondary.main,
+      marginBottom: theme.spacing.sm,
       borderRadius: 16,
-      justifyContent: "center",
-      alignItems: "center",
-      marginBottom: 16,
-    },
-    input: {
-      flex: 1,
-      marginLeft: 12,
-      fontSize: 16,
-      color: theme.colors.text.primary,
-    },
-    icon: {
-      color: theme.colors.text.secondary,
-    },
-    logoText: {
-      color: theme.colors.text.primary,
-      fontSize: 36,
-      fontWeight: "bold",
-    },
-    appName: {
-      fontSize: 24,
-      fontWeight: "600",
-      color: theme.colors.text.primary,
     },
     title: {
-      fontSize: 28,
-      fontWeight: "700",
+      fontSize: 32,
+      fontWeight: theme.typography.fontWeight.bold,
       color: theme.colors.text.primary,
-      marginBottom: 8,
+      marginBottom: theme.spacing.sm,
     },
-    subtitle: {
-      fontSize: 16,
-      color: theme.colors.text.secondary,
-      marginBottom: 24,
+    subtitle: { fontSize: 16, color: theme.colors.text.secondary },
+    formContainer: { marginBottom: theme.spacing.xl },
+    forgotPassword: {
+      textAlign: "right",
+      color: theme.colors.primary.main,
+      fontWeight: theme.typography.fontWeight.semibold,
+      marginTop: -theme.spacing.sm,
     },
-    errorContainer: {
-      backgroundColor: theme.colors.error + "20",
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 16,
-    },
-    errorText: {
-      color: theme.colors.error,
-      fontSize: 14,
-    },
-    inputContainer: {
+    separatorContainer: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.colors.background.default,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: 8,
-      paddingHorizontal: 16,
-      marginBottom: 16,
-      height: 56,
+      marginVertical: theme.spacing.xl,
     },
-
-    eyeIcon: {
-      padding: 4,
+    line: { flex: 1, height: 1, backgroundColor: theme.colors.border },
+    separatorText: {
+      marginHorizontal: theme.spacing.md,
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
-    forgotPassword: {
-      alignSelf: "flex-end",
-      marginBottom: 24,
-    },
-    forgotPasswordText: {
-      color: theme.colors.primary.main,
-      fontSize: 14,
-      fontWeight: "500",
-    },
-    loginButton: {
-      marginBottom: 24,
-    },
-    registerContainer: {
+    socialContainer: { alignItems: "center" },
+    footer: {
       flexDirection: "row",
       justifyContent: "center",
+      marginTop: theme.spacing["2xl"],
     },
-    registerText: {
-      color: theme.colors.text.secondary,
-      fontSize: 14,
-    },
-    registerLink: {
+    footerText: { color: theme.colors.text.secondary },
+    footerLink: {
       color: theme.colors.primary.main,
-      fontSize: 14,
-      fontWeight: "500",
+      fontWeight: theme.typography.fontWeight.bold,
     },
   });
-};

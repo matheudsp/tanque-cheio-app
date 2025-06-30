@@ -22,7 +22,7 @@ export function useSession() {
       }
     } else {
       if (!inAuthGroup) {
-        router.replace('/auth/login');
+        router.replace('/auth');
       }
     }
   }, [isAuthenticated, isLoading, segments, router]);

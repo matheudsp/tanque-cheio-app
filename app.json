@@ -7,19 +7,16 @@
     "scheme": "tanquecheio",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/playstore.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "icon": "./assets/images/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.matheudsp.tanquecheio"
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/playstore.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/adaptive-foreground.png",
+        "backgroundColor": "#0F172A" 
       },
       "package": "com.matheudsp.tanquecheio"
     },
@@ -27,7 +24,19 @@
       "expo-router",
       "expo-web-browser",
       "expo-build-properties",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "resizeMode": "contain",
+          "backgroundColor": "#F8FAFC",
+          "image": "./assets/images/splash-light.png",
+          "dark": {
+            "backgroundColor": "#0F172A",
+            "image": "./assets/images/splash-dark.png"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,45 +1,115 @@
-import { ChevronRight } from "lucide-react-native";
-import { useRouter } from "expo-router";
-import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+// gemini/app/intro.tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import React, { useRef, useState } from 'react';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-import { useTheme } from "@/providers/themeProvider";
-import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
-import type { ThemeState } from "@/types/theme";
+import { OnboardingSlide } from '@/components/onboarding/OnboardingSlide';
+import { Button } from '@/components/Button';
+import { useStylesWithTheme } from '@/hooks/useStylesWithTheme';
+import type { ThemeState } from '@/types/theme';
+
+
+const ONBOARDING_DATA = [
+  {
+    id: '1',
+    animation: require('@/assets/animations/search1.json'), 
+    title: 'Encontre Postos Perto de Você',
+    subtitle: 'Com base na sua localização, mostramos os postos de combustível mais próximos com preços atualizados.',
+  },
+  {
+    id: '2',
+    animation: require('@/assets/animations/price-pizza-chart.json'),
+    title: 'Compare Preços e Economize',
+    subtitle: 'Visualize o histórico de preços e compare os valores para fazer a melhor escolha para o seu bolso.',
+  },
+  {
+    id: '3',
+    animation: require('@/assets/animations/paper-plane.json'),
+    title: 'Receba Alertas de Preço',
+    subtitle: 'Favorite seus postos e combustíveis para ser notificado sobre as melhores oportunidades de economia.',
+  },
+];
+
+// Indicador de Paginação Animado
+const Paginator = ({ data, currentIndex }: { data: any[], currentIndex: number }) => {
+    const styles = useStylesWithTheme(getStyles);
+    return (
+        <View style={styles.paginatorContainer}>
+            {data.map((_, i) => {
+                const animatedStyle = useAnimatedStyle(() => {
+                    const width = withTiming(currentIndex === i ? 24 : 8, { duration: 300 });
+                    const opacity = withTiming(currentIndex === i ? 1 : 0.5, { duration: 300 });
+                    return { width, opacity };
+                });
+                return <Animated.View key={i.toString()} style={[styles.dot, animatedStyle]} />;
+            })}
+        </View>
+    );
+};
 
 export default function IntroScreen() {
   const router = useRouter();
   const styles = useStylesWithTheme(getStyles);
-  const { themeState } = useTheme();
+  const { width } = useWindowDimensions();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const slidesRef = useRef<FlatList>(null);
 
-  const handlePress = () => {
-    router.replace("splash" as any);
+  const viewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems[0]) {
+      setCurrentIndex(viewableItems[0].index);
+    }
+  }).current;
+
+  const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+
+  const handleDone = async () => {
+    try {
+      await AsyncStorage.setItem('@hasViewedOnboarding', 'true');
+      router.replace('/auth');
+    } catch (e) {
+      console.error('Failed to save onboarding status.', e);
+      router.replace('/auth');
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < ONBOARDING_DATA.length - 1) {
+        slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
+    } else {
+        handleDone();
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <Image
-        source={require("@/assets/images/intro.png")}
-        style={styles.illustration}
-        resizeMode="contain"
+      <FlatList
+        ref={slidesRef}
+        data={ONBOARDING_DATA}
+        renderItem={({ item }) => <OnboardingSlide item={item} />}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        onViewableItemsChanged={viewableItemsChanged}
+        viewabilityConfig={viewConfig}
+        bounces={false}
       />
-
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>Acompanhe os preços</Text>
-        <Text style={styles.subtitle}>para manter seu tanque cheio!</Text>
-      </View>
-
-      <View style={styles.bottomContainer}>
-        <View style={styles.paginationDots}>
-          <View style={[styles.dot, styles.activeDot]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
+      <View style={[styles.footer, { width }]}>
+        <Paginator data={ONBOARDING_DATA} currentIndex={currentIndex} />
+        <View style={styles.buttonContainer}>
+            <TouchableOpacity onPress={handleDone} style={styles.skipButton}>
+                <Text style={styles.skipText}>Pular</Text>
+            </TouchableOpacity>
+            <Button 
+              title={currentIndex === ONBOARDING_DATA.length - 1 ? "Começar" : "Avançar"}
+              onPress={handleNext} 
+              variant="primary"
+              size="medium"
+            />
         </View>
-
-        <TouchableOpacity style={styles.nextButton} onPress={handlePress}>
-          <ChevronRight size={24} color={themeState.colors.primary.text} />
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -50,57 +120,39 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.background.default,
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: theme.spacing.xl,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    illustration: {
-      width: "100%",
-      height: "50%",
-      marginBottom: theme.spacing["2xl"],
+    footer: {
+      position: 'absolute',
+      bottom: 0,
+      padding: theme.spacing.xl,
+      paddingBottom: theme.spacing['2xl'],
+      backgroundColor: theme.colors.background.default,
     },
-    textContainer: {
-      alignItems: "flex-start",
-      paddingHorizontal: theme.spacing.xl,
-      width: "100%",
-      marginBottom: theme.spacing["3xl"],
-    },
-    title: {
-      fontSize: theme.typography.fontSize.h1,
-      fontWeight: theme.typography.fontWeight.bold,
-      color: theme.colors.text.primary,
-      marginBottom: theme.spacing.sm,
-    },
-    subtitle: {
-      fontSize: 18,
-      color: theme.colors.text.secondary,
-    },
-    bottomContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      width: "100%",
-      paddingHorizontal: theme.spacing.xl,
-    },
-    paginationDots: {
-      flexDirection: "row",
+    paginatorContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: theme.spacing.xl,
     },
     dot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: theme.colors.divider,
-      marginHorizontal: theme.spacing.xs,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: theme.colors.primary.main,
+        marginHorizontal: 4,
     },
-    activeDot: {
-      backgroundColor: theme.colors.primary.main,
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    nextButton: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: theme.colors.primary.main,
-      justifyContent: "center",
-      alignItems: "center",
+    skipButton: {
+        paddingVertical: theme.spacing.md,
+        paddingHorizontal: theme.spacing.lg,
     },
+    skipText: {
+        color: theme.colors.text.secondary,
+        fontSize: 16,
+        fontWeight: '600',
+    }
   });

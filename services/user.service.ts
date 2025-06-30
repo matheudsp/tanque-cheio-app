@@ -2,7 +2,7 @@ import type { RegisterPushTokenDTO, User } from "@/types/user";
 import { apiRequest, convertBackendUser } from "./api";
 
 export const usersAPI = {
-    getCurrentUser: async (): Promise<User> => {
+  getCurrentUser: async (): Promise<User> => {
     try {
       const data = await apiRequest("/v1/users/me");
       // console.log('GET CURRENT USER',data)
@@ -24,16 +24,16 @@ export const usersAPI = {
    */
   registerPushToken: async (tokenData: RegisterPushTokenDTO): Promise<void> => {
     try {
-      // Necessário criar este endpoint no backend.
-      await apiRequest("/user/push-token", {
+      // CORRIGIDO: Apontando para o novo endpoint no controller de notificações
+      await apiRequest("/v1/notifications/tokens/register", {
+        //
         method: "POST",
         body: JSON.stringify(tokenData),
       });
-      console.log("Push token registered successfully with the backend.");
+      console.log("Push token registrado com sucesso no backend."); //
     } catch (error) {
-      console.error("Failed to register push token with the backend:", error);
-      // Mesmo que falhe, não lançamos o erro para não quebrar o fluxo de login.
-      // A lógica de retentativa deve ser implementada aqui.
+      console.error("Falha ao registrar o push token no backend:", error); //
+      // Mesmo que falhe, não lançamos o erro para não quebrar o fluxo de login
     }
   },
 };

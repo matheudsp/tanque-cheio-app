@@ -77,7 +77,7 @@ export const GasStationCard = ({
         : "N/A";
 
     const updateStatus = getUpdateStatus(heroFuel?.collection_date, themeState);
-    const distanceText = showDistance ? `${station.distance!} km` : "";
+    const distanceText = showDistance ? `• ${station.distance!} km` : "";
     const iconName = getIconNameFromFuel(heroFuel?.product_name);
 
     return {
@@ -119,7 +119,7 @@ export const GasStationCard = ({
         <View style={styles.locationRow}>
           <MapPin size={16} color={themeState.colors.text.secondary} />
           <Text style={styles.locationText} numberOfLines={1}>
-            {station.localization.city} • {cardData.distanceText}
+            {station.localization.city} {cardData.distanceText}
           </Text>
         </View>
       </View>

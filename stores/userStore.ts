@@ -44,6 +44,26 @@ const convertLoginResponseToUser = (loginResponse: LoginResponseDto): User => {
   };
 };
 
+/**
+ * Função auxiliar para registrar o push token.
+ */
+const _registerPushToken = async () => {
+  try {
+    const token =
+      await pushNotificationService.registerForPushNotificationsAsync(); //
+
+    if (token) {
+      await usersAPI.registerPushToken({ token });
+    } else {
+      console.log(
+        "Permissão para notificações não concedida ou token não obtido."
+      );
+    }
+  } catch (error) {
+    console.error("Erro no processo de registro do push token:", error);
+  }
+};
+
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
@@ -83,15 +103,7 @@ export const useUserStore = create<UserState>()(
             error: null,
           });
 
-          const pushToken =
-            await pushNotificationService.registerForPushNotificationsAsync();
-          if (pushToken) {
-            // Se obtivermos um token, o enviamos para o backend.
-            await usersAPI.registerPushToken({
-              token: pushToken,
-              device_type: Platform.OS,
-            });
-          }
+          await _registerPushToken();
 
           // console.log("Login bem-sucedido:", userData.email);
         } catch (error) {
@@ -140,15 +152,7 @@ export const useUserStore = create<UserState>()(
             error: null,
           });
 
-          const pushToken =
-            await pushNotificationService.registerForPushNotificationsAsync();
-          if (pushToken) {
-            await usersAPI.registerPushToken({
-              token: pushToken,
-              device_type: Platform.OS,
-            });
-          }
-
+          await _registerPushToken();
           // console.log("Registration successful:", newUser.email);
         } catch (error) {
           const errorMessage =
@@ -290,6 +294,8 @@ export const useUserStore = create<UserState>()(
             error: null,
             isLoading: false,
           });
+
+          // await _registerPushToken();
         } catch (error) {
           // Se qualquer passo falhar (token expirado, erro de rede, etc.), deslogamos o usuário.
           set({

@@ -1,4 +1,4 @@
-import { SplashScreen, Stack } from "expo-router";
+import { SplashScreen, Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -7,20 +7,46 @@ import { ThemeProvider } from "@/providers/themeProvider";
 import { PurchasesProvider } from "@/providers/purchasesProvider";
 import { useUserStore } from "@/stores/userStore";
 import { AuthProvider } from "@/providers/authProvider";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Garante que a splash screen não vai se esconder automaticamente
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { isLoading } = useUserStore();
+  const { isLoading: isAuthLoading } = useUserStore();
   const [isThemeReady, setIsThemeReady] = useState(false);
+  const [hasViewedOnboarding, setHasViewedOnboarding] = useState<
+    boolean | null
+  >(null);
+  const router = useRouter();
 
   useEffect(() => {
-    // Esconder a splash screen apenas quando a verificação de auth e o tema estiverem prontos.
-    if (!isLoading && isThemeReady) {
+    const checkOnboardingStatus = async () => {
+      try {
+        const value = await AsyncStorage.getItem("@hasViewedOnboarding");
+        setHasViewedOnboarding(value === "true");
+      } catch (e) {
+        console.error("Failed to load onboarding status.", e);
+        setHasViewedOnboarding(false);
+      }
+    };
+    checkOnboardingStatus();
+  }, []);
+
+  useEffect(() => {
+    // Esconder a splash screen apenas quando todas as verificações estiverem prontas.
+    // A verificação de onboarding é a primeira coisa que deve acontecer.
+    if (hasViewedOnboarding === null) {
+      return;
+    }
+
+    if (!isAuthLoading && isThemeReady) {
+      if (!hasViewedOnboarding) {
+        router.replace("/intro");
+      }
+
       SplashScreen.hideAsync();
     }
-  }, [isLoading, isThemeReady]);
+  }, [isAuthLoading, isThemeReady, hasViewedOnboarding, router]);
 
   return (
     <AuthProvider>

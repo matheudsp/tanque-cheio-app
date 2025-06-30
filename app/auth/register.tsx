@@ -1,223 +1,127 @@
-import React, { useEffect, useState } from "react";
+// gemini/app/auth/register.tsx (Substitua o conteúdo do seu arquivo)
+import React, { useState } from "react";
 import {
-  Image,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+  Image,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react-native";
-import { useUserStore } from "@/stores/userStore";
+import { Mail, Lock, User, Phone } from "lucide-react-native";
 
-import { Button } from "@/components/Button";
-import type { ThemeState } from "@/types/theme";
+import { useUserStore } from "@/stores/userStore";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
-import { useTheme } from "@/providers/themeProvider";
+import { Button } from "@/components/Button";
+import { AuthInput } from "@/components/auth/AuthInput";
+import type { ThemeState } from "@/types/theme";
 
 export default function RegisterScreen() {
-  useEffect(() => {
-    console.log("Register Screen rendered");
-  }, []);
-
   const router = useRouter();
-  const { register, isLoading, error } = useUserStore();
-  const [formError, setFormError] = useState("");
+  const { register, isLoading } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
-  const {themeState} = useTheme()
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleRegister = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      setFormError("Passwords do not match");
+    // A validação pode ser mais robusta com bibliotecas como Zod ou Yup
+    if (password !== confirmPassword) {
+      // Exibir erro no campo "Confirmar Senha"
       return;
     }
-
     try {
-      await register({
-        email: formData.email,
-        password: formData.password,
-        name: `${formData.firstName} ${formData.lastName}`,
-      });
-      router.replace("/tabs/index");
-    } catch (error) {
-      return;
+      await register({ name, email, password });
+      router.replace("/tabs");
+    } catch (e) {
+      // Erro já tratado na store
     }
-  };
-
-  const handleLogin = () => {
-    router.push("/auth/login");
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <Stack.Screen
-        options={{
-          title: "Register",
-          headerShown: false,
-        }}
-      />
-
+    <SafeAreaView style={styles.container} edges={["bottom", "top"]}>
+      <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoidingView}
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.logoContainer}>
+          <View style={styles.header}>
             <Image
-              source={require("@/assets/images/playstore.png")}
+              source={require("@/assets/images/icon.png")}
               style={styles.logo}
-              resizeMode="contain"
             />
-            <Text style={styles.appName}>Tanque Cheio</Text>
+            <Text style={styles.title}>Crie sua Conta</Text>
+            <Text style={styles.subtitle}>É rápido, fácil e gratuito.</Text>
           </View>
 
-          <Text style={styles.title}>Criar Conta</Text>
-          <Text style={styles.subtitle}>
-            Crie sua conta para ter acesso aos preços dos combustíveis próximos
-            à você.
-          </Text>
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-          {formError ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{formError}</Text>
-            </View>
-          ) : null}
-
-            <View style={styles.inputContainer}>
-            <User size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Nome"
-              placeholderTextColor={themeState.colors.text.hint}
-              value={formData.firstName}
-              onChangeText={(text) => setFormData({ ...formData, firstName: text })}
+          <View style={styles.formContainer}>
+            <AuthInput
+              label="Nome Completo"
+              icon={User}
+              placeholder="Seu nome"
+              value={name}
+              onChangeText={setName}
               autoCapitalize="words"
             />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <User size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Sobrenome"
-              placeholderTextColor={themeState.colors.text.hint}
-              value={formData.lastName}
-              onChangeText={(text) =>
-                setFormData({ ...formData, lastName: text })
-              }
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Mail size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={themeState.colors.text.hint}
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
-              autoCapitalize="none"
+            <AuthInput
+              label="E-mail"
+              icon={Mail}
+              placeholder="seuemail@exemplo.com"
+              value={email}
+              onChangeText={setEmail}
               keyboardType="email-address"
+              autoCapitalize="none"
             />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Phone size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Numero de Celular"
-              placeholderTextColor={themeState.colors.text.hint}
-              value={formData.phone}
-              onChangeText={(text) => setFormData({ ...formData, phone: text })}
+            <AuthInput
+              label="Celular (Opcional)"
+              icon={Phone}
+              placeholder="(00) 00000-0000"
+              value={phone}
+              onChangeText={setPhone}
               keyboardType="phone-pad"
             />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Lock size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Senha"
-              placeholderTextColor={themeState.colors.text.hint}
-              value={formData.password}
-              onChangeText={(text) =>
-                setFormData({ ...formData, password: text })
-              }
-              secureTextEntry={!showPassword}
+            <AuthInput
+              label="Senha"
+              icon={Lock}
+              placeholder="Crie uma senha forte"
+              value={password}
+              onChangeText={setPassword}
+              isPassword
             />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-            >
-              {showPassword ? (
-                <EyeOff size={20} color={styles.icon.color} />
-              ) : (
-                <Eye size={20} color={styles.icon.color} />
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Lock size={20} color={styles.icon.color} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirme a Senha"
-              placeholderTextColor={themeState.colors.text.hint}
-              value={formData.confirmPassword}
-              onChangeText={(text) =>
-                setFormData({ ...formData, confirmPassword: text })
-              }
-              secureTextEntry={!showConfirmPassword}
+            <AuthInput
+              label="Confirmar Senha"
+              icon={Lock}
+              placeholder="Repita a senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              isPassword
             />
-            <TouchableOpacity
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={styles.eyeIcon}
-            >
-              {showConfirmPassword ? (
-                <EyeOff size={20} color={styles.icon.color} />
-              ) : (
-                <Eye size={20} color={styles.icon.color} />
-              )}
-            </TouchableOpacity>
+
+            <Button
+              title="Criar Conta"
+              onPress={handleRegister}
+              loading={isLoading}
+              size="large"
+              fullWidth
+              style={{ marginTop: 24 }}
+            />
           </View>
 
-          <Button
-            title="Criar Conta"
-            variant="primary"
-            size="large"
-            loading={isLoading}
-            onPress={handleRegister}
-            style={styles.registerButton}
-          />
-
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Já possui conta?</Text>
-            <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.loginLink}>Entrar</Text>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Já tem uma conta?</Text>
+            <TouchableOpacity onPress={() => router.push("/auth/login")}>
+              <Text style={styles.footerLink}> Faça Login</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -228,92 +132,35 @@ export default function RegisterScreen() {
 
 const getStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.colors.background.default,
-    },
-    keyboardAvoidingView: {
-      flex: 1,
-    },
+    container: { flex: 1, backgroundColor: theme.colors.background.default },
     scrollContent: {
       flexGrow: 1,
-      padding: 24,
+      padding: theme.spacing.xl,
       justifyContent: "center",
     },
-    logoContainer: {
-      alignItems: "center",
-      marginBottom: 32,
-    },
+    header: { alignItems: "center", marginBottom: theme.spacing["2xl"] },
     logo: {
-      width: 80,
-      height: 80,
-      marginBottom: 16,
-    },
-    appName: {
-      fontSize: 24,
-      fontWeight: "600",
-      color: theme.colors.text.primary,
+      width: 60,
+      height: 60,
+      marginBottom: theme.spacing.sm,
+      borderRadius: 16,
     },
     title: {
-      fontSize: 28,
-      fontWeight: "700",
+      fontSize: 32,
+      fontWeight: theme.typography.fontWeight.bold,
       color: theme.colors.text.primary,
-      marginBottom: 8,
+      marginBottom: theme.spacing.sm,
     },
-    subtitle: {
-      fontSize: 16,
-      color: theme.colors.text.secondary,
-      marginBottom: 24,
-    },
-    errorContainer: {
-      backgroundColor: theme.colors.error + "20", // Adiciona opacidade à cor de erro
-      padding: 12,
-      borderRadius: 8,
-      marginBottom: 16,
-    },
-    errorText: {
-      color: theme.colors.error,
-      fontSize: 14,
-    },
-    inputContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: theme.colors.background.paper,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: 8,
-      paddingHorizontal: 16,
-      marginBottom: 16,
-      height: 56,
-    },
-    input: {
-      flex: 1,
-      marginLeft: 12,
-      fontSize: 16,
-      color: theme.colors.text.primary,
-    },
-    icon: {
-      color: theme.colors.text.secondary,
-    },
-    eyeIcon: {
-      padding: 4,
-    },
-    registerButton: {
-      marginBottom: 24,
-    },
-    loginContainer: {
+    subtitle: { fontSize: 16, color: theme.colors.text.secondary },
+    formContainer: { marginBottom: theme.spacing.xl },
+    footer: {
       flexDirection: "row",
       justifyContent: "center",
-      alignItems: "center",
-      gap: 4,
+      marginTop: theme.spacing.xl,
     },
-    loginText: {
-      color: theme.colors.text.secondary,
-      fontSize: 14,
-    },
-    loginLink: {
+    footerText: { color: theme.colors.text.secondary },
+    footerLink: {
       color: theme.colors.primary.main,
-      fontSize: 14,
-      fontWeight: "500",
+      fontWeight: theme.typography.fontWeight.bold,
     },
   });
