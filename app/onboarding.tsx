@@ -1,4 +1,3 @@
-// gemini/app/intro.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
@@ -50,7 +49,7 @@ const Paginator = ({ data, currentIndex }: { data: any[], currentIndex: number }
     );
 };
 
-export default function IntroScreen() {
+export default function OnboardingScreen() {
   const router = useRouter();
   const styles = useStylesWithTheme(getStyles);
   const { width } = useWindowDimensions();

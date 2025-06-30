@@ -131,6 +131,8 @@ export const ThemeProvider = ({
     >
       <StatusBar
         barStyle={activeTheme === "DARK" ? "light-content" : "dark-content"}
+        backgroundColor={currentThemeState.colors.background.default}
+        translucent={false}
       />
       {children}
     </ThemeContext.Provider>

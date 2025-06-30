@@ -41,7 +41,7 @@ export default function RootLayout() {
 
     if (!isAuthLoading && isThemeReady) {
       if (!hasViewedOnboarding) {
-        router.replace("/intro");
+        router.replace("/onboarding");
       }
 
       SplashScreen.hideAsync();
