@@ -24,7 +24,7 @@ interface UserState {
   updateProfile: (userData: Partial<User>) => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   updatePreferences: (preferences: User["preferences"]) => Promise<void>;
-  checkAuthStatus: () => void;
+  checkAuthOnInit: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   setIsPremium: (isPremium: boolean) => void;
   setUser: (user: User | null) => void;
@@ -68,7 +68,7 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       user: null,
-      isLoading: false,
+      isLoading: true,
       error: null,
       isAuthenticated: false,
       isPremium: false,
@@ -279,32 +279,25 @@ export const useUserStore = create<UserState>()(
         }
       },
 
-      checkAuthStatus: async () => {
+      checkAuthOnInit: async () => {
         try {
           const tokenData = await getTokenData();
           if (!tokenData) {
-            throw new Error("Nenhum token válido encontrado.");
+            // Se não há token, não estamos autenticados.
+            set({ user: null, isAuthenticated: false });
+            return;
           }
 
-          // Se temos um token, tentamos buscar os dados do usuário para validar a sessão.
+          // Se há token, validamos buscando os dados do usuário.
           const currentUser = await usersAPI.getCurrentUser();
           set({
             user: currentUser,
             isAuthenticated: true,
-            error: null,
-            isLoading: false,
           });
-
-          // await _registerPushToken();
         } catch (error) {
-          // Se qualquer passo falhar (token expirado, erro de rede, etc.), deslogamos o usuário.
-          set({
-            user: null,
-            error: "Sessão inválida. Por favor, faça login novamente.",
-            isAuthenticated: false,
-            isLoading: false,
-          });
-          // Limpa o token inválido do storage
+          // Qualquer erro (token expirado, etc.) significa que não estamos autenticados.
+          set({ user: null, isAuthenticated: false });
+          // O logout aqui garante a limpeza de qualquer token inválido.
           await get().logout();
         } finally {
           set({ isLoading: false });

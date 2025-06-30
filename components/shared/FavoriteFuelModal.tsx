@@ -73,9 +73,9 @@ export const FavoriteFuelModal = ({
     .onUpdate((event) => {
       translateY.value = Math.max(0, event.translationY);
     })
-    .onEnd(() => {
-      if (translateY.value > CLOSE_THRESHOLD) {
-        handleClose();
+    .onEnd((event) => {
+      if (event.translationY > CLOSE_THRESHOLD) {       
+        runOnJS(handleClose)();
       } else {
         translateY.value = withSpring(0, { damping: 15 });
       }
@@ -305,7 +305,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     separator: {
       height: 1,
-      backgroundColor: theme.colors.divider, 
+      backgroundColor: theme.colors.divider,
       marginHorizontal: theme.spacing.lg,
     },
     footer: {

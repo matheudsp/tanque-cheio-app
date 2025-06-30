@@ -12,7 +12,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { isLoading: isAuthLoading } = useUserStore();
   const [isThemeReady, setIsThemeReady] = useState(false);
   const [hasViewedOnboarding, setHasViewedOnboarding] = useState<
     boolean | null
@@ -35,18 +34,14 @@ export default function RootLayout() {
   useEffect(() => {
     // Esconder a splash screen apenas quando todas as verificações estiverem prontas.
     // A verificação de onboarding é a primeira coisa que deve acontecer.
-    if (hasViewedOnboarding === null) {
+    if (hasViewedOnboarding === null || !isThemeReady) {
       return;
     }
 
-    if (!isAuthLoading && isThemeReady) {
-      if (!hasViewedOnboarding) {
-        router.replace("/onboarding");
-      }
-
-      SplashScreen.hideAsync();
+    if (!hasViewedOnboarding) {
+      router.replace("/onboarding");
     }
-  }, [isAuthLoading, isThemeReady, hasViewedOnboarding, router]);
+  }, [isThemeReady, hasViewedOnboarding, router]);
 
   return (
     <AuthProvider>
@@ -56,7 +51,10 @@ export default function RootLayout() {
             <ToastProvider>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="intro" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="onboarding"
+                  options={{ headerShown: false }}
+                />
                 <Stack.Screen name="auth" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="tabs"

@@ -22,7 +22,6 @@ import type { GasStation } from "@/types/gas-stations";
 import type { ThemeState } from "@/types/theme";
 import { useTheme } from "@/providers/themeProvider";
 
-// Componente para renderizar os cabeçalhos das seções (sem alterações)
 const SectionHeader = ({
   title,
   onPress,
@@ -46,7 +45,7 @@ const SectionHeader = ({
   );
 };
 
-// Componente para exibir quando uma lista está vazia (sem alterações)
+
 const EmptyListComponent = ({ message }: { message: string }) => {
   const styles = useStylesWithTheme(getStyles);
   return (
@@ -79,10 +78,9 @@ export default function HomeScreen() {
     }))
   );
 
-  // --- ALTERAÇÃO: Mapeamento de favoritos mais seguro e robusto ---
   const favoriteStations = useMemo(() => {
     const stationsMap = new Map<string, GasStation>();
-    
+
     favorites.forEach((fav) => {
       // Garante que o favorito e seu produto associado são válidos
       if (!fav || !fav.gas_station_id || !fav.product) return;
@@ -92,15 +90,14 @@ export default function HomeScreen() {
       if (existingStation) {
         existingStation.fuel_prices.push(fav.product);
       } else {
-        // Cria um objeto GasStation a partir dos dados do FavoriteStation
         const newStation: GasStation = {
           id: fav.gas_station_id,
-          trade_name: fav.gas_station_name, // Usa o nome do favorito como nome fantasia
-          legal_name: fav.gas_station_name, // Usa como fallback para o nome legal
+          trade_name: fav.gas_station_name,
+          legal_name: fav.gas_station_name,
           brand: fav.gas_station_brand,
           localization: fav.localization,
           fuel_prices: [fav.product],
-          tax_id: "", // Campo obrigatório, mas não disponível nos favoritos
+          tax_id: "",
         };
         stationsMap.set(fav.gas_station_id, newStation);
       }
@@ -174,7 +171,7 @@ export default function HomeScreen() {
               renderItem={(props) =>
                 renderStationItem({ ...props, showDistance: false })
               }
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.id.toString()}
               ListEmptyComponent={
                 <EmptyListComponent message="Você ainda não favoritou nenhum posto." />
               }
@@ -182,7 +179,7 @@ export default function HomeScreen() {
             />
           )}
         </View>
-        
+
         <View style={styles.section}>
           <SectionHeader
             title="Últimas Buscas"
@@ -193,10 +190,11 @@ export default function HomeScreen() {
             data={recentlyViewedStations}
             horizontal
             showsHorizontalScrollIndicator={false}
-            // --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
-            // Verifica se a distância existe antes de decidir mostrá-la.
             renderItem={(props) =>
-              renderStationItem({ ...props, showDistance: props.item.distance != null })
+              renderStationItem({
+                ...props,
+                showDistance: props.item.distance != null,
+              })
             }
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
@@ -210,7 +208,6 @@ export default function HomeScreen() {
   );
 }
 
-// Estilos (sem alterações)
 const getStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({
     container: {

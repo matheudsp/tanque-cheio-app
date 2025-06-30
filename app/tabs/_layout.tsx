@@ -59,7 +59,7 @@ export default function TabLayout() {
           left: themeState.spacing.sm,
           right: themeState.spacing.sm,
           marginHorizontal: themeState.spacing.sm,
-          bottom: Platform.OS === "ios" ? themeState.spacing.xl : themeState.spacing["5xl"],
+          bottom: Platform.OS === "ios" ? themeState.spacing.xl : themeState.spacing.sm,
           backgroundColor: themeState.colors.background.paper,
           borderRadius: 32,
           height: 72,

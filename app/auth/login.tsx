@@ -124,8 +124,14 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Não tem uma conta?</Text>
-            <TouchableOpacity onPress={() => router.push("/auth/register")}>
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+              onPress={() => router.push("/auth/register")}
+            >
+              <Text style={styles.footerText}>Não tem uma conta?</Text>
               <Text style={styles.footerLink}> Cadastre-se</Text>
             </TouchableOpacity>
           </View>
