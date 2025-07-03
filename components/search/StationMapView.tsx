@@ -1,36 +1,56 @@
-import React, { useRef, useMemo, useEffect, useState } from "react";
+// components/search/StationMapView.tsx
+import React, { useCallback, useEffect, useRef, useMemo } from "react";
 import {
-  View,
+  Platform,
   StyleSheet,
-  Image,
   TouchableOpacity,
+  View,
   Text,
   Dimensions,
+  Alert, // Import Alert for permissions
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import { Feather } from "@expo/vector-icons";
+import { useLocationPermissions } from "expo-maps";
+import { useRouter } from "expo-router";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+} from "react-native-reanimated";
+import { Navigation2 } from "lucide-react-native";
+import * as Location from "expo-location"; // Import expo-location
 
-import type { GasStation } from "@/types";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
+import type { GasStation } from "@/types";
 import type { ThemeState } from "@/types/theme";
-import markerImage from "@/assets/images/marker.png";
-import markerSelectedImage from "@/assets/images/playstore.png";
-import { GasStationCard } from "@/components/shared/GasStationCard";
-import { GasStationCardSkeleton } from "../GasStationCardSkeleton";
-import { EmptyState } from "../ui/EmptyState";
-
-const { height } = Dimensions.get("window");
+import { Loading } from "../ui/Loading";
+import MapComponent, { MapComponentRef } from "../Map"; // Import MapComponentRef
+import { BrandLogo } from "../ui/BrandLogo";
+import { AppIcon } from "../ui/AppIcon";
+import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
+import { getPrimaryFuelInfo, formatCurrencyBRL } from "@/utils/fuel";
 
 interface StationMapViewProps {
   stations: GasStation[];
   isLoading: boolean;
-  userLocation: any;
+  userLocation: { latitude: number; longitude: number } | null;
   onSelectStation: (station: GasStation | null) => void;
   selectedStationId: string | null;
-  onSearchInArea: (region: Region) => void;
+  onSearchInArea: (region: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  }) => void;
+  onUpdateUserLocation: (location: {
+    latitude: number;
+    longitude: number;
+  }) => void; // Adicionado para atualizar a localização do usuário
 }
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_HEIGHT = 100;
 
 export function StationMapView({
   stations,
@@ -39,259 +59,275 @@ export function StationMapView({
   onSelectStation,
   selectedStationId,
   onSearchInArea,
+  onUpdateUserLocation, // Recebido como prop
 }: StationMapViewProps) {
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
+  const router = useRouter();
 
-  const mapRef = useRef<MapView>(null);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const [permissionStatus, requestPermission] = useLocationPermissions();
+  const mapRef = useRef<MapComponentRef>(null); // Ref para o MapComponent
 
-  const [currentMapRegion, setCurrentMapRegion] = useState<
-    Region | undefined
-  >();
-  const [showSearchAreaButton, setShowSearchAreaButton] = useState(false);
+  const [selectedStation, setSelectedStation] =
+    React.useState<GasStation | null>(null);
 
-  const snapPoints = useMemo(() => ["25%", "70%"], []);
+  const cardTranslateY = useSharedValue(CARD_HEIGHT);
+  const cardOpacity = useSharedValue(0);
 
-  // Anima o mapa para a estação selecionada
   useEffect(() => {
-    const station = stations.find((s) => s.id === selectedStationId);
-    if (station && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: station.localization.coordinates!.coordinates[1],
-          longitude: station.localization.coordinates!.coordinates[0],
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        600
-      );
-      bottomSheetRef.current?.snapToIndex(0);
+    if (permissionStatus?.granted === false) {
+      ///requestPermission();  Já está sendo chamado no onMount, mas você deve ser implementando um toast para aviso mais explícito
     }
-  }, [selectedStationId, stations]);
+  }, [permissionStatus]);
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permissão de Localização",
+          "Precisamos da sua permissão para acessar a localização para mostrar postos próximos. Por favor, habilite nas configurações do seu dispositivo."
+        );
+        return;
+      }
 
-  const centerOnUserLocation = () => {
-    if (userLocation && mapRef.current) {
-      const userRegion = {
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-      };
-      mapRef.current.animateToRegion(userRegion, 1000);
-      onSearchInArea(userRegion);
+      let location = await Location.getCurrentPositionAsync({});
+      onUpdateUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (selectedStationId) {
+      const foundStation = stations.find((s) => s.id === selectedStationId);
+      setSelectedStation(foundStation || null);
+      if (foundStation) {
+        cardTranslateY.value = withTiming(0, { duration: 300 });
+        cardOpacity.value = withTiming(1, { duration: 300 });
+      }
+    } else {
+      cardTranslateY.value = withTiming(CARD_HEIGHT, { duration: 300 });
+      cardOpacity.value = withTiming(0, { duration: 300 });
+      setSelectedStation(null);
     }
-  };
+  }, [selectedStationId, stations, cardTranslateY, cardOpacity]);
 
-  const renderBottomSheetHeader = () => (
-    <View style={styles.bottomSheetHeader}>
-      <Text style={styles.listTitle}>
-        {stations.length > 0
-          ? `${stations.length} postos encontrados`
-          : "Resultados Próximos"}
-      </Text>
-    </View>
+  const handleMarkerPress = useCallback(
+    (station: GasStation) => {
+      onSelectStation(station);
+    },
+    [onSelectStation]
   );
+
+  const handleMapClick = useCallback(() => {
+    onSelectStation(null);
+  }, [onSelectStation]);
+
+  const handleGoToDetails = useCallback(() => {
+    if (selectedStation) {
+      router.push({
+        pathname: "/gas-station/[id]",
+        params: { id: selectedStation.id },
+      } as any);
+    }
+  }, [selectedStation, router]);
+
+  // NOVO: Função para centralizar o mapa na localização do usuário
+  const centerOnUserLocation = useCallback(async () => {
+    // Delimitadores de zoom padrão para a área
+    const defaultLatitudeDelta = 0.05; // Definido aqui
+    const defaultLongitudeDelta = 0.05; // Definido aqui
+
+    if (userLocation) {
+      mapRef.current?.animateToRegion(
+        userLocation.latitude,
+        userLocation.longitude,
+        defaultLatitudeDelta,
+        defaultLongitudeDelta
+      );
+    } else {
+      // Se userLocation não estiver disponível, tente obter novamente e peça permissão
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permissão de Localização",
+          "Não foi possível obter sua localização. Por favor, verifique as permissões do aplicativo nas configurações do seu dispositivo."
+        );
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({});
+      onUpdateUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+      // Tente animar novamente após atualizar a localização
+      mapRef.current?.animateToRegion(
+        location.coords.latitude,
+        location.coords.longitude,
+        defaultLatitudeDelta,
+        defaultLongitudeDelta
+      );
+    }
+  }, [userLocation, onUpdateUserLocation]);
+
+  const animatedCardStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: cardTranslateY.value }],
+      opacity: cardOpacity.value,
+    };
+  });
+
+  if (isLoading && stations.length === 0) {
+    return <Loading />;
+  }
 
   return (
     <View style={styles.container}>
-      <MapView
+      <MapComponent
         ref={mapRef}
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={{
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-        onRegionChangeComplete={(region) => {
-          setCurrentMapRegion(region);
-          setShowSearchAreaButton(true);
-        }}
-        onPress={() => onSelectStation(null)}
-        showsUserLocation
-        showsMyLocationButton={false}
-        mapPadding={{ top: 0, right: 0, bottom: height * 0.22, left: 0 }}
-      >
-        {stations.map((station) => (
-          <Marker
-            key={station.id}
-            coordinate={{
-              latitude: station.localization.coordinates!.coordinates[1],
-              longitude: station.localization.coordinates!.coordinates[0],
-            }}
-            onPress={() => onSelectStation(station)}
-            zIndex={selectedStationId === station.id ? 99 : 1}
-          >
-            <Image
-              source={
-                selectedStationId === station.id
-                  ? markerSelectedImage
-                  : markerImage
-              }
-              style={
-                selectedStationId === station.id
-                  ? styles.customMarkerSelected
-                  : styles.customMarker
-              }
-              resizeMode="contain"
-            />
-          </Marker>
-        ))}
-      </MapView>
-
-      {showSearchAreaButton && !isLoading && (
-        <TouchableOpacity
-          style={styles.searchAreaButton}
-          onPress={() => currentMapRegion && onSearchInArea(currentMapRegion)}
-        >
-          <Feather
-            name="search"
-            size={18}
-            color={themeState.colors.primary.main}
-          />
-          <Text style={styles.searchAreaButtonText}>Buscar nesta área</Text>
-        </TouchableOpacity>
-      )}
+        userLocation={userLocation}
+        stations={stations}
+        onMarkerPress={handleMarkerPress}
+        onMapPress={handleMapClick}
+        onRegionChangeComplete={onSearchInArea}
+      />
 
       <TouchableOpacity
         style={styles.myLocationButton}
-        onPress={centerOnUserLocation}
+        onPress={centerOnUserLocation} // Atribui a função ao onPress
+        activeOpacity={0.8}
       >
-        <Feather
-          name="crosshair"
-          size={24}
-          color={themeState.colors.text.primary}
+        <Navigation2
+          color={themeState.colors.text.secondary}
+          size={themeState.typography.fontSize.h2}
         />
       </TouchableOpacity>
 
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        handleComponent={() => (
-          <View style={styles.bottomSheetHandleContainer}>
-            <View style={styles.bottomSheetHandle} />
-          </View>
-        )}
-        backgroundStyle={{
-          backgroundColor: themeState.colors.background.default,
-        }}
-      >
-        <BottomSheetFlatList
-          data={isLoading ? Array.from({ length: 5 }) : stations}
-          keyExtractor={(item, index) =>
-            (item as GasStation)?.id ?? index.toString()
-          }
-          ListHeaderComponent={renderBottomSheetHeader}
-          renderItem={({ item }) =>
-            isLoading ? (
-              <View style={styles.cardContainer}>
-                <GasStationCardSkeleton />
-              </View>
-            ) : (
-              <TouchableOpacity
-                onPress={() => onSelectStation(item)}
-                style={styles.cardContainer}
-              >
-                <GasStationCard
-                  station={item}
-                  isSelected={selectedStationId === (item as GasStation).id}
-                />
-              </TouchableOpacity>
-            )
-          }
-          ListEmptyComponent={
-            !isLoading ? (
-              <EmptyState
-                icon={
-                  <Feather
-                    name="map-pin"
-                    size={40}
-                    color={themeState.colors.text.secondary}
+      {selectedStation && (
+        <Animated.View style={[styles.cardAboveMarker, animatedCardStyle]}>
+          <BrandLogo brandName={selectedStation.brand} style={styles.logo} />
+          <View style={styles.cardContent}>
+            <Text style={styles.stationNameText} numberOfLines={1}>
+              {selectedStation.trade_name || selectedStation.legal_name}
+            </Text>
+            {(() => {
+              const fuel = getPrimaryFuelInfo(selectedStation);
+              const price = fuel ? formatCurrencyBRL(fuel.price) : "N/A";
+              return (
+                <View style={styles.priceContainer}>
+                  <AppIcon
+                    name={getIconNameFromFuel(fuel?.product_name)}
+                    width={20}
+                    height={20}
                   />
-                }
-                fullScreen
-                title="Nenhum posto encontrado"
-                description="Tente mover o mapa para outra área ou ajuste seus filtros."
-              />
-            ) : null
-          }
-          contentContainerStyle={styles.listContent}
-        />
-      </BottomSheet>
+                  <Text style={styles.priceText}>{price}</Text>
+                  {selectedStation.distance !== undefined && (
+                    <Text style={styles.distanceText}>
+                      • {selectedStation.distance} km
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
+            <TouchableOpacity
+              onPress={handleGoToDetails}
+              style={styles.detailsButton}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.detailsButtonText}>Ver detalhes</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      )}
     </View>
   );
 }
 
 const getStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({
-    container: { flex: 1 },
-    map: { ...StyleSheet.absoluteFillObject },
-    customMarker: { width: 40, height: 40 },
-    customMarkerSelected: { width: 55, height: 55 },
-    searchAreaButton: {
-      position: "absolute",
-      top: 20,
-      alignSelf: "center",
-      flexDirection: "row",
+    container: {
+      flex: 1,
+      paddingBottom: theme.spacing.sm,
+      backgroundColor: theme.colors.background.default,
+    },
+    map: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: "center",
       alignItems: "center",
       backgroundColor: theme.colors.background.default,
-      paddingVertical: theme.spacing.md,
-      paddingHorizontal: theme.spacing.xl,
-      borderRadius: theme.borderRadius.round,
-      ...theme.shadows.shadowMd,
-    },
-    searchAreaButtonText: {
-      marginLeft: theme.spacing.sm,
-      color: theme.colors.primary.main,
-      fontWeight: theme.typography.fontWeight.bold,
-      fontSize: 16,
     },
     myLocationButton: {
       position: "absolute",
-      bottom: height * 0.25 + 20,
-      right: 20,
-      backgroundColor: theme.colors.background.default,
-      width: 50,
-      height: 50,
-      borderRadius: 25,
+      padding: theme.spacing.lg,
+      borderRadius: theme.borderRadius.round,
+      bottom: 100,
+      right: theme.spacing.lg,
+      backgroundColor: theme.colors.background.elevated,
       justifyContent: "center",
       alignItems: "center",
       ...theme.shadows.shadowMd,
+      elevation: 8,
     },
-    bottomSheetHandleContainer: {
-      backgroundColor: theme.colors.background.default,
-      paddingVertical: theme.spacing.md,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+    cardAboveMarker: {
+      position: "absolute",
+      bottom: theme.spacing.xl + 72,
+      left: theme.spacing.lg,
+      right: theme.spacing.lg,
+      backgroundColor: theme.colors.background.paper,
+      borderRadius: theme.borderRadius.large,
+      padding: theme.spacing.md,
+      flexDirection: "row",
       alignItems: "center",
+      ...theme.shadows.shadowLg,
+      elevation: 10,
     },
-    bottomSheetHandle: {
-      width: 40,
-      height: 5,
-      borderRadius: 2.5,
-      backgroundColor: theme.colors.text.hint,
-    },
-    bottomSheetHeader: {
-      paddingHorizontal: theme.spacing.xl,
-      paddingBottom: theme.spacing.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.divider,
+    logo: {
+      width: 48,
+      height: 48,
+      borderRadius: theme.borderRadius.medium,
+      marginRight: theme.spacing.md,
       backgroundColor: theme.colors.background.default,
     },
-    listTitle: {
-      fontSize: 18,
-      fontWeight: theme.typography.fontWeight.bold,
+    cardContent: {
+      flex: 1,
+      justifyContent: "center",
+    },
+    stationNameText: {
+      fontSize: theme.typography.fontSize.medium,
+      fontWeight: theme.typography.fontWeight.semibold,
       color: theme.colors.text.primary,
+      marginBottom: theme.spacing.xs,
     },
-    cardContainer: {
-      paddingHorizontal: theme.spacing.xl,
+    priceContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: theme.spacing.sm,
+    },
+    priceText: {
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.bold,
+      color: theme.colors.primary.main,
+      marginLeft: theme.spacing.sm,
+    },
+    distanceText: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing.sm,
+    },
+    detailsButton: {
+      backgroundColor: theme.colors.action.selected,
       paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      borderRadius: theme.borderRadius.medium,
+      alignSelf: "flex-start",
     },
-    listContent: {
-      backgroundColor: theme.colors.background.default,
-      paddingBottom: 40,
+    detailsButtonText: {
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+      color: theme.colors.primary.main,
     },
   });

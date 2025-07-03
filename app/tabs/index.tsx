@@ -21,6 +21,7 @@ import { useGasStationStore } from "@/stores/gasStationStore";
 import type { GasStation } from "@/types/gas-stations";
 import type { ThemeState } from "@/types/theme";
 import { useTheme } from "@/providers/themeProvider";
+import { useUserStore } from "@/stores/userStore";
 
 const SectionHeader = ({
   title,
@@ -45,7 +46,6 @@ const SectionHeader = ({
   );
 };
 
-
 const EmptyListComponent = ({ message }: { message: string }) => {
   const styles = useStylesWithTheme(getStyles);
   return (
@@ -57,6 +57,7 @@ const EmptyListComponent = ({ message }: { message: string }) => {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
 
@@ -142,7 +143,7 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>Olá!</Text>
+          <Text style={styles.greeting}>Olá, {user?.name}</Text>
           <Text style={styles.subtitle}>
             Encontre os melhores preços perto de você.
           </Text>

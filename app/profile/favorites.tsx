@@ -139,7 +139,7 @@ const StationFavoritesCard = React.memo(
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <BrandLogo brandName={station_info.gas_station_brand} />
+          <BrandLogo brandName={station_info.gas_station_brand}/>
           <View style={styles.cardHeaderInfo}>
             <Text style={styles.cardTitle} numberOfLines={1}>
               {station_info.gas_station_name}

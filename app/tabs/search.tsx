@@ -38,14 +38,14 @@ export default function SearchScreen() {
 
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-  
-  // Estado dos filtros
+
   const [selectedFuelType, setSelectedFuelType] = useState("");
   const [radius, setRadius] = useState(50); // Raio inicial menor
   const [sort, setSort] = useState<"distanceAsc" | "priceAsc">("distanceAsc");
 
-  // Estado para o mapa
-  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(
+    null
+  );
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -57,7 +57,7 @@ export default function SearchScreen() {
 
   useEffect(() => {
     fetchFuelTypes();
-    // Realiza a busca inicial quando a localização do usuário estiver disponível
+
     if (userLocation) {
       handleSearchWithFilters();
     }
@@ -68,8 +68,7 @@ export default function SearchScreen() {
   ) => {
     if (!userLocation) return;
 
-    // Limpa a seleção de posto ao fazer nova busca
-    setSelectedStationId(null); 
+    setSelectedStationId(null);
 
     const params: NearbyStationsParams = {
       lat: userLocation.latitude,
@@ -81,34 +80,34 @@ export default function SearchScreen() {
     };
     fetchNearbyStations(params);
   };
-  
-  const handleSearchInMapArea = (region: Region) => {
-     if (!userLocation) return;
-     
-     const radiusInKm = Math.max(
-        2, // Mínimo de 2km
-        Math.round((region.latitudeDelta * 111) / 2) // Raio aproximado da área visível
-      );
 
-     handleSearchWithFilters({
-        lat: region.latitude,
-        lng: region.longitude,
-        radius: radiusInKm
-     });
-  }
+  const handleSearchInMapArea = (region: Region) => {
+    if (!userLocation) return;
+
+    const radiusInKm = Math.max(
+      2, // Mínimo de 2km
+      Math.round((region.latitudeDelta * 111) / 2) // Raio aproximado da área visível
+    );
+
+    handleSearchWithFilters({
+      lat: region.latitude,
+      lng: region.longitude,
+      radius: radiusInKm,
+    });
+  };
 
   const handleRefresh = () => {
     clearError();
     handleSearchWithFilters();
   };
-  
+
   const handleSelectStation = (station: GasStation | null) => {
     if (!station) {
-        setSelectedStationId(null);
-        return;
+      setSelectedStationId(null);
+      return;
     }
     setSelectedStationId(station.id);
-  }
+  };
 
   const applyFiltersAndSearch = () => {
     setShowFiltersModal(false);
@@ -118,7 +117,10 @@ export default function SearchScreen() {
   if (!userLocation) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={themeState.colors.primary.main} />
+        <ActivityIndicator
+          size="large"
+          color={themeState.colors.primary.main}
+        />
         <Text style={styles.loadingText}>Obtendo sua localização...</Text>
       </View>
     );
@@ -143,6 +145,8 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
+     
+
       <ActiveFilters
         selectedFuelType={selectedFuelType}
         sort={sort}
@@ -160,7 +164,7 @@ export default function SearchScreen() {
           handleSearchWithFilters({ radius: 50 });
         }}
       />
-      
+
       {error && (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -177,13 +181,19 @@ export default function SearchScreen() {
             onShowFilters={() => setShowFiltersModal(true)}
           />
         ) : (
-          <StationMapView 
+          <StationMapView
             stations={nearbyStations}
             isLoading={isLoading}
             userLocation={userLocation}
             onSelectStation={handleSelectStation}
             selectedStationId={selectedStationId}
             onSearchInArea={handleSearchInMapArea}
+            onUpdateUserLocation={function (location: {
+              latitude: number;
+              longitude: number;
+            }): void {
+              throw new Error("Function not implemented yet.");
+            }}
           />
         )}
       </View>
@@ -275,5 +285,5 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     content: {
       flex: 1,
-    }
+    },
   });

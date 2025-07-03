@@ -304,7 +304,7 @@ export default function GasStationDetailScreen() {
           ]}
         >
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => router.push('..')}
             style={styles.headerButton}
           >
             <Ionicons

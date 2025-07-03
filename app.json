@@ -13,12 +13,11 @@
       "bundleIdentifier": "com.matheudsp.tanquecheio"
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
+      "package": "com.matheudsp.tanquecheio",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-foreground.png",
-        "backgroundColor": "#0F172A" 
-      },
-      "package": "com.matheudsp.tanquecheio"
+        "backgroundColor": "#0F172A"
+      }
     },
     "plugins": [
       "expo-router",
@@ -35,6 +34,13 @@
             "backgroundColor": "#0F172A",
             "image": "./assets/images/splash-dark.png"
           }
+        }
+      ],
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Permitir que $(PRODUCT_NAME) use sua localização para encontrar postos próximos."
         }
       ]
     ],

@@ -220,9 +220,11 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     scrollView: {
       flex: 1,
+      
     },
     scrollContent: {
       padding: theme.spacing.lg,
+      paddingBottom: 100
     },
     profileHeader: {
       alignItems: "center",

@@ -71,7 +71,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       borderRadius: theme.borderRadius.medium,
     },
     activeButton: {
-      backgroundColor: theme.colors.background.default,
+      backgroundColor: theme.colors.action.selected,
       ...theme.shadows.shadowSm,
     },
     buttonText: {
