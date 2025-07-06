@@ -132,20 +132,21 @@ export default function SearchScreen() {
             onShowFilters={() => setShowFiltersModal(true)}
           />
         ) : (
-          <StationMapView
-            stations={nearbyStations}
-            isLoading={isLoading}
-            userLocation={userLocation}
-            onSelectStation={handleSelectStation}
-            selectedStationId={selectedStationId}
-            onSearchInArea={handleSearchInMapArea}
-            onUpdateUserLocation={function (location: {
-              latitude: number;
-              longitude: number;
-            }): void {
-              throw new Error("Function not implemented.");
-            }}
-          />
+          // <StationMapView
+          //   stations={nearbyStations}
+          //   isLoading={isLoading}
+          //   userLocation={userLocation}
+          //   onSelectStation={handleSelectStation}
+          //   selectedStationId={selectedStationId}
+          //   onSearchInArea={handleSearchInMapArea}
+          //   onUpdateUserLocation={function (location: {
+          //     latitude: number;
+          //     longitude: number;
+          //   }): void {
+          //     throw new Error("Function not implemented.");
+          //   }}
+          // />
+          <Text>HI</Text>
         )}
       </View>
 

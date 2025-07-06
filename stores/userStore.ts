@@ -34,6 +34,7 @@ interface UserState {
   checkAuthOnInit: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   setIsPremium: (isPremium: boolean) => void;
+  togglePremiumStatus: () => void;
   setUser: (user: User | null) => void;
 }
 
@@ -84,11 +85,20 @@ export const useUserStore = create<UserState>()(
       setIsPremium: (isPremium: boolean) => {
         set({ isPremium });
       },
+      togglePremiumStatus: () => {
+        set((state) => ({ isPremium: !state.isPremium }));
+        const newStatus = !get().isPremium;
+        toast.info({
+          title: "Status Premium Alterado",
+          description: `Agora você ${
+            newStatus ? "É" : "NÃO é"
+          } um usuário Premium.`,
+        });
+      },
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-
           const response: LoginResponseDto = await authAPI.login(
             email,
             password

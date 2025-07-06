@@ -8,9 +8,10 @@ import {
   Settings,
   Trash2,
   User,
+  Wrench,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Platform,
@@ -31,7 +32,7 @@ import type { ThemeState } from "@/types/theme";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user,isPremium, logout } = useUserStore();
+  const { user, isPremium, logout } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
 
@@ -120,6 +121,11 @@ export default function ProfileScreen() {
             icon: <Bell size={20} color={themeState.colors.primary.main} />,
             label: "Notificações",
             onPress: () => router.push("/profile/notifications"),
+          },
+          {
+            icon: <Wrench size={20} color={themeState.colors.primary.main} />,
+            label: "Opções do Desenvolvedor",
+            onPress: () => router.push("/dev/developer"),
           },
           {
             icon: (
@@ -220,11 +226,10 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     scrollView: {
       flex: 1,
-      
     },
     scrollContent: {
       padding: theme.spacing.lg,
-      paddingBottom: 100
+      paddingBottom: 100,
     },
     profileHeader: {
       alignItems: "center",

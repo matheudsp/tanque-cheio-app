@@ -5,20 +5,16 @@
   },
   "build": {
     "development": {
+      "environment": "development",
       "developmentClient": true,
-      "distribution": "internal",
-      "environment": "development"
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true,
-      "environment": "production",
-       "env": {
-        "EXPO_PUBLIC_API_URL": "http://137.184.48.203/api"
-      }
+      "environment": "production"
     }
   },
   "submit": {

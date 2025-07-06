@@ -56,11 +56,12 @@ export default function RootLayout() {
                   options={{ headerShown: false }}
                 />
                 <Stack.Screen name="auth" options={{ headerShown: false }} />
+                <Stack.Screen name="dev" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="tabs"
                   options={{
                     headerShown: false,
-                    gestureEnabled:false
+                    gestureEnabled: false,
                   }}
                 />
                 <Stack.Screen
