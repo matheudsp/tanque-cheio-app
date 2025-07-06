@@ -10,8 +10,7 @@ import {
 } from "@/types";
 
 // Base API URL
-const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.15:3000/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 // Token management helpers
 export const getTokenData = async (): Promise<TokenData | null> => {
@@ -103,14 +102,11 @@ export const apiRequest = async (
   options: RequestInit = {}
 ) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
   try {
     const isAuthEndpoint =
-      // endpoint.startsWith("/auth/local/") || endpoint.startsWith("/auth/");
-      endpoint.startsWith("/auth/local/") ||
-      endpoint.startsWith("/auth/logout") ||
-      endpoint.startsWith("/auth/refresh");
+      endpoint.startsWith("/auth/local/") || endpoint.startsWith("/auth/");
 
     const token = isAuthEndpoint ? null : await getToken();
     const headers: Record<string, string> = {

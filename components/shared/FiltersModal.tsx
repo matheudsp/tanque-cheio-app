@@ -1,5 +1,7 @@
+// @/components/shared/FiltersModal.tsx
+
 import { X } from "lucide-react-native";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   SafeAreaView,
@@ -15,38 +17,53 @@ import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 
+// ✅ Tipagem para os filtros, garantindo consistência
+type SearchFilters = {
+  product?: string;
+  sortBy: "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc";
+  radius: number;
+};
+
 type FiltersModalProps = {
   visible: boolean;
   onClose: () => void;
   fuelTypes: any[];
-  selectedFuelType: string;
-  setSelectedFuelType: (fuel: string) => void;
-  sortBy: string;
-  setSortBy: (
-    sort: "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc"
-  ) => void;
-  radius: number;
-  setRadius: (r: number) => void;
-  onApply: () => void;
-  onClear: () => void;
-  activeFilterCount: number;
+  initialFilters: SearchFilters;
+  onApply: (filters: SearchFilters) => void;
 };
 
 export const FiltersModal = ({
   visible,
   onClose,
   fuelTypes,
-  selectedFuelType,
-  setSelectedFuelType,
-  sortBy,
-  setSortBy,
-  radius,
-  setRadius,
+  initialFilters,
   onApply,
-  onClear,
 }: FiltersModalProps) => {
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
+
+  const [localFilters, setLocalFilters] =
+    useState<SearchFilters>(initialFilters);
+
+  useEffect(() => {
+    if (visible) {
+      setLocalFilters(initialFilters);
+    }
+  }, [visible, initialFilters]);
+
+  const handleApply = () => {
+    onApply(localFilters);
+  };
+
+  const handleClear = () => {
+    const defaultFilters: SearchFilters = {
+      sortBy: "distanceAsc",
+      radius: 50,
+      product: undefined,
+    };
+    setLocalFilters(defaultFilters);
+    onApply(defaultFilters);
+  };
 
   const FilterSection: React.FC<{
     title: string;
@@ -86,7 +103,7 @@ export const FiltersModal = ({
             <X size={24} color={themeState.colors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Filtrar</Text>
-          <TouchableOpacity onPress={onClear}>
+          <TouchableOpacity onPress={handleClear}>
             <Text style={styles.clearButton}>Limpar</Text>
           </TouchableOpacity>
         </View>
@@ -95,15 +112,19 @@ export const FiltersModal = ({
           <FilterSection title="Combustível">
             <FilterOptionButton
               label="Todos"
-              isActive={!selectedFuelType}
-              onPress={() => setSelectedFuelType("")}
+              isActive={!localFilters.product}
+              onPress={() =>
+                setLocalFilters({ ...localFilters, product: undefined })
+              }
             />
             {fuelTypes.map((fuel) => (
               <FilterOptionButton
                 key={fuel.id}
                 label={fuel.name}
-                isActive={selectedFuelType === fuel.name}
-                onPress={() => setSelectedFuelType(fuel.name)}
+                isActive={localFilters.product === fuel.name}
+                onPress={() =>
+                  setLocalFilters({ ...localFilters, product: fuel.name })
+                }
               />
             ))}
           </FilterSection>
@@ -111,23 +132,31 @@ export const FiltersModal = ({
           <FilterSection title="Ordenar por">
             <FilterOptionButton
               label="Menor Distância"
-              isActive={sortBy === "distanceAsc"}
-              onPress={() => setSortBy("distanceAsc")}
+              isActive={localFilters.sortBy === "distanceAsc"}
+              onPress={() =>
+                setLocalFilters({ ...localFilters, sortBy: "distanceAsc" })
+              }
             />
             <FilterOptionButton
               label="Maior Distância"
-              isActive={sortBy === "distanceDesc"}
-              onPress={() => setSortBy("distanceDesc")}
+              isActive={localFilters.sortBy === "distanceDesc"}
+              onPress={() =>
+                setLocalFilters({ ...localFilters, sortBy: "distanceDesc" })
+              }
             />
             <FilterOptionButton
               label="Menor Preço"
-              isActive={sortBy === "priceAsc"}
-              onPress={() => setSortBy("priceAsc")}
+              isActive={localFilters.sortBy === "priceAsc"}
+              onPress={() =>
+                setLocalFilters({ ...localFilters, sortBy: "priceAsc" })
+              }
             />
             <FilterOptionButton
               label="Maior Preço"
-              isActive={sortBy === "priceDesc"}
-              onPress={() => setSortBy("priceDesc")}
+              isActive={localFilters.sortBy === "priceDesc"}
+              onPress={() =>
+                setLocalFilters({ ...localFilters, sortBy: "priceDesc" })
+              }
             />
           </FilterSection>
 
@@ -136,8 +165,8 @@ export const FiltersModal = ({
               <FilterOptionButton
                 key={r}
                 label={`${r} km`}
-                isActive={radius === r}
-                onPress={() => setRadius(r)}
+                isActive={localFilters.radius === r}
+                onPress={() => setLocalFilters({ ...localFilters, radius: r })}
               />
             ))}
           </FilterSection>
@@ -145,8 +174,8 @@ export const FiltersModal = ({
 
         <View style={styles.footer}>
           <Button
-            title={`Ver Resultados`}
-            onPress={onApply}
+            title="Ver Resultados"
+            onPress={handleApply}
             variant="primary"
           />
         </View>

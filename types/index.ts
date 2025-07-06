@@ -14,5 +14,7 @@ export {
   RegisterUserDto,
   TokenData,
   User,
+  ForgotPasswordDto,
+  ResetPasswordDto
 } from "./user";
 export { FavoriteStation } from "./favorites";

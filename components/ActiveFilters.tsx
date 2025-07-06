@@ -28,8 +28,8 @@ type ActiveFiltersProps = {
 
 const sortLabels: { [key: string]: string } = {
   distanceAsc: "Menor Distância",
-  distanceDesc: "Maior Distância",
   priceAsc: "Menor Preço",
+  distanceDesc: "Maior Distância",
   priceDesc: "Maior Preço",
 };
 
@@ -42,14 +42,6 @@ export const ActiveFilters = ({
   onClearRadius,
 }: ActiveFiltersProps) => {
   const styles = useStylesWithTheme(getStyles);
-  const { themeState } = useTheme();
-
-  const ActiveFilterPill = ({ label, onRemove }: ActiveFilterPillProps) => (
-    <TouchableOpacity style={styles.pill} onPress={onRemove}>
-      <Text style={styles.pillText}>{label}</Text>
-      <X size={14} color={themeState.colors.primary.main} />
-    </TouchableOpacity>
-  );
 
   const hasActiveFilters = selectedFuelType || sort || radius;
 
@@ -60,21 +52,33 @@ export const ActiveFilters = ({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={styles.scrollContent}
       >
         {selectedFuelType && (
-          <ActiveFilterPill label={selectedFuelType} onRemove={onClearFuel} />
+          <FilterTag label={selectedFuelType} onClear={onClearFuel} />
         )}
-        {sortLabels[sort] && (
-          <ActiveFilterPill label={sortLabels[sort]} onRemove={onClearSort} />
+        {sort !== "distanceAsc" && (
+          <FilterTag label={sortLabels[sort]} onClear={onClearSort} />
         )}
-        {radius && (
-          <ActiveFilterPill
-            label={`${radius.toString()} km`}
-            onRemove={onClearRadius}
-          />
+        {radius !== 50 && (
+          <FilterTag label={`${radius} km`} onClear={onClearRadius} />
         )}
       </ScrollView>
+    </View>
+  );
+};
+
+const FilterTag: React.FC<{ label: string; onClear: () => void }> = ({
+  label,
+  onClear,
+}) => {
+  const styles = useStylesWithTheme(getStyles);
+  return (
+    <View style={styles.filterTag}>
+      <Text style={styles.filterText}>{label}</Text>
+      <TouchableOpacity onPress={onClear} style={styles.closeIcon}>
+        <X size={14} color={styles.filterText.color} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -84,27 +88,30 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     container: {
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.background.default,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    scrollViewContent: {
       paddingHorizontal: theme.spacing.lg,
     },
-    pill: {
+    scrollContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.sm,
+    },
+
+    filterTag: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: theme.colors.action.selected,
-      borderColor: theme.colors.primary.light,
-      borderWidth: 1,
-      borderRadius: theme.borderRadius.round,
+      borderRadius: theme.borderRadius.medium,
       paddingVertical: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.md,
-      marginRight: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.sm,
+      borderWidth: 1,
+      borderColor: theme.colors.primary.main,
     },
-    pillText: {
+    filterText: {
       color: theme.colors.primary.main,
       fontWeight: theme.typography.fontWeight.semibold,
-      marginRight: theme.spacing.xs,
-      fontSize: 13,
+    },
+    closeIcon: {
+      marginLeft: theme.spacing.xs,
+      padding: 2,
     },
   });

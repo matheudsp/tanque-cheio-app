@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GasStation, NearbyStationsParams } from "@/types";
 import { gasStationsAPI } from "@/services/gas-station.service";
 
-import type { ProductPriceHistory } from "@/types/gas-stations";
+import type { ProductPriceHistory, SearchFilters } from "@/types/gas-stations";
 
 interface GasStationState {
   recentlyViewedStations: GasStation[];
@@ -13,6 +13,8 @@ interface GasStationState {
   isDetailsLoading: boolean;
   isHistoryLoading: boolean;
   selectedStation: GasStation | null;
+  filters: SearchFilters;
+
   fuelTypes: {
     id: string;
     name: string;
@@ -36,7 +38,7 @@ interface GasStationState {
 
   // Actions
   addRecentlyViewedStation: (station: GasStation) => void;
-  fetchNearbyStations: (params: NearbyStationsParams) => Promise<void>;
+  fetchNearbyStations: () => Promise<void>;
   fetchStationDetails: (gas_station_id: string) => Promise<void>;
   fetchPriceHistory: (
     gas_station_id: string,
@@ -46,7 +48,14 @@ interface GasStationState {
   setUserLocation: (latitude: number, longitude: number) => void;
   clearSelectedStation: () => void;
   clearError: () => void;
+  setFilters: (newFilters: Partial<SearchFilters>) => void;
 }
+
+const defaultFilters: SearchFilters = {
+  sortBy: "distanceAsc",
+  radius: 250,
+  product: undefined,
+};
 
 export const useGasStationStore = create<GasStationState>()(
   persist(
@@ -63,25 +72,38 @@ export const useGasStationStore = create<GasStationState>()(
       searchParams: null,
       isLoading: false,
       error: null,
+      filters: defaultFilters,
 
       addRecentlyViewedStation: (stationToAdd) => {
         const { recentlyViewedStations } = get();
-        // Remove a estação se ela já existir para evitar duplicatas e movê-la para o topo.
+
         const filteredStations = recentlyViewedStations.filter(
           (station) => station.id !== stationToAdd.id
         );
-        // Adiciona a nova estação ao início da lista.
+
         const newHistory = [stationToAdd, ...filteredStations];
-        // Limita o histórico a 10 itens para não sobrecarregar.
+
         const limitedHistory = newHistory.slice(0, 5);
         set({ recentlyViewedStations: limitedHistory });
       },
 
-      fetchNearbyStations: async (params: NearbyStationsParams) => {
-        set({ isLoading: true, error: null, searchParams: params });
+      fetchNearbyStations: async () => {
+        const { userLocation, filters } = get();
+        if (!userLocation) return;
+
+        set({ isLoading: true, error: null });
+
+        const params: NearbyStationsParams = {
+          lat: userLocation.latitude,
+          lng: userLocation.longitude,
+          radius: filters.radius,
+          sort: filters.sortBy,
+          product: filters.product,
+        };
+        set({ searchParams: params });
+
         try {
           const stationsData = await gasStationsAPI.getNearbyStations(params);
-
           set({
             nearbyStations: stationsData.results || [],
             isLoading: false,
@@ -92,11 +114,19 @@ export const useGasStationStore = create<GasStationState>()(
             error:
               error instanceof Error
                 ? error.message
-                : "Falha ao buscar postos de combustíveis  nas proximidades",
+                : "Falha ao buscar postos de combustíveis nas proximidades",
             isLoading: false,
             nearbyStations: [],
           });
         }
+      },
+
+      setFilters: (newFilters: Partial<SearchFilters>) => {
+        set((state) => ({
+          filters: { ...state.filters, ...newFilters },
+        }));
+
+        get().fetchNearbyStations();
       },
 
       fetchStationDetails: async (gas_station_id: string) => {
@@ -126,7 +156,7 @@ export const useGasStationStore = create<GasStationState>()(
         gas_station_id: string,
         params?: { start_date?: string; end_date?: string; product?: string }
       ) => {
-        set({ isHistoryLoading: true, error: null }); // Usa o loading do histórico
+        set({ isHistoryLoading: true, error: null });
         try {
           const historyData = await gasStationsAPI.getPriceHistory(
             gas_station_id,
@@ -160,9 +190,8 @@ export const useGasStationStore = create<GasStationState>()(
       },
 
       setUserLocation: (latitude: number, longitude: number) => {
-        const { userLocation, searchParams } = get();
+        const { userLocation } = get();
 
-        // Opcional: Evita buscas repetidas se a localização não mudou.
         if (
           userLocation?.latitude === latitude &&
           userLocation?.longitude === longitude
@@ -172,20 +201,7 @@ export const useGasStationStore = create<GasStationState>()(
 
         console.warn("Definindo nova localização e buscando postos...");
         set({ userLocation: { latitude, longitude } });
-
-        const defaultParams = {
-          lat: latitude,
-          lng: longitude,
-          radius: 50,
-          sort: "distanceAsc" as const,
-        };
-
-        get().fetchNearbyStations({
-          ...defaultParams,
-          ...searchParams,
-          // lat: latitude,
-          // lng: longitude,
-        });
+        get().fetchNearbyStations();
       },
 
       clearSelectedStation: () => {
@@ -204,7 +220,7 @@ export const useGasStationStore = create<GasStationState>()(
       partialize: (state) => ({
         fuelTypes: state.fuelTypes,
         userLocation: state.userLocation,
-        searchParams: state.searchParams,
+        filters: state.filters,
         recentlyViewedStations: state.recentlyViewedStations,
       }),
     }

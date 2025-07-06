@@ -1,3 +1,4 @@
+
 export default ({ config }) => {
   return {
 
@@ -10,7 +11,7 @@ export default ({ config }) => {
       config: {
         ...config.android.config,
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY,
+          apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY ?? './google-service.json',
         },
       },
     },

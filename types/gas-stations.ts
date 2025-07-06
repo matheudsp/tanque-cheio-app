@@ -27,6 +27,12 @@ export interface GasStation {
   fuel_prices: Product[];
 }
 
+export interface SearchFilters {
+  product?: string;
+  sortBy: "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc";
+  radius: number;
+}
+
 export interface NearbyStationsParams {
   lat: number;
   lng: number;

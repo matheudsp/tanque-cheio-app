@@ -16,9 +16,10 @@ import { Mail, Lock } from "lucide-react-native";
 import { useUserStore } from "@/stores/userStore";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { Button } from "@/components/Button";
-import { AuthInput } from "@/components/auth/AuthInput"; // Nosso novo componente
-import { SocialButton } from "@/components/auth/SocialButton"; // Nosso novo componente
+import { AuthInput } from "@/components/auth/AuthInput"; 
+import { SocialButton } from "@/components/auth/SocialButton"; 
 import type { ThemeState } from "@/types/theme";
+import { toast } from "@/hooks/useToast";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -29,17 +30,16 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    // Adicionar validação básica de UI antes de chamar a store
     if (!email || !password) {
-      // Idealmente, o estado de erro nos inputs cuidaria disso
-      return;
+      return toast.error({
+        title: "Preencha os campos",
+        description: "É necessário preencher os campos.",
+      });
     }
     try {
       await login(email, password);
       router.replace("/tabs");
-    } catch (e) {
-      // O erro já é tratado na store e exibido pelo toast
-    }
+    } catch (e) {}
   };
 
   return (
@@ -84,7 +84,7 @@ export default function LoginScreen() {
             />
             <TouchableOpacity
               onPress={() => {
-                /* Lógica de esqueci a senha */
+                router.push("/auth/forgot-password");
               }}
             >
               <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>

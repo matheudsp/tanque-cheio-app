@@ -1,22 +1,27 @@
-  {
-    "cli": {
-      "appVersionSource": "local"
+{
+  "cli": {
+    "version": ">= 16.13.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development"
     },
-    "build": {
-      "development": {
-        "developmentClient": true,
-        "distribution": "internal",
-        "environment": "development"
-      },
-      "preview": {
-        "distribution": "internal",
-        "environment": "preview"
-      },
-      "production": {
-        "environment": "production"
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "environment": "production",
+       "env": {
+        "EXPO_PUBLIC_API_URL": "http://137.184.48.203/api"
       }
-    },
-    "submit": {
-      "production": {}
     }
+  },
+  "submit": {
+    "production": {}
   }
+}

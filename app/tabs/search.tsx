@@ -1,13 +1,13 @@
 import { Filter } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useShallow } from "zustand/react/shallow";
 import type { Region } from "react-native-maps";
 
 import { ActiveFilters } from "@/components/ActiveFilters";
@@ -19,111 +19,79 @@ import { useGasStationStore } from "@/stores/gasStationStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
-import type { GasStation, NearbyStationsParams } from "@/types";
+import type { GasStation } from "@/types";
+import { Loading } from "@/components/ui/Loading";
 
 export default function SearchScreen() {
+  
   const {
     nearbyStations,
     fuelTypes,
     userLocation,
     isLoading,
     error,
-    fetchNearbyStations,
+    filters,
+    setFilters, 
     fetchFuelTypes,
     clearError,
-  } = useGasStationStore();
+    fetchNearbyStations, 
+  } = useGasStationStore(
+    useShallow((state) => ({
+      nearbyStations: state.nearbyStations,
+      fuelTypes: state.fuelTypes,
+      userLocation: state.userLocation,
+      isLoading: state.isLoading,
+      error: state.error,
+      filters: state.filters,
+      setFilters: state.setFilters,
+      fetchFuelTypes: state.fetchFuelTypes,
+      clearError: state.clearError,
+      fetchNearbyStations: state.fetchNearbyStations,
+    }))
+  );
 
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
 
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-
-  const [selectedFuelType, setSelectedFuelType] = useState("");
-  const [radius, setRadius] = useState(50); // Raio inicial menor
-  const [sort, setSort] = useState<"distanceAsc" | "priceAsc">("distanceAsc");
-
   const [selectedStationId, setSelectedStationId] = useState<string | null>(
     null
   );
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (selectedFuelType) count++;
-    if (sort !== "distanceAsc") count++;
-    if (radius !== 10) count++;
+    if (filters.product) count++;
+    if (filters.sortBy !== "distanceAsc") count++;
+    if (filters.radius !== 50) count++;
     return count;
-  }, [selectedFuelType, sort, radius]);
+  }, [filters]);
 
   useEffect(() => {
     fetchFuelTypes();
-
-    if (userLocation) {
-      handleSearchWithFilters();
-    }
-  }, [userLocation]);
-
-  const handleSearchWithFilters = (
-    overrideParams?: Partial<NearbyStationsParams>
-  ) => {
-    if (!userLocation) return;
-
-    setSelectedStationId(null);
-
-    const params: NearbyStationsParams = {
-      lat: userLocation.latitude,
-      lng: userLocation.longitude,
-      radius: radius,
-      sort,
-      product: selectedFuelType || undefined,
-      ...overrideParams,
-    };
-    fetchNearbyStations(params);
-  };
-
-  const handleSearchInMapArea = (region: Region) => {
-    if (!userLocation) return;
-
-    const radiusInKm = Math.max(
-      2, // Mínimo de 2km
-      Math.round((region.latitudeDelta * 111) / 2) // Raio aproximado da área visível
-    );
-
-    handleSearchWithFilters({
-      lat: region.latitude,
-      lng: region.longitude,
-      radius: radiusInKm,
-    });
-  };
+  }, [fetchFuelTypes]);
 
   const handleRefresh = () => {
     clearError();
-    handleSearchWithFilters();
+    fetchNearbyStations();
+  };
+
+  const handleSearchInMapArea = (region: Region) => {
+    const radiusInKm = Math.max(
+      2,
+      Math.round((region.latitudeDelta * 111) / 2)
+    );
+    if (userLocation) {
+      setFilters({ radius: radiusInKm });
+    }
   };
 
   const handleSelectStation = (station: GasStation | null) => {
-    if (!station) {
-      setSelectedStationId(null);
-      return;
-    }
-    setSelectedStationId(station.id);
-  };
-
-  const applyFiltersAndSearch = () => {
-    setShowFiltersModal(false);
-    handleSearchWithFilters();
+    setSelectedStationId(station?.id || null);
   };
 
   if (!userLocation) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator
-          size="large"
-          color={themeState.colors.primary.main}
-        />
-        <Text style={styles.loadingText}>Obtendo sua localização...</Text>
-      </View>
-    );
+    return <Loading />;
   }
 
   return (
@@ -145,24 +113,13 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
-     
-
       <ActiveFilters
-        selectedFuelType={selectedFuelType}
-        sort={sort}
-        radius={radius}
-        onClearFuel={() => {
-          setSelectedFuelType("");
-          handleSearchWithFilters({ product: undefined });
-        }}
-        onClearSort={() => {
-          setSort("distanceAsc");
-          handleSearchWithFilters({ sort: "distanceAsc" });
-        }}
-        onClearRadius={() => {
-          setRadius(50);
-          handleSearchWithFilters({ radius: 50 });
-        }}
+        selectedFuelType={filters.product || ""}
+        sort={filters.sortBy}
+        radius={filters.radius}
+        onClearFuel={() => setFilters({ product: undefined })}
+        onClearSort={() => setFilters({ sortBy: "distanceAsc" })}
+        onClearRadius={() => setFilters({ radius: 50 })}
       />
 
       {error && (
@@ -177,24 +134,25 @@ export default function SearchScreen() {
             stations={nearbyStations}
             isLoading={isLoading}
             onRefresh={handleRefresh}
-            filteredFuel={selectedFuelType}
+            filteredFuel={filters.product}
             onShowFilters={() => setShowFiltersModal(true)}
           />
         ) : (
-          <StationMapView
-            stations={nearbyStations}
-            isLoading={isLoading}
-            userLocation={userLocation}
-            onSelectStation={handleSelectStation}
-            selectedStationId={selectedStationId}
-            onSearchInArea={handleSearchInMapArea}
-            onUpdateUserLocation={function (location: {
-              latitude: number;
-              longitude: number;
-            }): void {
-              throw new Error("Function not implemented yet.");
-            }}
-          />
+          // <StationMapView
+          //   stations={nearbyStations}
+          //   isLoading={isLoading}
+          //   userLocation={userLocation}
+          //   onSelectStation={handleSelectStation}
+          //   selectedStationId={selectedStationId}
+          //   onSearchInArea={handleSearchInMapArea}
+          //   onUpdateUserLocation={function (location: {
+          //     latitude: number;
+          //     longitude: number;
+          //   }): void {
+          //     throw new Error("Function not implemented.");
+          //   }}
+          // />
+          <Text>HI</Text>
         )}
       </View>
 
@@ -202,25 +160,12 @@ export default function SearchScreen() {
         visible={showFiltersModal}
         onClose={() => setShowFiltersModal(false)}
         fuelTypes={fuelTypes}
-        selectedFuelType={selectedFuelType}
-        setSelectedFuelType={setSelectedFuelType}
-        sortBy={sort}
-        setSortBy={setSort as any}
-        radius={radius}
-        setRadius={setRadius}
-        onApply={applyFiltersAndSearch}
-        onClear={() => {
-          setSelectedFuelType("");
-          setSort("distanceAsc");
-          setRadius(10);
+        initialFilters={filters}
+        // ✅ 'onApply' simplesmente chama `setFilters` com o novo objeto.
+        onApply={(newFilters) => {
           setShowFiltersModal(false);
-          handleSearchWithFilters({
-            product: undefined,
-            sort: "distanceAsc",
-            radius: 10,
-          });
+          setFilters(newFilters);
         }}
-        activeFilterCount={activeFilterCount}
       />
     </SafeAreaView>
   );

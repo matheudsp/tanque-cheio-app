@@ -4,19 +4,17 @@ import {
   type ToastCardProps,
 } from "@/components/ui/ToastCard";
 
+export const durationMs = 4000;
+
 const {
   NotificationsProvider,
   useNotifications,
   notify,
   CustomVariantsTypeHelper,
 } = createNotifications({
-  duration: 4000,
+  duration: durationMs,
   notificationPosition: "top",
-  defaultStylesSettings: {
-    globalConfig: {
-      borderRadius: 8,
-    },
-  },
+
   variants: {
     customSuccess: {
       component: NotificationCard,
@@ -53,6 +51,6 @@ export const toast = {
     notify("customWarning", { params: { ...params, type: "warning" } });
   },
 };
-export { NotificationsProvider as ToastProvider, useNotifications as useToast};
+export { NotificationsProvider as ToastProvider, useNotifications as useToast };
 
 export type AppNotificationVariants = typeof CustomVariantsTypeHelper;

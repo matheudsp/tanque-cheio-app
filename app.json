@@ -7,7 +7,7 @@
     "scheme": "tanquecheio",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/adaptive-foreground.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.matheudsp.tanquecheio"
@@ -15,9 +15,12 @@
     "android": {
       "package": "com.matheudsp.tanquecheio",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-foreground.png",
-        "backgroundColor": "#0F172A"
-      }
+        "foregroundImage": "./assets/images/adaptive-foreground.png"
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -28,10 +31,10 @@
         "expo-splash-screen",
         {
           "resizeMode": "contain",
-          "backgroundColor": "#F8FAFC",
+          "backgroundColor": "#ffffff",
           "image": "./assets/images/splash-light.png",
           "dark": {
-            "backgroundColor": "#0F172A",
+            "backgroundColor": "#151718",
             "image": "./assets/images/splash-dark.png"
           }
         }
@@ -53,6 +56,12 @@
         "projectId": "4b089e2b-ba45-45f3-83f5-e3f8e1d237b5"
       }
     },
-    "owner": "matheudsp"
+    "owner": "matheudsp",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4b089e2b-ba45-45f3-83f5-e3f8e1d237b5"
+    }
   }
 }

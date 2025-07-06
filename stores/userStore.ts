@@ -1,13 +1,17 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LoginResponseDto, RegisterUserDto, User } from "@/types";
+import {
+  LoginResponseDto,
+  RegisterUserDto,
+  User,
+  ResetPasswordDto,
+} from "@/types";
 import { authAPI } from "@/services/auth.service";
 
 import { toast } from "@/hooks/useToast";
 import { pushNotificationService } from "@/services/push-notification.service";
 import { usersAPI } from "@/services/user.service";
-import { Platform } from "react-native";
 import { getTokenData } from "@/services/api";
 
 interface UserState {
@@ -21,6 +25,9 @@ interface UserState {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterUserDto) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<boolean>;
+  resetPassword: (data: ResetPasswordDto) => Promise<boolean>;
+
   updateProfile: (userData: Partial<User>) => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   updatePreferences: (preferences: User["preferences"]) => Promise<void>;
@@ -68,7 +75,7 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       user: null,
-      isLoading: true,
+      isLoading: false,
       error: null,
       isAuthenticated: false,
       isPremium: false,
@@ -81,6 +88,7 @@ export const useUserStore = create<UserState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
+
           const response: LoginResponseDto = await authAPI.login(
             email,
             password
@@ -130,51 +138,102 @@ export const useUserStore = create<UserState>()(
 
       register: async (userData: RegisterUserDto) => {
         set({ isLoading: true, error: null });
-        try {
-          const response = await authAPI.register(userData);
-
-          // Validate response structure
-          if (
-            !response.data ||
-            !response.data.access_token ||
-            !response.data.user
-          ) {
-            throw new Error("Invalid registration response format");
-          }
-
-          // Convert backend response to frontend user format
-          const newUser = convertLoginResponseToUser(response);
-
-          set({
-            user: newUser,
-            isLoading: false,
-            isAuthenticated: true,
-            error: null,
+        if (userData.password !== userData.passwordConfirmation) {
+          const errorMsg = "As senhas não coincidem.";
+          toast.error({
+            title: "Erro de Validação",
+            description: errorMsg,
           });
+          set({ error: errorMsg, isLoading: false });
 
-          await _registerPushToken();
-          // console.log("Registration successful:", newUser.email);
+          throw new Error(errorMsg);
+        }
+        try {
+          await authAPI.register(userData);
+          toast.success({
+            title: "Conta Criada com Sucesso!",
+            description: "Você já pode fazer o login com suas credenciais.",
+          });
+          set({ isLoading: false });
         } catch (error) {
           const errorMessage =
             error instanceof Error
               ? error.message
               : "Não foi possível criar a conta. Tente novamente.";
 
-          toast.error({
-            title: "Falha no Cadastro",
-            description: errorMessage,
-          });
+          if (
+            error instanceof Error &&
+            error.message !== "As senhas não coincidem."
+          ) {
+            toast.error({
+              title: "Falha no Cadastro",
+              description: errorMessage,
+            });
+          }
 
           console.error("Registration error:", error);
-          set({
-            error: errorMessage,
-            isLoading: false,
-            isAuthenticated: false,
-            user: null,
-          });
+          set({ error: errorMessage, isLoading: false });
           throw error;
+        } finally {
+          set({ isLoading: false });
         }
       },
+
+      forgotPassword: async (email: string): Promise<boolean> => {
+        set({ isLoading: true, error: null });
+        try {
+          await authAPI.forgotPassword(email);
+          toast.success({
+            title: "Pedido Enviado",
+            description:
+              "Se uma conta com este e-mail existir, um código de redefinição foi enviado.",
+          });
+          return true;
+        } catch (error: any) {
+          toast.error({
+            title: "Erro",
+            description:
+              error.message || "Não foi possível completar a solicitação.",
+          });
+          set({ error: error.message, isLoading: false });
+          return false;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      resetPassword: async (data: ResetPasswordDto): Promise<boolean> => {
+        set({ isLoading: true, error: null });
+        if (data.password !== data.passwordConfirmation) {
+          toast.error({
+            title: "Erro de Validação",
+            description: "As senhas não coincidem.",
+          });
+          set({ error: "As senhas não coincidem.", isLoading: false });
+          return false;
+        }
+
+        try {
+          await authAPI.resetPassword(data);
+          toast.success({
+            title: "Senha Redefinida!",
+            description:
+              "Sua senha foi alterada com sucesso. Já pode fazer login.",
+          });
+          return true;
+        } catch (error: any) {
+          toast.error({
+            title: "Erro",
+            description:
+              error.message || "Não foi possível redefinir sua senha.",
+          });
+          set({ error: error.message, isLoading: false });
+          return false;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
       logout: async () => {
         set({ isLoading: true });
 

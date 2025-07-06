@@ -24,8 +24,8 @@ export const usersAPI = {
    */
   registerPushToken: async (tokenData: RegisterPushTokenDTO): Promise<void> => {
     try {
-      // CORRIGIDO: Apontando para o novo endpoint no controller de notificações
-      await apiRequest("/v1/notifications/tokens/register", {
+  
+      await apiRequest("/v1/push-notifications/tokens/register", {
         //
         method: "POST",
         body: JSON.stringify(tokenData),

@@ -75,6 +75,6 @@ const getStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({
     listContainer: {
       padding: theme.spacing.lg,
-      paddingBottom: 80, // Espaço para o tab navigator
+      paddingBottom: 80,
     },
   });

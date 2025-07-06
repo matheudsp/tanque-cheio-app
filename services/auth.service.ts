@@ -3,6 +3,8 @@ import type {
   RegisterResponseDTO,
   RegisterUserDto,
   User,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from "@/types";
 import {
   apiRequest,
@@ -46,6 +48,7 @@ export const authAPI = {
       const backendUserData = {
         email: userData.email,
         password: userData.password,
+        passwordConfirmation: userData.password,
         name: `${userData.name}`,
       };
 
@@ -58,14 +61,14 @@ export const authAPI = {
       );
 
       // Validate response structure
-      if (!response.data || !response.data.access_token) {
-        throw new Error(
-          "Invalid registration response: No access token received"
-        );
-      }
+      // if (!response.data || !response.data.access_token) {
+      //   throw new Error(
+      //     "Invalid registration response: No access token received"
+      //   );
+      // }
 
       // Save token data
-      await saveTokenData(response);
+      // await saveTokenData(response);
 
       return response;
     } catch (error) {
@@ -74,30 +77,37 @@ export const authAPI = {
     }
   },
 
-
   refreshToken: async (): Promise<boolean> => {
     return refreshAuthToken();
   },
 
+  forgotPassword: async (email: string): Promise<void> => {
+    try {
+      const payload: ForgotPasswordDto = { email };
+      await apiRequest("/auth/local/forgot-password", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      throw error;
+    }
+  },
+
+  resetPassword: async (data: ResetPasswordDto): Promise<void> => {
+    try {
+      await apiRequest("/auth/local/reset-password", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      throw error;
+    }
+  },
+
   logout: async (): Promise<void> => {
     try {
-      const tokenData = await getTokenData();
-
-      if (tokenData) {
-        // Optional: Call logout endpoint to invalidate token on server
-        try {
-          await apiRequest("/auth/logout", {
-            method: "POST",
-            // body: JSON.stringify({
-            //   refresh_token: tokenData.refresh_token,
-            // }),
-          });
-        } catch (error) {
-          console.warn("Server logout failed:", error);
-          // Continue with local logout even if server logout fails
-        }
-      }
-
       // Clear local storage
       await AsyncStorage.removeItem("auth_token_data");
     } catch (error) {

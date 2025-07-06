@@ -1,4 +1,3 @@
-// gemini/app/auth/register.tsx (Substitua o conteúdo do seu arquivo)
 import React, { useState } from "react";
 import {
   View,
@@ -12,36 +11,46 @@ import {
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Mail, Lock, User, Phone } from "lucide-react-native";
+import { Mail, Lock, User } from "lucide-react-native";
 
 import { useUserStore } from "@/stores/userStore";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { Button } from "@/components/Button";
 import { AuthInput } from "@/components/auth/AuthInput";
 import type { ThemeState } from "@/types/theme";
+import { toast } from "@/hooks/useToast";
 
 export default function RegisterScreen() {
   const router = useRouter();
+
   const { register, isLoading } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleRegister = async () => {
-    // A validação pode ser mais robusta com bibliotecas como Zod ou Yup
-    if (password !== confirmPassword) {
-      // Exibir erro no campo "Confirmar Senha"
+    if (!name || !email || !password || !confirmPassword) {
+      toast.error({
+        title: "Campos Incompletos",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+      });
       return;
     }
+
     try {
-      await register({ name, email, password });
-      router.replace("/tabs");
+      await register({
+        name,
+        email,
+        password,
+        passwordConfirmation: confirmPassword,
+      });
+
+      router.replace("/auth/login");
     } catch (e) {
-      // Erro já tratado na store
+      console.log("Falha no registro (tratado na store):", e);
     }
   };
 
@@ -84,14 +93,6 @@ export default function RegisterScreen() {
               autoCapitalize="none"
             />
             <AuthInput
-              label="Celular (Opcional)"
-              icon={Phone}
-              placeholder="(00) 00000-0000"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-            <AuthInput
               label="Senha"
               icon={Lock}
               placeholder="Crie uma senha forte"
@@ -120,10 +121,7 @@ export default function RegisterScreen() {
 
           <View style={styles.footer}>
             <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
+              style={{ flexDirection: "row", alignItems: "center" }}
               onPress={() => router.push("/auth/login")}
             >
               <Text style={styles.footerText}>Já tem uma conta?</Text>

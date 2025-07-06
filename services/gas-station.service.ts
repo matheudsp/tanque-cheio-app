@@ -67,7 +67,7 @@ export const gasStationsAPI = {
       queryParams.append("lng", params.lng.toString());
 
       // Optional parameters with defaults
-      queryParams.append("radius", (params.radius || 50).toString());
+      queryParams.append("radius", (params.radius || 250).toString());
       queryParams.append("limit", (params.limit || 10).toString());
 
       if (params.offset) {
