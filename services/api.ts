@@ -8,9 +8,10 @@ import {
   TokenData,
   ApiErrorResponse,
 } from "@/types";
+import Constants from "expo-constants";
 
 // Base API URL
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 // Token management helpers
 export const getTokenData = async (): Promise<TokenData | null> => {

@@ -1,11 +1,6 @@
 import { Filter } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
 import type { Region } from "react-native-maps";
@@ -23,7 +18,6 @@ import type { GasStation } from "@/types";
 import { Loading } from "@/components/ui/Loading";
 
 export default function SearchScreen() {
-  
   const {
     nearbyStations,
     fuelTypes,
@@ -31,10 +25,10 @@ export default function SearchScreen() {
     isLoading,
     error,
     filters,
-    setFilters, 
+    setFilters,
     fetchFuelTypes,
     clearError,
-    fetchNearbyStations, 
+    fetchNearbyStations,
   } = useGasStationStore(
     useShallow((state) => ({
       nearbyStations: state.nearbyStations,
@@ -138,21 +132,20 @@ export default function SearchScreen() {
             onShowFilters={() => setShowFiltersModal(true)}
           />
         ) : (
-          // <StationMapView
-          //   stations={nearbyStations}
-          //   isLoading={isLoading}
-          //   userLocation={userLocation}
-          //   onSelectStation={handleSelectStation}
-          //   selectedStationId={selectedStationId}
-          //   onSearchInArea={handleSearchInMapArea}
-          //   onUpdateUserLocation={function (location: {
-          //     latitude: number;
-          //     longitude: number;
-          //   }): void {
-          //     throw new Error("Function not implemented.");
-          //   }}
-          // />
-          <Text>HI</Text>
+          <StationMapView
+            stations={nearbyStations}
+            isLoading={isLoading}
+            userLocation={userLocation}
+            onSelectStation={handleSelectStation}
+            selectedStationId={selectedStationId}
+            onSearchInArea={handleSearchInMapArea}
+            onUpdateUserLocation={function (location: {
+              latitude: number;
+              longitude: number;
+            }): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
         )}
       </View>
 

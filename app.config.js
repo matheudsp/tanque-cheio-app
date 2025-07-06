@@ -3,15 +3,17 @@ export default ({ config }) => {
   return {
 
     ...config,
-    name: "Tanque Cheio",
-    slug: "tanquecheio",
+    extra: {
+      ...config.extra,
+      API_URL: process.env.EXPO_PUBLIC_API_URL,
+    },
     android: {
       ...config.android,
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-service.json',
       config: {
         ...config.android.config,
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY ?? './google-service.json',
+          apiKey: process.env.GOOGLE_MAPS_ANDROID_KEY,
         },
       },
     },
