@@ -25,7 +25,18 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          },
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
       "expo-notifications",
       [
         "expo-splash-screen",
