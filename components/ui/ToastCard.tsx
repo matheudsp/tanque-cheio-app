@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { useTheme } from "@/providers/themeProvider";
-import { durationMs } from "@/hooks/useToast";
+import { DURATION_MS } from "@/constants/toast.config";
 import type { ThemeState } from "@/types/theme";
 
 export interface ToastCardProps {
@@ -22,23 +22,22 @@ export interface ToastCardProps {
   type: "success" | "error" | "info" | "warning";
 }
 
-
 const getToastTypeStyles = (theme: ThemeState) => ({
   success: {
     icon: "checkmark-circle" as const,
-    color: theme.colors.success, 
+    color: theme.colors.success,
   },
   error: {
     icon: "close-circle" as const,
-    color: theme.colors.error, 
+    color: theme.colors.error,
   },
   info: {
     icon: "information-circle" as const,
-    color: theme.colors.info, 
+    color: theme.colors.info,
   },
   warning: {
     icon: "warning" as const,
-    color: theme.colors.warning, 
+    color: theme.colors.warning,
   },
 });
 
@@ -57,7 +56,7 @@ export const NotificationCard = ({
 
   useEffect(() => {
     progress.value = withTiming(0, {
-      duration: durationMs,
+      duration: DURATION_MS,
       easing: Easing.linear,
     });
   }, [progress]);
@@ -71,7 +70,7 @@ export const NotificationCard = ({
     return {
       borderColor,
     };
-  });
+  }, [styleConfig]);
 
   const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 

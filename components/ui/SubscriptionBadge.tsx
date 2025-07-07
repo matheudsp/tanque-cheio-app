@@ -68,7 +68,7 @@ const ShineEffect: React.FC = () => {
       { translateX: shinePosition.value },
       { rotate: "-45deg" },
     ],
-  }));
+  }), []); 
 
   const styles = useStylesWithTheme(getShineStyles);
 

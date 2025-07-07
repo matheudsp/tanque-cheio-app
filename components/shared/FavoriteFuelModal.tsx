@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -69,17 +69,21 @@ export const FavoriteFuelModal = ({
     runOnJS(onClose)();
   }, [onClose, translateY]);
 
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
-    })
-    .onEnd((event) => {
-      if (event.translationY > CLOSE_THRESHOLD) {       
-        runOnJS(handleClose)();
-      } else {
-        translateY.value = withSpring(0, { damping: 15 });
-      }
-    });
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onUpdate((event) => {
+          translateY.value = Math.max(0, event.translationY);
+        })
+        .onEnd((event) => {
+          if (event.translationY > CLOSE_THRESHOLD) {
+            runOnJS(handleClose)();
+          } else {
+            translateY.value = withSpring(0, { damping: 15 });
+          }
+        }),
+    [handleClose, translateY] 
+  );
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

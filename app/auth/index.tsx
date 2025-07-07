@@ -19,7 +19,6 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const styles = useStylesWithTheme(getStyles);
 
-  // --- Animações ---
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(50);
   const imageOpacity = useSharedValue(0);
@@ -30,14 +29,20 @@ export default function WelcomeScreen() {
     contentTranslateY.value = withDelay(400, withTiming(0, { duration: 800 }));
   }, []);
 
-  const animatedImageStyle = useAnimatedStyle(() => ({
-    opacity: imageOpacity.value,
-  }));
+  const animatedImageStyle = useAnimatedStyle(
+    () => ({
+      opacity: imageOpacity.value,
+    }),
+    []
+  );
 
-  const animatedContentStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-    transform: [{ translateY: contentTranslateY.value }],
-  }));
+  const animatedContentStyle = useAnimatedStyle(
+    () => ({
+      opacity: contentOpacity.value,
+      transform: [{ translateY: contentTranslateY.value }],
+    }),
+    []
+  );
 
   return (
     <LinearGradient
@@ -45,14 +50,12 @@ export default function WelcomeScreen() {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        {/* Ilustração animada */}
         <Animated.Image
           source={require("@/assets/images/intro.png")}
           style={[styles.illustration, animatedImageStyle]}
           resizeMode="contain"
         />
 
-        {/* Container de Conteúdo Animado */}
         <Animated.View style={[styles.contentContainer, animatedContentStyle]}>
           <Image
             source={require("@/assets/images/icon.png")}
@@ -71,7 +74,6 @@ export default function WelcomeScreen() {
             onPress={() => router.push("/auth/register")}
             style={styles.button}
           />
-        
 
           <TouchableOpacity onPress={() => router.push("/auth/login")}>
             <Text style={styles.loginText}>

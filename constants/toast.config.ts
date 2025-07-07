@@ -1,0 +1,1 @@
+export const DURATION_MS = 4000;

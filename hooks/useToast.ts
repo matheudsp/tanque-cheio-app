@@ -4,7 +4,7 @@ import {
   type ToastCardProps,
 } from "@/components/ui/ToastCard";
 
-export const durationMs = 4000;
+import { DURATION_MS } from "@/constants/toast.config";
 
 const {
   NotificationsProvider,
@@ -12,7 +12,7 @@ const {
   notify,
   CustomVariantsTypeHelper,
 } = createNotifications({
-  duration: durationMs,
+  duration: DURATION_MS,
   notificationPosition: "top",
 
   variants: {

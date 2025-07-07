@@ -27,7 +27,7 @@ const ShimmerPlaceholder = ({ style }: { style?: any }) => {
     return {
       transform: [{ translateX }],
     };
-  });
+  }, []);
 
   return (
     <View style={[styles.placeholder, style]}>

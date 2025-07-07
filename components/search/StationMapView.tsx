@@ -1,4 +1,3 @@
-// components/search/StationMapView.tsx
 import React, { useCallback, useEffect, useRef, useMemo } from "react";
 import {
   Platform,
@@ -7,7 +6,7 @@ import {
   View,
   Text,
   Dimensions,
-  Alert, // Import Alert for permissions
+  Alert,
 } from "react-native";
 import { useLocationPermissions } from "expo-maps";
 import { useRouter } from "expo-router";
@@ -18,14 +17,14 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { Navigation2 } from "lucide-react-native";
-import * as Location from "expo-location"; // Import expo-location
+import * as Location from "expo-location";
 
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { GasStation } from "@/types";
 import type { ThemeState } from "@/types/theme";
 import { Loading } from "../ui/Loading";
-import MapComponent, { MapComponentRef } from "../Map"; // Import MapComponentRef
+import MapComponent, { MapComponentRef } from "../Map";
 import { BrandLogo } from "../ui/BrandLogo";
 import { AppIcon } from "../ui/AppIcon";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
@@ -46,7 +45,7 @@ interface StationMapViewProps {
   onUpdateUserLocation: (location: {
     latitude: number;
     longitude: number;
-  }) => void; // Adicionado para atualizar a localização do usuário
+  }) => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -59,14 +58,14 @@ export function StationMapView({
   onSelectStation,
   selectedStationId,
   onSearchInArea,
-  onUpdateUserLocation, // Recebido como prop
+  onUpdateUserLocation,
 }: StationMapViewProps) {
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
   const router = useRouter();
 
   const [permissionStatus, requestPermission] = useLocationPermissions();
-  const mapRef = useRef<MapComponentRef>(null); // Ref para o MapComponent
+  const mapRef = useRef<MapComponentRef>(null);
 
   const [selectedStation, setSelectedStation] =
     React.useState<GasStation | null>(null);
@@ -133,11 +132,9 @@ export function StationMapView({
     }
   }, [selectedStation, router]);
 
-  // NOVO: Função para centralizar o mapa na localização do usuário
   const centerOnUserLocation = useCallback(async () => {
-    // Delimitadores de zoom padrão para a área
-    const defaultLatitudeDelta = 0.05; // Definido aqui
-    const defaultLongitudeDelta = 0.05; // Definido aqui
+    const defaultLatitudeDelta = 0.05;
+    const defaultLongitudeDelta = 0.05;
 
     if (userLocation) {
       mapRef.current?.animateToRegion(
@@ -147,7 +144,6 @@ export function StationMapView({
         defaultLongitudeDelta
       );
     } else {
-      // Se userLocation não estiver disponível, tente obter novamente e peça permissão
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
@@ -161,7 +157,7 @@ export function StationMapView({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-      // Tente animar novamente após atualizar a localização
+
       mapRef.current?.animateToRegion(
         location.coords.latitude,
         location.coords.longitude,
@@ -195,7 +191,7 @@ export function StationMapView({
 
       <TouchableOpacity
         style={styles.myLocationButton}
-        onPress={centerOnUserLocation} // Atribui a função ao onPress
+        onPress={centerOnUserLocation}
         activeOpacity={0.8}
       >
         <Navigation2

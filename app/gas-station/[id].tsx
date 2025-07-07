@@ -135,37 +135,49 @@ export default function GasStationDetailScreen() {
     },
   });
 
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    height: interpolate(
-      scrollY.value,
-      [0, HEADER_SCROLL_DISTANCE],
-      [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
-      "clamp"
-    ),
-  }));
+  const headerAnimatedStyle = useAnimatedStyle(
+    () => ({
+      height: interpolate(
+        scrollY.value,
+        [0, HEADER_SCROLL_DISTANCE],
+        [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+        "clamp"
+      ),
+    }),
+    [HEADER_SCROLL_DISTANCE, HEADER_MIN_HEIGHT]
+  );
 
-  const heroContentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      scrollY.value,
-      [0, HEADER_SCROLL_DISTANCE / 2],
-      [1, 0],
-      "clamp"
-    ),
-  }));
+  const heroContentAnimatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: interpolate(
+        scrollY.value,
+        [0, HEADER_SCROLL_DISTANCE / 2],
+        [1, 0],
+        "clamp"
+      ),
+    }),
+    [HEADER_SCROLL_DISTANCE]
+  );
 
-  const collapsedHeaderContentStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      scrollY.value,
-      [HEADER_SCROLL_DISTANCE * 0.7, HEADER_SCROLL_DISTANCE],
-      [0, 1],
-      "clamp"
-    ),
-  }));
+  const collapsedHeaderContentStyle = useAnimatedStyle(
+    () => ({
+      opacity: interpolate(
+        scrollY.value,
+        [HEADER_SCROLL_DISTANCE * 0.7, HEADER_SCROLL_DISTANCE],
+        [0, 1],
+        "clamp"
+      ),
+    }),
+    [HEADER_SCROLL_DISTANCE]
+  );
 
-  const cardsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: contentOpacity.value,
-    transform: [{ translateY: contentTranslateY.value }],
-  }));
+  const cardsAnimatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: contentOpacity.value,
+      transform: [{ translateY: contentTranslateY.value }],
+    }),
+    []
+  );
 
   const handleRetry = () => {
     if (id) {

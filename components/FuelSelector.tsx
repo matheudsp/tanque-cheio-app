@@ -52,9 +52,12 @@ export const FuelSelector: React.FC<FuelSelectorProps> = ({
     closeModal();
   };
 
-  const modalAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
+  const modalAnimatedStyle = useAnimatedStyle(
+    () => ({
+      transform: [{ translateY: translateY.value }],
+    }),
+    []
+  );
 
   const iconName = getIconNameFromFuel(selectedValue);
 

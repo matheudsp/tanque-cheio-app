@@ -3,8 +3,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
-import type { Region } from "react-native-maps";
 
+import { Region } from "@/types/gas-stations";
 import { ActiveFilters } from "@/components/ActiveFilters";
 import { FiltersModal } from "@/components/shared/FiltersModal";
 import { StationListView } from "@/components/search/StationListView";

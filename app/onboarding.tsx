@@ -14,7 +14,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   useSharedValue,
-} from "react-native-reanimated"; 
+} from "react-native-reanimated";
 
 import { OnboardingSlide } from "@/components/onboarding/OnboardingSlide";
 import { Button } from "@/components/Button";
@@ -60,7 +60,7 @@ const Dot = ({
       width: withTiming(isActive ? 24 : 8, { duration: 300 }),
       opacity: withTiming(isActive ? 1 : 0.5, { duration: 300 }),
     };
-  });
+  }, [index]);
 
   return <Animated.View style={[styles.dot, animatedStyle]} />;
 };
