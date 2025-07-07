@@ -29,6 +29,8 @@ export default function SearchScreen() {
     fetchFuelTypes,
     clearError,
     fetchNearbyStations,
+    fetchMoreNearbyStations,
+    isFetchingMore,
   } = useGasStationStore(
     useShallow((state) => ({
       nearbyStations: state.nearbyStations,
@@ -41,6 +43,8 @@ export default function SearchScreen() {
       fetchFuelTypes: state.fetchFuelTypes,
       clearError: state.clearError,
       fetchNearbyStations: state.fetchNearbyStations,
+      isFetchingMore: state.isFetchingMore,
+      fetchMoreNearbyStations: state.fetchMoreNearbyStations,
     }))
   );
 
@@ -130,6 +134,8 @@ export default function SearchScreen() {
             onRefresh={handleRefresh}
             filteredFuel={filters.product}
             onShowFilters={() => setShowFiltersModal(true)}
+            onEndReached={fetchMoreNearbyStations}
+            isFetchingMore={isFetchingMore}
           />
         ) : (
           // <StationMapView

@@ -122,11 +122,17 @@ export default function ProfileScreen() {
             label: "Notificações",
             onPress: () => router.push("/profile/notifications"),
           },
-          {
-            icon: <Wrench size={20} color={themeState.colors.primary.main} />,
-            label: "Opções do Desenvolvedor",
-            onPress: () => router.push("/dev/developer"),
-          },
+          ...(__DEV__
+            ? [
+                {
+                  icon: (
+                    <Wrench size={20} color={themeState.colors.primary.main} />
+                  ),
+                  label: "Opções do Desenvolvedor",
+                  onPress: () => router.push("/dev/developer"),
+                },
+              ]
+            : []),
           {
             icon: (
               <HelpCircle size={20} color={themeState.colors.primary.main} />

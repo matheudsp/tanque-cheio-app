@@ -35,10 +35,13 @@ interface GasStationState {
   searchParams: NearbyStationsParams | null;
   isLoading: boolean;
   error: string | null;
-
+  isFetchingMore: boolean;
+  offset: number;
+  totalStations: number;
   // Actions
   addRecentlyViewedStation: (station: GasStation) => void;
   fetchNearbyStations: () => Promise<void>;
+  fetchMoreNearbyStations: () => Promise<void>;
   fetchStationDetails: (gas_station_id: string) => Promise<void>;
   fetchPriceHistory: (
     gas_station_id: string,
@@ -57,6 +60,8 @@ const defaultFilters: SearchFilters = {
   product: undefined,
 };
 
+const STATIONS_PER_PAGE = 10;
+
 export const useGasStationStore = create<GasStationState>()(
   persist(
     (set, get) => ({
@@ -73,6 +78,9 @@ export const useGasStationStore = create<GasStationState>()(
       isLoading: false,
       error: null,
       filters: defaultFilters,
+      isFetchingMore: false,
+      offset: 0,
+      totalStations: 0,
 
       addRecentlyViewedStation: (stationToAdd) => {
         const { recentlyViewedStations } = get();
@@ -91,7 +99,7 @@ export const useGasStationStore = create<GasStationState>()(
         const { userLocation, filters } = get();
         if (!userLocation) return;
 
-        set({ isLoading: true, error: null });
+        set({ isLoading: true, error: null, offset: 0 });
 
         const params: NearbyStationsParams = {
           lat: userLocation.latitude,
@@ -99,6 +107,8 @@ export const useGasStationStore = create<GasStationState>()(
           radius: filters.radius,
           sort: filters.sortBy,
           product: filters.product,
+          limit: STATIONS_PER_PAGE,
+          offset: 0,
         };
         set({ searchParams: params });
 
@@ -106,6 +116,8 @@ export const useGasStationStore = create<GasStationState>()(
           const stationsData = await gasStationsAPI.getNearbyStations(params);
           set({
             nearbyStations: stationsData.results || [],
+            totalStations: stationsData.total || 0,
+            offset: stationsData.results?.length || 0,
             isLoading: false,
           });
         } catch (error) {
@@ -118,6 +130,55 @@ export const useGasStationStore = create<GasStationState>()(
             isLoading: false,
             nearbyStations: [],
           });
+        }
+      },
+
+      fetchMoreNearbyStations: async () => {
+        const {
+          userLocation,
+          filters,
+          isLoading,
+          isFetchingMore,
+          offset,
+          totalStations,
+          nearbyStations,
+        } = get();
+
+        if (
+          isLoading ||
+          isFetchingMore ||
+          nearbyStations.length >= totalStations ||
+          !userLocation
+        ) {
+          return;
+        }
+
+        set({ isFetchingMore: true });
+
+        const params: NearbyStationsParams = {
+          lat: userLocation.latitude,
+          lng: userLocation.longitude,
+          radius: filters.radius,
+          sort: filters.sortBy,
+          product: filters.product,
+          limit: STATIONS_PER_PAGE,
+          offset: offset,
+        };
+
+        try {
+          const stationsData = await gasStationsAPI.getNearbyStations(params);
+          set((state) => ({
+            nearbyStations: [
+              ...state.nearbyStations,
+              ...(stationsData.results || []),
+            ],
+
+            offset: state.offset + (stationsData.results?.length || 0),
+            isFetchingMore: false,
+          }));
+        } catch (error) {
+          console.error("Error fetching more stations:", error);
+          set({ isFetchingMore: false });
         }
       },
 

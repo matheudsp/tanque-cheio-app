@@ -2,8 +2,10 @@ import { Bell, MapPin } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
+  ActionSheetIOS,
+  Alert,
   Linking,
   Platform,
   StyleSheet,
@@ -37,7 +39,9 @@ import { Loading } from "@/components/ui/Loading";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useUserStore } from "@/stores/userStore";
 import { PaywallModal } from "@/components/shared/PaywallModal";
-
+import { useShallow } from "zustand/react/shallow";
+import { toast } from "@/hooks/useToast";
+import { useActionSheet } from "@expo/react-native-action-sheet";
 const HEADER_MAX_HEIGHT = 360;
 
 export default function GasStationDetailScreen() {
@@ -46,7 +50,7 @@ export default function GasStationDetailScreen() {
   const { top } = useSafeAreaInsets();
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
-
+  const { showActionSheetWithOptions } = useActionSheet();
   const HEADER_MIN_HEIGHT = top + 60;
   const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
@@ -64,8 +68,20 @@ export default function GasStationDetailScreen() {
     fetchPriceHistory,
     clearSelectedStation,
     clearError,
-  } = useGasStationStore();
-  const { isPremium } = useUserStore(); // Obter o status premium
+  } = useGasStationStore(
+    useShallow((state) => ({
+      selectedStation: state.selectedStation,
+      isDetailsLoading: state.isDetailsLoading,
+      error: state.error,
+      fetchStationDetails: state.fetchStationDetails,
+      clearSelectedStation: state.clearSelectedStation,
+      clearError: state.clearError,
+      fetchPriceHistory: state.fetchPriceHistory,
+      priceHistory: state.priceHistory,
+      isHistoryLoading: state.isHistoryLoading,
+    }))
+  );
+  const { isPremium } = useUserStore();
   const { fetchFavorites } = useFavoriteStore();
 
   useEffect(() => {
@@ -78,7 +94,7 @@ export default function GasStationDetailScreen() {
         setFavoriteModalVisible(true);
       }
     } else {
-      setPaywallVisible(true); // If not premium, open Paywall
+      setPaywallVisible(true);
     }
   };
 
@@ -151,24 +167,6 @@ export default function GasStationDetailScreen() {
     transform: [{ translateY: contentTranslateY.value }],
   }));
 
-  const handleGetDirections = () => {
-    if (!selectedStation?.localization?.coordinates?.coordinates) {
-      return;
-    }
-    const [longitude, latitude] =
-      selectedStation.localization.coordinates.coordinates;
-    const label = encodeURIComponent(selectedStation.legal_name);
-    const url = Platform.select({
-      ios: `maps:0,0?q=${label}@${latitude},${longitude}`,
-      android: `geo:0,0?q=${latitude},${longitude}(${label})`,
-    });
-    if (url) {
-      Linking.openURL(url).catch((err) =>
-        console.error("Não foi possível abrir o app de mapas", err)
-      );
-    }
-  };
-
   const handleRetry = () => {
     if (id) {
       clearError();
@@ -176,29 +174,73 @@ export default function GasStationDetailScreen() {
     }
   };
 
-  if (isDetailsLoading) {
-    return <Loading />;
-  }
+  const getDirections = useCallback(() => {
+    if (!selectedStation?.localization) {
+      toast.error({
+        title: "Erro",
+        description: "Endereço do posto não encontrado.",
+      });
+      return;
+    }
 
-  if (error || !selectedStation) {
-    return (
-      // <View style={styles.centered}>
-      //   <Ionicons
-      //     name="cloud-offline-outline"
-      //     size={48}
-      //     color={themeState.colors.error}
-      //   />
-      //   <Text style={styles.errorTitle}>Ocorreu um Erro</Text>
-      //   <Text style={styles.errorText}>{error}</Text>
-      //   <Button
-      //     title="Tentar Novamente"
-      //     onPress={handleRetry}
-      //     color={themeState.colors.primary.main}
-      //   />
-      // </View>
-      <ErrorState onRetry={handleRetry} />
+    const { address, number, neighborhood, city, state } =
+      selectedStation.localization;
+    const addressString = `${address}, ${number} - ${neighborhood}, ${city}, ${state}`;
+    const encodedAddress = encodeURIComponent(addressString);
+
+    const mapApps = [
+      {
+        name: "Google Maps",
+        url: `comgooglemaps://?daddr=${encodedAddress}&directionsmode=driving`,
+        webUrl: `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`,
+      },
+      {
+        name: "Waze",
+        url: `waze://?q=${encodedAddress}&navigate=yes`,
+        webUrl: `https://waze.com/ul?q=${encodedAddress}`,
+      },
+    ];
+
+    if (Platform.OS === "ios") {
+      mapApps.push({
+        name: "Apple Maps",
+        url: `http://maps.apple.com/?daddr=${encodedAddress}`,
+        webUrl: `http://maps.apple.com/?daddr=${encodedAddress}`,
+      });
+    }
+
+    const options = [...mapApps.map((app) => app.name), "Cancelar"];
+    const cancelButtonIndex = options.length - 1;
+
+    showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+        title: "Traçar Rota",
+        message: "Escolha seu app de navegação preferido.",
+        tintColor: themeState.colors.primary.main,
+        titleTextStyle: styles.actionSheetTitle,
+        messageTextStyle: styles.actionSheetMessage,
+      },
+      (selectedIndex?: number) => {
+        if (
+          selectedIndex === undefined ||
+          selectedIndex === cancelButtonIndex
+        ) {
+          return; // Usuário cancelou
+        }
+
+        const selectedApp = mapApps[selectedIndex];
+        Linking.openURL(selectedApp.url).catch(() => {
+          Linking.openURL(selectedApp.webUrl); // Tenta abrir a URL web como fallback
+        });
+      }
     );
-  }
+  }, [selectedStation, showActionSheetWithOptions, themeState, styles]);
+
+  if (isDetailsLoading) return <Loading />;
+
+  if (error || !selectedStation) return <ErrorState onRetry={handleRetry} />;
 
   return (
     <View style={styles.container}>
@@ -304,7 +346,7 @@ export default function GasStationDetailScreen() {
           ]}
         >
           <TouchableOpacity
-            onPress={() => router.push('..')}
+            onPress={() => router.replace("..")}
             style={styles.headerButton}
           >
             <Ionicons
@@ -367,7 +409,7 @@ export default function GasStationDetailScreen() {
           </Text>
           <TouchableOpacity
             style={styles.directionsButton}
-            onPress={handleGetDirections}
+            onPress={getDirections}
           >
             <Ionicons
               name="navigate-outline"
@@ -586,5 +628,14 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     filterButtonTextActive: {
       color: theme.colors.primary.text,
+    },
+    actionSheetTitle: {
+      color: theme.colors.text.primary,
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    actionSheetMessage: {
+      color: theme.colors.text.secondary,
+      fontSize: 13,
     },
   });

@@ -5,10 +5,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ToastProvider } from "@/hooks/useToast";
 import { ThemeProvider } from "@/providers/themeProvider";
 import { PurchasesProvider } from "@/providers/purchasesProvider";
-import { useUserStore } from "@/stores/userStore";
+
 import { AuthProvider } from "@/providers/authProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -39,41 +39,46 @@ export default function RootLayout() {
     }
 
     if (!hasViewedOnboarding) {
-      router.replace("/onboarding");
+      router.replace("/onboarding" as any);
     }
   }, [isThemeReady, hasViewedOnboarding, router]);
 
   return (
-    <AuthProvider>
-      <ThemeProvider onThemeLoaded={() => setIsThemeReady(true)}>
-        <PurchasesProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <ToastProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="onboarding"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen name="auth" options={{ headerShown: false }} />
-                <Stack.Screen name="dev" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="tabs"
-                  options={{
-                    headerShown: false,
-                    gestureEnabled: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="gas-station/[id]"
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen name="profile" options={{ headerShown: false }} />
-              </Stack>
-            </ToastProvider>
-          </GestureHandlerRootView>
-        </PurchasesProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <ActionSheetProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AuthProvider>
+          <ThemeProvider onThemeLoaded={() => setIsThemeReady(true)}>
+            <PurchasesProvider>
+              <ToastProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="onboarding"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen name="auth" options={{ headerShown: false }} />
+                  <Stack.Screen name="dev" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="tabs"
+                    options={{
+                      headerShown: false,
+                      gestureEnabled: true,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="gas-station/[id]"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="profile"
+                    options={{ headerShown: false }}
+                  />
+                </Stack>
+              </ToastProvider>
+            </PurchasesProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </GestureHandlerRootView>
+    </ActionSheetProvider>
   );
 }
