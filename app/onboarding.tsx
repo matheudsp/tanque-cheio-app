@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { useRouter } from "expo-router";
 import React, { useRef, useState, useEffect } from "react";
 import {
@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
   useSharedValue,
 } from "react-native-reanimated";
-
+import { useOnboarding } from "./_layout";
 import { OnboardingSlide } from "@/components/onboarding/OnboardingSlide";
 import { Button } from "@/components/Button";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
@@ -94,7 +94,7 @@ export default function OnboardingScreen() {
   const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const slidesRef = useRef<FlatList>(null);
-
+  const { onComplete } = useOnboarding();
   const viewableItemsChanged = useRef(({ viewableItems }: any) => {
     if (
       viewableItems &&
@@ -107,22 +107,16 @@ export default function OnboardingScreen() {
 
   const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
-  const handleDone = async () => {
-    try {
-      await AsyncStorage.setItem("@hasViewedOnboarding", "true");
-      router.replace("/auth");
-    } catch (e) {
-      console.error("Failed to save onboarding status.", e);
-      router.replace("/auth");
-    }
-  };
-
   const handleNext = () => {
     if (currentIndex < ONBOARDING_DATA.length - 1) {
       slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      handleDone();
+      onComplete();
     }
+  };
+
+  const handleSkip = () => {
+    onComplete();
   };
 
   return (
@@ -142,7 +136,7 @@ export default function OnboardingScreen() {
       <View style={[styles.footer, { width }]}>
         <Paginator data={ONBOARDING_DATA} currentIndex={currentIndex} />
         <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={handleDone} style={styles.skipButton}>
+          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
             <Text style={styles.skipText}>Pular</Text>
           </TouchableOpacity>
           <Button

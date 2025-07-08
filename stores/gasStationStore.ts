@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { persist } from "zustand/middleware";
 import { GasStation, NearbyStationsParams } from "@/types";
 import { gasStationsAPI } from "@/services/gas-station.service";
 
 import type { ProductPriceHistory, SearchFilters } from "@/types/gas-stations";
+import { mmkvStorage } from "@/lib/mmkv";
 
 interface GasStationState {
   recentlyViewedStations: GasStation[];
@@ -276,8 +276,8 @@ export const useGasStationStore = create<GasStationState>()(
 
     {
       name: "gas-station-storage",
-      storage: createJSONStorage(() => AsyncStorage),
-      // Only persist non-sensitive data
+      storage: mmkvStorage,
+
       partialize: (state) => ({
         fuelTypes: state.fuelTypes,
         userLocation: state.userLocation,

@@ -22,13 +22,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { SubscriptionBadge } from "@/components/ui/SubscriptionBadge";
 import { useUserStore } from "@/stores/userStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
+import { storage } from "@/lib/mmkv";
+import { toast } from "@/hooks/useToast";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -65,18 +65,19 @@ export default function ProfileScreen() {
           text: "Limpar Tudo",
           onPress: async () => {
             try {
-              await AsyncStorage.clear();
+              storage.clearAll();
+
               logout();
               router.replace("/auth/login");
-              Alert.alert(
-                "Sucesso",
-                "Todos os dados do aplicativo foram limpos."
-              );
+              toast.success({
+                title: "Dados Limpos",
+                description: "Todos os dados foram apagados com sucesso.",
+              });
             } catch (e) {
-              Alert.alert(
-                "Erro",
-                "Não foi possível limpar os dados do aplicativo."
-              );
+              toast.error({
+                title: "Erro ao Limpar Dados",
+                description: "Ocorreu um erro ao limpar os dados.",
+              });
             }
           },
           style: "destructive",

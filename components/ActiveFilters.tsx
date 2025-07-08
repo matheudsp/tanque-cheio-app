@@ -57,10 +57,10 @@ export const ActiveFilters = ({
         {selectedFuelType && (
           <FilterTag label={selectedFuelType} onClear={onClearFuel} />
         )}
-        {sort !== "distanceAsc" && (
+        {sort && (
           <FilterTag label={sortLabels[sort]} onClear={onClearSort} />
         )}
-        {radius !== 50 && (
+        {radius && (
           <FilterTag label={`${radius} km`} onClear={onClearRadius} />
         )}
       </ScrollView>

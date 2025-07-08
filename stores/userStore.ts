@@ -1,6 +1,5 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { persist } from "zustand/middleware";
 import {
   LoginResponseDto,
   RegisterUserDto,
@@ -13,6 +12,7 @@ import { toast } from "@/hooks/useToast";
 import { pushNotificationService } from "@/services/push-notification.service";
 import { usersAPI } from "@/services/user.service";
 import { getTokenData } from "@/services/api";
+import { mmkvStorage } from "@/lib/mmkv";
 
 interface UserState {
   user: User | null;
@@ -375,8 +375,7 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: "user-storage",
-      storage: createJSONStorage(() => AsyncStorage),
-      // Only persist user data, not loading states or errors
+      storage: mmkvStorage,
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,

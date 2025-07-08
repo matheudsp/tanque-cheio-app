@@ -1,4 +1,3 @@
-import { useAsyncStorage } from "@react-native-async-storage/async-storage";
 import React, {
   createContext,
   ReactNode,
@@ -15,8 +14,8 @@ import {
 
 import { DARK_THEME, LIGHT_THEME } from "@/constants/themes";
 import { Theme, ThemePreference, ThemeState } from "@/types/theme";
+import { storage } from "@/lib/mmkv";
 
-// Chave para salvar a preferência do tema no armazenamento local.
 const THEME_STORAGE_KEY = "@app_theme";
 
 interface ThemeContextProps {
@@ -29,30 +28,26 @@ interface ThemeContextProps {
 type ThemeProviderProps = {
   children: ReactNode;
   defaultThemePreference?: ThemePreference;
-  onThemeLoaded: () => void; // Callback para saber quando o tema foi carregado
+  onThemeLoaded: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
-// Hook customizado para abstrair a lógica de armazenamento.
 function useThemeStorage() {
-  const storage = useAsyncStorage(THEME_STORAGE_KEY);
-
   const saveThemePreference = async (
     preference: ThemePreference
   ): Promise<void> => {
-    await storage.setItem(preference);
+    storage.set(THEME_STORAGE_KEY, preference);
   };
 
   const loadThemePreference = async (): Promise<ThemePreference | null> => {
-    const savedPreference = await storage.getItem();
-    return savedPreference as ThemePreference | null;
+    const value = storage.getString(THEME_STORAGE_KEY);
+    return (value as ThemePreference) ?? null;
   };
 
   return { saveThemePreference, loadThemePreference };
 }
 
-// Lógica para resolver qual tema (LIGHT/DARK) deve ser aplicado
 const resolveTheme = (
   preference: ThemePreference,
   systemTheme: ColorSchemeName
@@ -63,7 +58,6 @@ const resolveTheme = (
   return preference === ThemePreference.DARK ? Theme.DARK : Theme.LIGHT;
 };
 
-// Mapeamento dos temas para fácil acesso
 const themeMap: Record<Theme, ThemeState> = {
   [Theme.LIGHT]: LIGHT_THEME,
   [Theme.DARK]: DARK_THEME,
@@ -130,7 +124,7 @@ export const ThemeProvider = ({
       }}
     >
       <StatusBar
-        barStyle={activeTheme === "DARK" ? "light-content" : "dark-content"}
+        barStyle={activeTheme === Theme.DARK ? "light-content" : "dark-content"}
         backgroundColor={currentThemeState.colors.background.default}
         translucent={false}
       />
@@ -139,7 +133,6 @@ export const ThemeProvider = ({
   );
 };
 
-// Hook para consumir o contexto do tema nos componentes
 export const useTheme = (): ThemeContextProps => {
   const context = useContext(ThemeContext);
   if (!context) {

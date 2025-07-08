@@ -60,8 +60,8 @@ export default function SearchScreen() {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.product) count++;
-    if (filters.sortBy !== "distanceAsc") count++;
-    if (filters.radius !== 50) count++;
+    if (filters.sortBy) count++;
+    if (filters.radius) count++;
     return count;
   }, [filters]);
 
@@ -160,7 +160,6 @@ export default function SearchScreen() {
         onClose={() => setShowFiltersModal(false)}
         fuelTypes={fuelTypes}
         initialFilters={filters}
-        // ✅ 'onApply' simplesmente chama `setFilters` com o novo objeto.
         onApply={(newFilters) => {
           setShowFiltersModal(false);
           setFilters(newFilters);

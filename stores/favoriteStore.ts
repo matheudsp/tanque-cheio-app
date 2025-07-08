@@ -4,7 +4,7 @@ import type { FavoriteStation } from "@/types/favorites";
 import { useGasStationStore } from "./gasStationStore";
 interface FavoriteState {
   favorites: FavoriteStation[];
-  favoriteIds: Set<string>; // Armazena uma chave composta "stationId-productId"
+  favoriteIds: Set<string>;
   isLoading: boolean;
   error: string | null;
   stationSpecificFavorites: Set<string>;
@@ -52,7 +52,7 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     try {
       const favoritesData = await favoritesAPI.getFavorites();
       const favoriteIds = new Set(
-        // O ID do produto está dentro do objeto 'product'
+     
         favoritesData.map(
           (fav) => `${fav.gas_station_id}-${fav.product.product_id}`
         )
@@ -72,7 +72,6 @@ export const useFavoriteStore = create<FavoriteState>((set, get) => ({
     return get().favoriteIds.has(`${gas_station_id}-${product_id}`);
   },
 
-  // ---- AÇÃO EM LOTE COM ATUALIZAÇÃO OTIMISTA ----
   updateFavoritesInBulk: async (
     stationId: string,
     productsToAdd: string[],
