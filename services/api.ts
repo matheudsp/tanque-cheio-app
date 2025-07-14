@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { storage } from "@/lib/mmkv";
 import {
   LoginResponseDto,
   LoginUserDto,
@@ -12,17 +12,17 @@ import Constants from "expo-constants";
 
 // Base API URL
 const API_URL = Constants.expoConfig?.extra?.API_URL;
-
+const TOKEN_DATA_KEY = "auth_token_data";
 // Token management helpers
 export const getTokenData = async (): Promise<TokenData | null> => {
   try {
-    const tokenDataString = await AsyncStorage.getItem("auth_token_data");
+    const tokenDataString = storage.getString(TOKEN_DATA_KEY);
     if (!tokenDataString) return null;
 
     const tokenData: TokenData = JSON.parse(tokenDataString);
 
     if (Date.now() >= tokenData.expires_at) {
-      await AsyncStorage.removeItem("auth_token_data");
+      storage.delete(TOKEN_DATA_KEY);
       return null;
     }
 
@@ -45,7 +45,7 @@ export const saveTokenData = async (
       expires_at: Date.now() + loginResponse.data.expires_in * 1000,
     };
 
-    await AsyncStorage.setItem("auth_token_data", JSON.stringify(tokenData));
+    storage.set(TOKEN_DATA_KEY, JSON.stringify(tokenData));
   } catch (error) {
     console.error("Error saving token data:", error);
     throw new Error("Failed to save authentication data");
@@ -79,8 +79,17 @@ export const refreshAuthToken = async (): Promise<boolean> => {
     return false;
   } catch (error) {
     console.error("Token refresh failed:", error);
-    await AsyncStorage.removeItem("auth_token_data");
+    storage.delete(TOKEN_DATA_KEY);
     return false;
+  }
+};
+
+export const removeTokenData = async (): Promise<void> => {
+  try {
+    storage.delete(TOKEN_DATA_KEY);
+  } catch (error) {
+    console.error("Error removing token data:", error);
+    throw error;
   }
 };
 

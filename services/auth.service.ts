@@ -9,13 +9,12 @@ import type {
 import {
   apiRequest,
   convertBackendUser,
-  getTokenData,
   refreshAuthToken,
+  removeTokenData,
   saveTokenData,
 } from "./api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { toast } from "@/hooks/useToast";
 
-// Auth API
 export const authAPI = {
   login: async (email: string, password: string): Promise<LoginResponseDto> => {
     try {
@@ -27,12 +26,9 @@ export const authAPI = {
         }
       );
 
-      // Validate response structure
       if (!response.data || !response.data.access_token) {
         throw new Error("Invalid login response: No access token received");
       }
-
-      // Save token data
       await saveTokenData(response);
 
       return response;
@@ -109,11 +105,15 @@ export const authAPI = {
   logout: async (): Promise<void> => {
     try {
       // Clear local storage
-      await AsyncStorage.removeItem("auth_token_data");
+      await removeTokenData();
     } catch (error) {
       console.error("Logout error:", error);
       // Still clear local storage on error
-      await AsyncStorage.removeItem("auth_token_data");
+      toast.error({
+        title: "Erro ao fazer logout.",
+        description: "Por favor, tente novamente.",
+      });
+      await removeTokenData();
     }
   },
 };

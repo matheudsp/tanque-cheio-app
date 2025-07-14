@@ -36,6 +36,13 @@
           }
         }
       ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7557948505846700~8491282777",
+          "iosAppId": "ca-app-pub-xxxxxxxx~xxxxxxxx"
+        }
+      ],
       "expo-notifications",
       [
         "expo-splash-screen",

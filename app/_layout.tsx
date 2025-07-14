@@ -8,10 +8,18 @@ import { PurchasesProvider } from "@/providers/purchasesProvider";
 import { AuthProvider } from "@/providers/authProvider";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import { storage } from "@/lib/mmkv";
-
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
 const OnboardingContext = createContext<{ onComplete: () => void } | null>(
   null
 );
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false, // Reanimated runs in strict mode true by default
+});
 
 export const useOnboarding = () => {
   const context = useContext(OnboardingContext);

@@ -16,7 +16,7 @@ import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import type { GasStation } from "@/types";
 import { Loading } from "@/components/ui/Loading";
-
+import { BannerAdComponent } from "@/components/ads/BannerAd";
 export default function SearchScreen() {
   const {
     nearbyStations,
@@ -154,7 +154,9 @@ export default function SearchScreen() {
           />
         )}
       </View>
-
+      <View style={styles.bannerContainer}>
+        <BannerAdComponent />
+      </View>
       <FiltersModal
         visible={showFiltersModal}
         onClose={() => setShowFiltersModal(false)}
@@ -174,6 +176,12 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.background.default,
+    },
+    bannerContainer: {
+      
+      bottom: 70,
+      width: "100%",
+      alignItems: "center",
     },
     centerContent: {
       justifyContent: "center",

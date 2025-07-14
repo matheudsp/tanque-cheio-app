@@ -1,4 +1,3 @@
-
 import { useRouter } from "expo-router";
 import React, { useRef, useState, useEffect } from "react";
 import {
@@ -89,7 +88,6 @@ const Paginator = ({
 };
 
 export default function OnboardingScreen() {
-  const router = useRouter();
   const styles = useStylesWithTheme(getStyles);
   const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -56,16 +56,20 @@ export default function TabLayout() {
         tabBarInactiveTintColor: themeState.colors.text.secondary,
         tabBarStyle: {
           position: "absolute",
-          left: themeState.spacing.sm,
-          right: themeState.spacing.sm,
-          marginHorizontal: themeState.spacing.sm,
-          bottom: Platform.OS === "ios" ? themeState.spacing.xl : themeState.spacing.lg,
+          // left: themeState.spacing.sm,
+          // right: themeState.spacing.sm,
+          // marginHorizontal: themeState.spacing.sm,
+          // bottom:
+          //   Platform.OS === "ios"
+          //     ? themeState.spacing.xl
+          //     : themeState.spacing.lg,
           backgroundColor: themeState.colors.background.paper,
-          borderRadius: 32,
+          // borderRadius: 32,
+          borderTopColor: themeState.colors.border,
+          borderTopWidth: 0.5,
           height: 72,
           paddingBottom: Platform.OS === "ios" ? 24 : 12,
           paddingTop: themeState.spacing.sm,
-          borderTopWidth: 0,
           shadowColor: themeState.colors.shadow,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.12,

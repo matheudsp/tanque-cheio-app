@@ -1,7 +1,7 @@
 import { differenceInDays, parseISO } from "date-fns";
 import { Clock, MapPin } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Platform,
   StyleSheet,
@@ -17,6 +17,10 @@ import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import type { GasStation, Product } from "@/types";
 import { getIconNameFromFuel } from "@/utils/getIconNameFromFuel";
+import { useInterstitialAd } from "@/hooks/useInterstitialAd";
+import { useUserStore } from "@/stores/userStore";
+import { PaywallModal } from "./PaywallModal";
+import { AdOrPremiumModal } from "./AdOrPremiumModal";
 
 type GasStationCardProps = {
   station: GasStation;
@@ -49,6 +53,11 @@ export const GasStationCard = ({
   const router = useRouter();
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
+  const { showInterstitialAd } = useInterstitialAd();
+  const [isAdOrPremiumModalVisible, setAdOrPremiumModalVisible] =
+    useState(false);
+  const [isPaywallVisible, setPaywallVisible] = useState(false);
+  const { isPremium } = useUserStore();
 
   const cardData = useMemo(() => {
     const prices = station.fuel_prices || [];
@@ -90,75 +99,109 @@ export const GasStationCard = ({
     };
   }, [station, filteredFuel, showDistance, themeState]);
 
-  const handlePress = () => {
+  const navigateToDetails = () => {
     router.push({
       pathname: "/gas-station/[id]",
       params: { id: station.id },
     } as any);
   };
+  
+  const handlePress = () => {
+    if (isPremium) {
+      navigateToDetails();
+    } else {
+      setAdOrPremiumModalVisible(true);
+    }
+  };
+
+  const handleWatchAd = () => {
+    setAdOrPremiumModalVisible(false);
+    showInterstitialAd({
+      onAdDismissed: navigateToDetails,
+      onAdFailedToLoad: navigateToDetails,
+    });
+  };
+
+  const handleGoPremium = () => {
+    setAdOrPremiumModalVisible(false);
+    setPaywallVisible(true);
+  };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        isSelected && { borderColor: themeState.colors.primary.main },
-      ]}
-      onPress={handlePress}
-      activeOpacity={0.8}
-    >
-      <View style={styles.infoSection}>
-        <View style={styles.header}>
-          <BrandLogo brandName={station.brand} width={35} height={35} />
-          <View style={styles.titleInfo}>
-            <Text style={styles.stationName} numberOfLines={1}>
-              {station.trade_name || station.legal_name}
+    <>
+      <AdOrPremiumModal
+        isVisible={isAdOrPremiumModalVisible}
+        onClose={() => setAdOrPremiumModalVisible(false)}
+        onWatchAd={handleWatchAd}
+        onGoPremium={handleGoPremium}
+        stationName={station.trade_name || station.legal_name}
+      />
+      <PaywallModal
+        isVisible={isPaywallVisible}
+        onClose={() => setPaywallVisible(false)}
+      />
+      <TouchableOpacity
+        style={[
+          styles.container,
+          isSelected && { borderColor: themeState.colors.primary.main },
+        ]}
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
+        <View style={styles.infoSection}>
+          <View style={styles.header}>
+            <BrandLogo brandName={station.brand} width={35} height={35} />
+            <View style={styles.titleInfo}>
+              <Text style={styles.stationName} numberOfLines={1}>
+                {station.trade_name || station.legal_name}
+              </Text>
+              <Text style={styles.stationBrand}>{station.brand}</Text>
+            </View>
+          </View>
+          <View style={styles.locationRow}>
+            <MapPin size={16} color={themeState.colors.text.secondary} />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {station.localization.city} {cardData.distanceText}
             </Text>
-            <Text style={styles.stationBrand}>{station.brand}</Text>
           </View>
         </View>
-        <View style={styles.locationRow}>
-          <MapPin size={16} color={themeState.colors.text.secondary} />
-          <Text style={styles.locationText} numberOfLines={1}>
-            {station.localization.city} {cardData.distanceText}
-          </Text>
-        </View>
-      </View>
 
-      <View style={styles.priceSection}>
-        <View style={styles.priceDetails}>
-          <View style={styles.heroLabelContainer}>
-            <AppIcon name={cardData.iconName} width={30} height={30} />
-            <Text style={styles.heroLabel}>{cardData.heroLabel}</Text>
+        <View style={styles.priceSection}>
+          <View style={styles.priceDetails}>
+            <View style={styles.heroLabelContainer}>
+              <AppIcon name={cardData.iconName} width={30} height={30} />
+              <Text style={styles.heroLabel}>{cardData.heroLabel}</Text>
+            </View>
+            <View style={styles.updateStatus}>
+              <Clock size={12} color={cardData.updateStatus.color} />
+              <Text
+                style={[
+                  styles.updateStatusText,
+                  { color: cardData.updateStatus.color },
+                ]}
+              >
+                {cardData.updateStatus.text}
+              </Text>
+            </View>
           </View>
-          <View style={styles.updateStatus}>
-            <Clock size={12} color={cardData.updateStatus.color} />
+          <View style={styles.priceValueContainer}>
             <Text
               style={[
-                styles.updateStatusText,
-                { color: cardData.updateStatus.color },
+                styles.price,
+                cardData.priceText === "N/A" && styles.priceNA,
               ]}
             >
-              {cardData.updateStatus.text}
+              {cardData.priceText}
             </Text>
+            {cardData.otherPricesCount > 0 && (
+              <Text style={styles.otherPrices}>
+                +{cardData.otherPricesCount} outros
+              </Text>
+            )}
           </View>
         </View>
-        <View style={styles.priceValueContainer}>
-          <Text
-            style={[
-              styles.price,
-              cardData.priceText === "N/A" && styles.priceNA,
-            ]}
-          >
-            {cardData.priceText}
-          </Text>
-          {cardData.otherPricesCount > 0 && (
-            <Text style={styles.otherPrices}>
-              +{cardData.otherPricesCount} outros
-            </Text>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </>
   );
 };
 

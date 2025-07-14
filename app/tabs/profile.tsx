@@ -29,12 +29,15 @@ import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import { storage } from "@/lib/mmkv";
 import { toast } from "@/hooks/useToast";
+import { DeveloperPasswordModal } from "@/components/auth/DeveloperPasswordModal";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, isPremium, logout } = useUserStore();
   const styles = useStylesWithTheme(getStyles);
   const { themeState } = useTheme();
+  const [isDevPasswordModalVisible, setDevPasswordModalVisible] =
+    useState(false);
 
   const handleLogout = () => {
     if (Platform.OS === "web") {
@@ -86,6 +89,16 @@ export default function ProfileScreen() {
     );
   };
 
+  const handlePasswordSubmit = (password: string) => {
+    setDevPasswordModalVisible(false);
+
+    if (password === "2025tanquecheio") {
+      router.push("/dev/developer");
+    } else {
+      Alert.alert("Acesso Negado", "A senha digitada está incorreta.");
+    }
+  };
+
   const menuItems = useMemo(
     () => [
       {
@@ -106,13 +119,13 @@ export default function ProfileScreen() {
             label: "Preferências",
             onPress: () => router.push("/profile/preferences"),
           },
-          {
-            icon: (
-              <CreditCard size={20} color={themeState.colors.primary.main} />
-            ),
-            label: "Métodos de Pagamento",
-            onPress: () => router.push("/profile/payment"),
-          },
+          // {
+          //   icon: (
+          //     <CreditCard size={20} color={themeState.colors.primary.main} />
+          //   ),
+          //   label: "Métodos de Pagamento",
+          //   onPress: () => router.push("/profile/payment"),
+          // },
         ],
       },
       {
@@ -123,17 +136,13 @@ export default function ProfileScreen() {
             label: "Notificações",
             onPress: () => router.push("/profile/notifications"),
           },
-          ...(__DEV__
-            ? [
-                {
-                  icon: (
-                    <Wrench size={20} color={themeState.colors.primary.main} />
-                  ),
-                  label: "Opções do Desenvolvedor",
-                  onPress: () => router.push("/dev/developer"),
-                },
-              ]
-            : []),
+
+          {
+            icon: <Wrench size={20} color={themeState.colors.primary.main} />,
+            label: "Opções do Desenvolvedor",
+            onPress: () => setDevPasswordModalVisible(true),
+          },
+
           {
             icon: (
               <HelpCircle size={20} color={themeState.colors.primary.main} />
@@ -160,68 +169,75 @@ export default function ProfileScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <User size={40} color={themeState.colors.primary.main} />
+    <>
+      <DeveloperPasswordModal
+        isVisible={isDevPasswordModalVisible}
+        onClose={() => setDevPasswordModalVisible(false)}
+        onSubmit={handlePasswordSubmit}
+      />
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.profileHeader}>
+            <View style={styles.avatar}>
+              <User size={40} color={themeState.colors.primary.main} />
+            </View>
+
+            <View style={styles.profileNameContainer}>
+              <Text style={styles.profileName}>{user?.name || "Usuário"}</Text>
+              <SubscriptionBadge isPremium={isPremium} style={styles.badge} />
+            </View>
+
+            <Text style={styles.profileEmail}>
+              {user?.email || "guest@tanquecheio.app"}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.editProfileButton}
+              onPress={() => router.push("/profile/edit")}
+            >
+              <Text style={styles.editProfileText}>Editar perfil</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.profileNameContainer}>
-            <Text style={styles.profileName}>{user?.name || "Usuário"}</Text>
-            <SubscriptionBadge isPremium={isPremium} style={styles.badge} />
+          {menuItems.map((section, sectionIndex) => (
+            <View key={sectionIndex} style={styles.menuSection}>
+              <Text style={styles.menuSectionTitle}>{section.title}</Text>
+              {section.items.map((item, itemIndex) => (
+                <TouchableOpacity
+                  key={itemIndex}
+                  style={styles.menuItem}
+                  onPress={item.onPress}
+                >
+                  <View style={styles.menuItemLeft}>
+                    {item.icon}
+                    <Text
+                      style={[
+                        styles.menuItemLabel,
+                        item.textColor ? { color: item.textColor } : null,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                  <ChevronRight
+                    size={20}
+                    color={themeState.colors.text.secondary}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+
+          <View style={styles.versionContainer}>
+            <Text style={styles.versionText}>Versão 1.0.0</Text>
           </View>
-
-          <Text style={styles.profileEmail}>
-            {user?.email || "guest@tanquecheio.app"}
-          </Text>
-
-          <TouchableOpacity
-            style={styles.editProfileButton}
-            onPress={() => router.push("/profile/edit")}
-          >
-            <Text style={styles.editProfileText}>Editar perfil</Text>
-          </TouchableOpacity>
-        </View>
-
-        {menuItems.map((section, sectionIndex) => (
-          <View key={sectionIndex} style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>{section.title}</Text>
-            {section.items.map((item, itemIndex) => (
-              <TouchableOpacity
-                key={itemIndex}
-                style={styles.menuItem}
-                onPress={item.onPress}
-              >
-                <View style={styles.menuItemLeft}>
-                  {item.icon}
-                  <Text
-                    style={[
-                      styles.menuItemLabel,
-                      item.textColor ? { color: item.textColor } : null,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </View>
-                <ChevronRight
-                  size={20}
-                  color={themeState.colors.text.secondary}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-
-        <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Versão 1.0.0</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }
 
