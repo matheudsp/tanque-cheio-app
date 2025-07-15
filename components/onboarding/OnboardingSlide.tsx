@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, useWindowDimensions, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, ImageSourcePropType } from 'react-native';
+import {Image} from 'expo-image'
 import LottieView from 'lottie-react-native';
 import { useStylesWithTheme } from '@/hooks/useStylesWithTheme';
 import type { ThemeState } from '@/types/theme';

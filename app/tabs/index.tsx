@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { Heart, History } from "lucide-react-native";
 import React, { useCallback, useEffect, useMemo } from "react";
 import {
-  FlatList,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 import { useShallow } from "zustand/react/shallow";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FlashList } from "@shopify/flash-list";
 
 import { GasStationCard } from "@/components/shared/GasStationCard";
 import { GasStationCardSkeleton } from "@/components/GasStationCardSkeleton";
@@ -83,7 +83,6 @@ export default function HomeScreen() {
     const stationsMap = new Map<string, GasStation>();
 
     favorites.forEach((fav) => {
-      // Garante que o favorito e seu produto associado são válidos
       if (!fav || !fav.gas_station_id || !fav.product) return;
 
       const existingStation = stationsMap.get(fav.gas_station_id);
@@ -155,17 +154,18 @@ export default function HomeScreen() {
             icon={<Heart size={20} color={themeState.colors.primary.main} />}
             onPress={() => router.push("/profile/favorites")}
           />
-          {isLoadingFavorites ? (
-            <FlatList
+          {!isLoadingFavorites ? (
+            <FlashList
               data={Array(3).fill(0)}
               horizontal
               showsHorizontalScrollIndicator={false}
               renderItem={renderSkeleton}
               keyExtractor={(_, index) => `fav-skeleton-${index}`}
               contentContainerStyle={styles.listContent}
+              estimatedItemSize={5}
             />
           ) : (
-            <FlatList
+            <FlashList
               data={favoriteStations.slice(0, 5)}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -177,6 +177,7 @@ export default function HomeScreen() {
                 <EmptyListComponent message="Você ainda não favoritou nenhum posto." />
               }
               contentContainerStyle={styles.listContent}
+              estimatedItemSize={5}
             />
           )}
         </View>
@@ -184,10 +185,10 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <SectionHeader
             title="Últimas Buscas"
-            icon={<History size={20} color={themeState.colors.primary.main} />}
-            onPress={() => router.push("tabs/search")}
+            icon={<Heart size={20} color={themeState.colors.primary.main} />}
+            onPress={() => router.push("tabs/search" as any)}
           />
-          <FlatList
+          <FlashList
             data={recentlyViewedStations}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -202,6 +203,7 @@ export default function HomeScreen() {
               <EmptyListComponent message="Nenhum posto visitado recentemente." />
             }
             contentContainerStyle={styles.listContent}
+            estimatedItemSize={10}
           />
         </View>
       </ScrollView>
@@ -256,8 +258,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       fontWeight: "600",
     },
     listContent: {
-      paddingHorizontal: theme.spacing.xl,
-      paddingVertical: theme.spacing.xs,
+      padding: theme.spacing.xl,
     },
     cardWrapper: {
       width: 300,
@@ -265,7 +266,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     emptyContainer: {
       width: 300,
-      height: 150,
+      height: 167,
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: theme.colors.background.paper,

@@ -9,7 +9,6 @@ const useStylesWithTheme = <T extends NamedStyles<T>>(
 ): T => {
   const { themeState: currentTheme } = useTheme();
 
-  // useMemo garante que os estilos só sejam recalculados se o tema mudar.
   return useMemo(() => {
     const styles = builderFn(currentTheme);
     return StyleSheet.create(styles) as T;

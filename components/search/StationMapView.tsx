@@ -260,7 +260,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       position: "absolute",
       padding: theme.spacing.lg,
       borderRadius: theme.borderRadius.round,
-      bottom: 100,
+      bottom: theme.spacing["5xl"] * 2.4,
       right: theme.spacing.lg,
       backgroundColor: theme.colors.background.elevated,
       justifyContent: "center",

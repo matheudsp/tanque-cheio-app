@@ -1,13 +1,17 @@
-import colors from './colors';
-import { BorderRadius, Shadows, Spacing, Theme, ThemeState, Typography } from '@/types/theme';
-
-// Valores de tipografia, espaçamento e bordas são compartilhados entre os temas
-// para manter a consistência visual.
+import colors from "./colors";
+import {
+  BorderRadius,
+  Shadows,
+  Spacing,
+  Theme,
+  ThemeState,
+  Typography,
+} from "@/types/theme";
 
 const typography: Typography = {
   fontFamily: {
-    primary: 'System',
-    secondary: 'System',
+    primary: "System",
+    secondary: "System",
   },
   fontSize: {
     small: 12,
@@ -17,10 +21,10 @@ const typography: Typography = {
     h2: 24,
   },
   fontWeight: {
-    normal: '400',
-    bold: '700',
-    light: '300',
-    semibold: '600',
+    normal: "400",
+    bold: "700",
+    light: "300",
+    semibold: "600",
   },
   lineHeight: {
     body: 24,
@@ -36,10 +40,10 @@ const spacing: Spacing = {
   md: 12,
   lg: 16,
   xl: 24,
-  '2xl': 32,
-  '3xl': 40,
-  '4xl': 48,
-  '5xl': 64,
+  "2xl": 32,
+  "3xl": 40,
+  "4xl": 48,
+  "5xl": 64,
 };
 
 const borderRadius: BorderRadius = {

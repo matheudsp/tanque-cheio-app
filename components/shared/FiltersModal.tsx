@@ -1,5 +1,3 @@
-// @/components/shared/FiltersModal.tsx
-
 import { X } from "lucide-react-native";
 import React, { useState, useEffect } from "react";
 import {
@@ -17,7 +15,6 @@ import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 
-// ✅ Tipagem para os filtros, garantindo consistência
 type SearchFilters = {
   product?: string;
   sortBy: "distanceAsc" | "priceAsc" | "distanceDesc" | "priceDesc";

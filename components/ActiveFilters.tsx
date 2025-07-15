@@ -89,6 +89,8 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       paddingVertical: theme.spacing.sm,
       backgroundColor: theme.colors.background.default,
       paddingHorizontal: theme.spacing.lg,
+      borderBottomWidth: 1,
+      borderColor: theme.colors.border,
     },
     scrollContent: {
       flexDirection: "row",

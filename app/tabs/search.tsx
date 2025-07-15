@@ -1,6 +1,12 @@
 import { Filter } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useShallow } from "zustand/react/shallow";
 
@@ -16,7 +22,7 @@ import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import type { GasStation } from "@/types";
 import { Loading } from "@/components/ui/Loading";
-import { BannerAdComponent } from "@/components/ads/BannerAd";
+
 export default function SearchScreen() {
   const {
     nearbyStations,
@@ -93,7 +99,7 @@ export default function SearchScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.headerContainer}>
         <View style={styles.titleContainer}>
           <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
@@ -153,10 +159,8 @@ export default function SearchScreen() {
             }}
           />
         )}
-      </View>
-      <View style={styles.bannerContainer}>
-        <BannerAdComponent />
-      </View>
+      </View> 
+
       <FiltersModal
         visible={showFiltersModal}
         onClose={() => setShowFiltersModal(false)}
@@ -178,8 +182,8 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       backgroundColor: theme.colors.background.default,
     },
     bannerContainer: {
-      
-      bottom: 70,
+      bottom:
+        Platform.OS === "ios" ? theme.spacing["4xl"] : theme.spacing["6xl"],
       width: "100%",
       alignItems: "center",
     },

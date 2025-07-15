@@ -1,5 +1,6 @@
 import React from "react";
-import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
+import { RefreshControl, StyleSheet, View } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 
 import type { GasStation } from "@/types";
 import { GasStationCard } from "@/components/shared/GasStationCard";
@@ -37,20 +38,21 @@ export function StationListView({
     return <Loading />;
   };
 
-  if (isLoading && stations.length === 0) {
+  if (isLoading) {
     return (
-      <FlatList
+      <FlashList
         data={Array.from({ length: 7 })}
         renderItem={() => <GasStationCardSkeleton />}
         keyExtractor={(_, index) => index.toString()}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        estimatedItemSize={10} 
       />
     );
   }
 
   return (
-    <FlatList
+    <FlashList
       data={stations}
       renderItem={({ item }) => (
         <GasStationCard station={item} filteredFuel={filteredFuel} />
@@ -80,6 +82,7 @@ export function StationListView({
           />
         ) : null
       }
+      estimatedItemSize={10}
     />
   );
 }
@@ -88,7 +91,7 @@ const getStyles = (theme: Readonly<ThemeState>) =>
   StyleSheet.create({
     listContainer: {
       padding: theme.spacing.lg,
-      paddingBottom: 80,
+      paddingBottom: 160,
     },
     footerLoading: {
       paddingVertical: theme.spacing.xl,

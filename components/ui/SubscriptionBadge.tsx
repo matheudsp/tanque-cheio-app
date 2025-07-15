@@ -1,7 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useMemo } from "react";
+import { Image } from "expo-image";
 import {
-  Image,
   ImageSourcePropType,
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
   ViewStyle,
   type ColorValue,
 } from "react-native";
+
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -30,7 +31,7 @@ interface BadgeConfig {
   showShineEffect: boolean;
 }
 
-const badgeConfigMap: Record<'premium' | 'free', BadgeConfig> = {
+const badgeConfigMap: Record<"premium" | "free", BadgeConfig> = {
   premium: {
     label: "PREMIUM",
     icon: require("@/assets/images/premium.png"),
@@ -63,12 +64,12 @@ const ShineEffect: React.FC = () => {
     );
   }, [shinePosition]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: shinePosition.value },
-      { rotate: "-45deg" },
-    ],
-  }), []); 
+  const animatedStyle = useAnimatedStyle(
+    () => ({
+      transform: [{ translateX: shinePosition.value }, { rotate: "-45deg" }],
+    }),
+    []
+  );
 
   const styles = useStylesWithTheme(getShineStyles);
 
@@ -92,17 +93,22 @@ interface SubscriptionBadgeProps {
 export const SubscriptionBadge: React.FC<SubscriptionBadgeProps> = React.memo(
   ({ isPremium, style }) => {
     const styles = useStylesWithTheme(getBadgeStyles);
-    
+
     const config = useMemo<BadgeConfig>(() => {
       return isPremium ? badgeConfigMap.premium : badgeConfigMap.free;
     }, [isPremium]);
 
     return (
       <View style={[styles.badgeContainer, style]}>
-        <LinearGradient colors={config.gradientColors as [ColorValue, ColorValue, ...ColorValue[]]} style={styles.gradient}>
+        <LinearGradient
+          colors={
+            config.gradientColors as [ColorValue, ColorValue, ...ColorValue[]]
+          }
+          style={styles.gradient}
+        >
           {config.showShineEffect && <ShineEffect />}
           <Image source={config.icon} style={styles.badgeIcon} />
-          <Text style={[styles.badgeText, { color: config.textColor }]}>  
+          <Text style={[styles.badgeText, { color: config.textColor }]}>
             {config.label}
           </Text>
         </LinearGradient>

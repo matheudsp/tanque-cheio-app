@@ -4,9 +4,7 @@ import React, { useCallback, useEffect, useState, useMemo } from "react";
 import {
   ActivityIndicator,
   Dimensions,
-  FlatList,
   Modal,
-  SafeAreaView,
   StyleSheet,
   Switch,
   Text,
@@ -20,12 +18,14 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { FlashList } from "@shopify/flash-list"; 
 
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
 import type { GasStation } from "@/types/gas-stations";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface FavoriteFuelModalProps {
   isVisible: boolean;
@@ -82,7 +82,7 @@ export const FavoriteFuelModal = ({
             translateY.value = withSpring(0, { damping: 15 });
           }
         }),
-    [handleClose, translateY] 
+    [handleClose, translateY]
   );
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -128,8 +128,20 @@ export const FavoriteFuelModal = ({
   ]);
 
   const renderFuelItem = useCallback(
-    ({ item }: { item: GasStation["fuel_prices"][0] }) => (
-      <View style={styles.fuelItem}>
+    ({
+      item,
+      index,
+    }: {
+      item: GasStation["fuel_prices"][0];
+      index: number;
+    }) => (
+      <View
+        style={[
+          styles.fuelItem,
+          index < station!.fuel_prices.length - 1 &&
+            styles.fuelItemWithSeparator,
+        ]}
+      >
         <Text style={styles.fuelName}>{item.product_name}</Text>
         <Switch
           trackColor={{
@@ -144,7 +156,14 @@ export const FavoriteFuelModal = ({
         />
       </View>
     ),
-    [localSelection, handleToggleSwitch, isLoading, styles, themeState]
+    [
+      localSelection,
+      handleToggleSwitch,
+      isLoading,
+      styles,
+      themeState,
+      station?.fuel_prices.length,
+    ]
   );
 
   if (!station) {
@@ -189,14 +208,11 @@ export const FavoriteFuelModal = ({
                       style={{ marginTop: 40 }}
                     />
                   ) : (
-                    <FlatList
+                    <FlashList
                       data={station.fuel_prices}
                       renderItem={renderFuelItem}
                       keyExtractor={(item) => item.product_id}
-                      ItemSeparatorComponent={() => (
-                        <View style={styles.separator} />
-                      )}
-                      style={styles.flatList}
+                      estimatedItemSize={5} 
                     />
                   )}
                 </View>
@@ -285,12 +301,6 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       flex: 1,
       marginHorizontal: theme.spacing.lg,
     },
-    flatList: {
-      backgroundColor: theme.colors.background.paper,
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
     fuelItem: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -300,17 +310,16 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       height: 48,
       backgroundColor: theme.colors.background.paper,
     },
+    fuelItemWithSeparator: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.divider,
+    },
     fuelName: {
       fontSize: 17,
       color: theme.colors.text.primary,
     },
     switch: {
       transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
-    },
-    separator: {
-      height: 1,
-      backgroundColor: theme.colors.divider,
-      marginHorizontal: theme.spacing.lg,
     },
     footer: {
       padding: theme.spacing.lg,

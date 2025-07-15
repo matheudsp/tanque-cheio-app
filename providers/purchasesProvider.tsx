@@ -1,5 +1,14 @@
-import Purchases, { PurchasesOffering, CustomerInfo } from "react-native-purchases";
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import Purchases, {
+  PurchasesOffering,
+  CustomerInfo,
+} from "react-native-purchases";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { Platform } from "react-native";
 
 import { useUserStore } from "@/stores/userStore";
@@ -15,9 +24,15 @@ interface PurchasesContextProps {
   isLoading: boolean;
 }
 
-const PurchasesContext = createContext<PurchasesContextProps | undefined>(undefined);
+const PurchasesContext = createContext<PurchasesContextProps | undefined>(
+  undefined
+);
 
-export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
+export const PurchasesProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
   const { user } = useUserStore();
   const setIsPremiumInStore = useUserStore((state) => state.setIsPremium);
 
@@ -25,13 +40,16 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
   const [offerings, setOfferings] = useState<PurchasesOffering | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Inicializa o SDK do RevenueCat
   useEffect(() => {
     const init = async () => {
       if (Platform.OS === "android") {
-        await Purchases.configure({ apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PUBLIC_KEY_ANDROID! });
+        await Purchases.configure({
+          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PUBLIC_KEY_ANDROID!,
+        });
       } else {
-        await Purchases.configure({ apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PUBLIC_KEY_IOS! });
+        await Purchases.configure({
+          apiKey: process.env.EXPO_PUBLIC_REVENUECAT_PUBLIC_KEY_IOS!,
+        });
       }
 
       setIsLoading(false);
@@ -64,9 +82,11 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const updateSubscriptionStatus = (customerInfo: CustomerInfo) => {
-    const userIsPremium = typeof customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] !== "undefined";
+    const userIsPremium =
+      typeof customerInfo.entitlements.active[PREMIUM_ENTITLEMENT] !==
+      "undefined";
     setIsPremium(userIsPremium);
-    setIsPremiumInStore(userIsPremium); // Atualiza o estado global no Zustand
+    setIsPremiumInStore(userIsPremium);
   };
 
   const purchasePackage = async (pkg: any) => {
@@ -111,7 +131,6 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Hook customizado para consumir o contexto
 export const usePurchases = (): PurchasesContextProps => {
   const context = useContext(PurchasesContext);
   if (!context) {

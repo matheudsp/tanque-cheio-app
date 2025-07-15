@@ -97,7 +97,7 @@ export const ThemeProvider = ({
         }
       } finally {
         setIsLoading(false);
-        onThemeLoaded?.();
+        onThemeLoaded();
       }
     };
     initializeTheme();

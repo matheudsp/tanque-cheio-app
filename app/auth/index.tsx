@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import { Image, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {Image} from 'expo-image'
+import {  StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {

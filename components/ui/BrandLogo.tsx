@@ -1,6 +1,7 @@
 // gemini/components/ui/BrandLogo.tsx
 import React from "react";
-import { Image, ImageProps, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
+import { Image, ImageProps } from "expo-image";
 
 export const brandMap: Record<string, any> = {
   vibra: require("@/assets/images/brands/vibra.png"),
@@ -39,8 +40,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   return (
     <Image
       source={logoSource}
+      contentFit="contain"
       style={[styles.logo, style]}
-      resizeMode="contain"
       {...props}
     />
   );

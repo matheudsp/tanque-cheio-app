@@ -1,4 +1,4 @@
-import { ImageStyle, TextStyle, ViewStyle } from 'react-native';
+import { ImageStyle, TextStyle, ViewStyle } from "react-native";
 
 // Utility type para garantir que os estilos sejam objetos de estilo válidos do React Native.
 export type NamedStyles<T> = {
@@ -7,15 +7,15 @@ export type NamedStyles<T> = {
 
 // Enum para os temas que a aplicação pode de fato aplicar (light/dark).
 export enum Theme {
-  LIGHT = 'LIGHT',
-  DARK = 'DARK',
+  LIGHT = "LIGHT",
+  DARK = "DARK",
 }
 
 // Enum para as opções de preferência do usuário, incluindo a do sistema.
 export enum ThemePreference {
-  LIGHT = 'LIGHT',
-  DARK = 'DARK',
-  SYSTEM = 'SYSTEM',
+  LIGHT = "LIGHT",
+  DARK = "DARK",
+  SYSTEM = "SYSTEM",
 }
 
 // A interface principal que define a estrutura de um objeto de tema.
@@ -93,10 +93,10 @@ export interface Typography {
     h2: number;
   };
   fontWeight: {
-    normal: TextStyle['fontWeight'];
-    bold: TextStyle['fontWeight'];
-    light: TextStyle['fontWeight'];
-    semibold: TextStyle['fontWeight'];
+    normal: TextStyle["fontWeight"];
+    bold: TextStyle["fontWeight"];
+    light: TextStyle["fontWeight"];
+    semibold: TextStyle["fontWeight"];
   };
   lineHeight: {
     body: number;
@@ -115,10 +115,10 @@ export interface Spacing {
   md: number;
   lg: number;
   xl: number;
-  '2xl': number;
-  '3xl': number;
-  '4xl': number;
-  '5xl': number;
+  "2xl": number;
+  "3xl": number;
+  "4xl": number;
+  "5xl": number;
 }
 
 export interface BorderRadius {

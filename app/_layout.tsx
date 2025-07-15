@@ -44,9 +44,7 @@ export default function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    // Esconder a splash screen apenas quando todas as verificações estiverem prontas.
-    // A verificação de onboarding é a primeira coisa que deve acontecer.
-    if (!isThemeReady) {
+    if (hasViewedOnboarding === null || !isThemeReady) {
       return;
     }
     SplashScreen.hideAsync();
@@ -58,7 +56,7 @@ export default function RootLayout() {
   const handleOnboardingComplete = () => {
     storage.set(ONBOARDING_STATUS_KEY, true);
     setHasViewedOnboarding(true);
-    router.replace("/tabs");
+    router.replace("/");
   };
 
   return (

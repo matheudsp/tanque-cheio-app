@@ -5,7 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "tanquecheio",
-    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "icon": "./assets/images/adaptive-foreground.png",
     "ios": {

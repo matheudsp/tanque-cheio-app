@@ -1,6 +1,6 @@
 import { Globe, Moon, Sun } from "lucide-react-native";
 import { Stack } from "expo-router";
-import React from "react";
+
 import {
   ScrollView,
   StyleSheet,
@@ -14,7 +14,6 @@ import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { ThemePreference, type ThemeState } from "@/types/theme";
 
-// Componente para o botão de opção de tema
 const ThemeOptionButton = ({
   label,
   onPress,
@@ -42,7 +41,7 @@ export default function PreferencesScreen() {
   const { themeState, themePreference, setTheme } = useTheme();
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={["bottom","top"]}>
       <Stack.Screen
         options={{
           title: "Preferências",

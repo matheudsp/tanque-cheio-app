@@ -105,7 +105,7 @@ export const GasStationCard = ({
       params: { id: station.id },
     } as any);
   };
-  
+
   const handlePress = () => {
     if (isPremium) {
       navigateToDetails();
@@ -150,7 +150,7 @@ export const GasStationCard = ({
       >
         <View style={styles.infoSection}>
           <View style={styles.header}>
-            <BrandLogo brandName={station.brand} width={35} height={35} />
+            <BrandLogo brandName={station.brand} style={styles.brandLogo} />
             <View style={styles.titleInfo}>
               <Text style={styles.stationName} numberOfLines={1}>
                 {station.trade_name || station.legal_name}
@@ -284,6 +284,10 @@ const getStyles = (theme: Readonly<ThemeState>) =>
     },
     priceValueContainer: {
       alignItems: "flex-end",
+    },
+    brandLogo: {
+      width: 35,
+      height: 35,
     },
     price: {
       fontSize: 22,

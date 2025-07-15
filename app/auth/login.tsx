@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Image,
+
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
+import {Image} from 'expo-image'
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, Lock } from "lucide-react-native";
@@ -49,93 +52,96 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <Image
-              source={require("@/assets/images/icon.png")}
-              style={styles.logo}
-            />
-            <Text style={styles.title}>Bem-vindo!</Text>
-            <Text style={styles.subtitle}>
-              Economize no seu próximo abastecimento.
-            </Text>
-          </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.header}>
+              <Image
+                source={require("@/assets/images/icon.png")}
+                style={styles.logo}
+              />
+              <Text style={styles.title}>Bem-vindo!</Text>
+              <Text style={styles.subtitle}>
+                Economize no seu próximo abastecimento.
+              </Text>
+            </View>
 
-          <View style={styles.formContainer}>
-            <AuthInput
-              label="E-mail"
-              icon={Mail}
-              placeholder="seuemail@exemplo.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <AuthInput
-              label="Senha"
-              icon={Lock}
-              placeholder="Sua senha"
-              value={password}
-              onChangeText={setPassword}
-              isPassword
-            />
-            <TouchableOpacity
-              onPress={() => {
-                router.push("/auth/forgot-password");
-              }}
-            >
-              <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
-            </TouchableOpacity>
-
-            <Button
-              title="Entrar"
-              onPress={handleLogin}
-              loading={isLoading}
-              size="large"
-              fullWidth
-              style={{ marginTop: 24 }}
-            />
-          </View>
-
-          <View style={styles.separatorContainer}>
-            <View style={styles.line} />
-            <Text style={styles.separatorText}>OU</Text>
-            <View style={styles.line} />
-          </View>
-
-          <View style={styles.socialContainer}>
-            <SocialButton
-              type="google"
-              onPress={() => {
-                /* Lógica de login com Google */
-              }}
-            />
-            {Platform.OS === "ios" && (
-              <SocialButton
-                type="apple"
+            <View style={styles.formContainer}>
+              <AuthInput
+                label="E-mail"
+                icon={Mail}
+                placeholder="seuemail@exemplo.com"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <AuthInput
+                label="Senha"
+                icon={Lock}
+                placeholder="Sua senha"
+                value={password}
+                onChangeText={setPassword}
+                isPassword
+              />
+              <TouchableOpacity
                 onPress={() => {
-                  /* Lógica de login com Apple */
+                  router.push("/auth/forgot-password");
+                }}
+              >
+                <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
+              </TouchableOpacity>
+
+              <Button
+                title="Entrar"
+                onPress={handleLogin}
+                loading={isLoading}
+                size="large"
+                fullWidth
+                style={{ marginTop: 24 }}
+              />
+            </View>
+
+            <View style={styles.separatorContainer}>
+              <View style={styles.line} />
+              <Text style={styles.separatorText}>OU</Text>
+              <View style={styles.line} />
+            </View>
+
+            <View style={styles.socialContainer}>
+              <SocialButton
+                type="google"
+                onPress={() => {
+                 
                 }}
               />
-            )}
-          </View>
+              {Platform.OS === "ios" && (
+                <SocialButton
+                  type="apple"
+                  onPress={() => {
+                  
+                  }}
+                />
+              )}
+            </View>
 
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-              onPress={() => router.push("/auth/register")}
-            >
-              <Text style={styles.footerText}>Não tem uma conta?</Text>
-              <Text style={styles.footerLink}> Cadastre-se</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+            <View style={styles.footer}>
+              <TouchableOpacity
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+                onPress={() => router.push("/auth/register")}
+              >
+                <Text style={styles.footerText}>Não tem uma conta?</Text>
+                <Text style={styles.footerLink}> Cadastre-se</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

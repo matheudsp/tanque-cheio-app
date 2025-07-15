@@ -1,12 +1,20 @@
-// /components/shared/AdOrPremiumModal.tsx
-
 import React from "react";
-import { View, Text, Modal, StyleSheet } from "react-native";
-import { Shield, PlayCircle } from "lucide-react-native";
+import {
+  View,
+  Text,
+  Modal,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { Shield, PlayCircle, X } from "lucide-react-native";
 
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { Button } from "@/components/Button";
 import type { ThemeState } from "@/types/theme";
+import { useTheme } from "@/providers/themeProvider";
 
 interface AdOrPremiumModalProps {
   isVisible: boolean;
@@ -16,15 +24,6 @@ interface AdOrPremiumModalProps {
   stationName: string;
 }
 
-/**
- * @description Modal que oferece ao usuário a escolha entre assistir um anúncio
- * ou tornar-se premium para visualizar os detalhes de um posto.
- * @param {boolean} isVisible - Controla a visibilidade do modal.
- * @param {() => void} onClose - Função para fechar o modal.
- * @param {() => void} onWatchAd - Função a ser executada quando o usuário escolhe assistir ao anúncio.
- * @param {() => void} onGoPremium - Função a ser executada quando o usuário opta por se tornar premium.
- * @param {string} stationName - Nome do posto para exibir no título.
- */
 export const AdOrPremiumModal = ({
   isVisible,
   onClose,
@@ -33,41 +32,53 @@ export const AdOrPremiumModal = ({
   stationName,
 }: AdOrPremiumModalProps) => {
   const styles = useStylesWithTheme(getStyles);
+  const { themeState } = useTheme();
 
   return (
     <Modal
       visible={isVisible}
-      transparent={true}
+      transparent
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.container}>
-          <Text style={styles.title}>Ver detalhes de {stationName}</Text>
-          <Text style={styles.subtitle}>
-            Para acessar os detalhes completos, escolha uma das opções abaixo.
-          </Text>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : undefined}
+              style={styles.container}
+            >
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <X size={24} color={themeState.colors.text.secondary} />
+              </TouchableOpacity>
 
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Assistir Anúncio (5s)"
-              onPress={onWatchAd}
-              variant="outline"
-              icon={<PlayCircle size={20} color={styles.buttonText.color} />}
-              style={styles.button}
-              textStyle={styles.buttonText}
-            />
-            <Button
-              title="Seja Premium"
-              onPress={onGoPremium}
-              variant="primary"
-              icon={<Shield size={20} color={styles.buttonPremiumText.color} />}
-              style={styles.button}
-              textStyle={styles.buttonPremiumText}
-            />
-          </View>
+              <Text style={styles.title}>Ver detalhes de {stationName}</Text>
+              <Text style={styles.subtitle}>
+                Para acessar os detalhes completos, escolha uma das opções abaixo.
+              </Text>
+
+              <View style={styles.buttonContainer}>
+                <Button
+                  title="Assistir Anúncio (5s)"
+                  onPress={onWatchAd}
+                  variant="outline"
+                  icon={<PlayCircle size={20} color={styles.buttonText.color} />}
+                  style={styles.button}
+                  textStyle={styles.buttonText}
+                />
+                <Button
+                  title="Seja Premium"
+                  onPress={onGoPremium}
+                  variant="primary"
+                  icon={<Shield size={20} color={styles.buttonPremiumText.color} />}
+                  style={styles.button}
+                  textStyle={styles.buttonPremiumText}
+                />
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -89,12 +100,20 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       alignItems: "center",
       ...theme.shadows.shadowMd,
     },
+    closeButton: {
+      position: "absolute",
+      top: theme.spacing.md,
+      right: theme.spacing.md,
+      padding: 10,
+      zIndex: 10,
+    },
     title: {
       fontSize: 20,
       fontWeight: theme.typography.fontWeight.bold,
       color: theme.colors.text.primary,
       textAlign: "center",
       marginBottom: theme.spacing.sm,
+      paddingTop: theme.spacing.lg,
     },
     subtitle: {
       fontSize: 14,
