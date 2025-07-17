@@ -4,17 +4,16 @@ import React from "react";
 import { useTheme } from "@/providers/themeProvider";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import type { ThemeState } from "@/types/theme";
-
-export const Loading = () => {
+interface LoadingProps {
+  size?: "small" | "large";
+}
+export const Loading = ({ size = "large" }: LoadingProps) => {
   const { themeState } = useTheme();
   const styles = useStylesWithTheme(getStyles);
 
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator
-        size="large"
-        color={themeState.colors.secondary.main}
-      />
+      <ActivityIndicator size={size} color={themeState.colors.secondary.main} />
     </View>
   );
 };
@@ -25,6 +24,5 @@ const getStyles = (theme: Readonly<ThemeState>) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: theme.colors.background.default,
     },
   });

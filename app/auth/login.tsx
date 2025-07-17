@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-
   Keyboard,
   TouchableWithoutFeedback,
 } from "react-native";
-import {Image} from 'expo-image'
+import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Mail, Lock } from "lucide-react-native";
@@ -19,19 +18,30 @@ import { Mail, Lock } from "lucide-react-native";
 import { useUserStore } from "@/stores/userStore";
 import { useStylesWithTheme } from "@/hooks/useStylesWithTheme";
 import { Button } from "@/components/Button";
-import { AuthInput } from "@/components/auth/AuthInput"; 
-import { SocialButton } from "@/components/auth/SocialButton"; 
+import { AuthInput } from "@/components/auth/AuthInput";
+import { SocialButton } from "@/components/auth/SocialButton";
 import type { ThemeState } from "@/types/theme";
 import { toast } from "@/hooks/useToast";
+import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri, revokeAsync } from "expo-auth-session";
+
+import * as WebBrowser from "expo-web-browser";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading } = useUserStore();
-  const styles = useStylesWithTheme(getStyles);
+  const { login, isLoading, loginWithGoogle, isAuthenticated } = useUserStore();
 
+  const styles = useStylesWithTheme(getStyles);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/tabs");
+    }
+  }, [isAuthenticated]);
   const handleLogin = async () => {
     if (!email || !password) {
       return toast.error({
@@ -41,9 +51,60 @@ export default function LoginScreen() {
     }
     try {
       await login(email, password);
-      router.replace("/tabs");
-    } catch (e) {}
+    } catch {
+      // Erro tratado no store
+    }
   };
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    redirectUri: makeRedirectUri({
+      scheme: "com.matheudsp.tanquecheio",
+    }),
+  });
+
+  useEffect(() => {
+    const handleGoogleResponse = async () => {
+      if (!response) {
+        // Garantir que o loading seja falso se não houver resposta ainda
+        setIsGoogleLoading(false);
+        return;
+      }
+
+      if (response.type === "success") {
+        setIsGoogleLoading(true);
+        const { id_token } = response.params;
+        if (id_token) {
+          try {
+            await loginWithGoogle(id_token);
+          } catch (error) {
+            console.error("Falha no fluxo de login com Google:", error);
+          } finally {
+            setIsGoogleLoading(false);
+          }
+        } else {
+          toast.error({
+            title: "Erro de Autenticação",
+            description: "Não foi possível obter o token do Google.",
+          });
+          setIsGoogleLoading(false);
+        }
+      } else {
+        // Cancelado ou erro
+        setIsGoogleLoading(false);
+        if (response.type === "error") {
+          toast.error({
+            title: "Erro no login com Google",
+            description: response.error?.message || "Ocorreu um erro.",
+          });
+        }
+      }
+    };
+
+    handleGoogleResponse();
+  }, [response?.type]);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom", "top"]}>
@@ -88,18 +149,15 @@ export default function LoginScreen() {
                 isPassword
               />
               <TouchableOpacity
-                onPress={() => {
-                  router.push("/auth/forgot-password");
-                }}
+                onPress={() => router.push("/auth/forgot-password")}
               >
                 <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
               </TouchableOpacity>
-
               <Button
                 title="Entrar"
                 onPress={handleLogin}
                 loading={isLoading}
-                size="large"
+                size="medium"
                 fullWidth
                 style={{ marginTop: 24 }}
               />
@@ -115,25 +173,20 @@ export default function LoginScreen() {
               <SocialButton
                 type="google"
                 onPress={() => {
-                 
+                  promptAsync();
                 }}
+                disabled={!request || isLoading || isGoogleLoading}
+                loading={isGoogleLoading || isLoading}
               />
+
               {Platform.OS === "ios" && (
-                <SocialButton
-                  type="apple"
-                  onPress={() => {
-                  
-                  }}
-                />
+                <SocialButton type="apple" onPress={() => {}} />
               )}
             </View>
 
             <View style={styles.footer}>
               <TouchableOpacity
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                }}
+                style={{ flexDirection: "row", alignItems: "center" }}
                 onPress={() => router.push("/auth/register")}
               >
                 <Text style={styles.footerText}>Não tem uma conta?</Text>

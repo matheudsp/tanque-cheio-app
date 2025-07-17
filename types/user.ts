@@ -19,6 +19,7 @@ export interface LoginResponseDto {
     user: {
       id: string;
       name: string;
+      provider: string;
       email: string;
       created_at: string;
       updated_at: string;
@@ -59,6 +60,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  provider: string;
+  picture?: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

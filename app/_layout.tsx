@@ -12,6 +12,10 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
+import * as WebBrowser from "expo-web-browser";
+
+WebBrowser.maybeCompleteAuthSession();
+
 const OnboardingContext = createContext<{ onComplete: () => void } | null>(
   null
 );

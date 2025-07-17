@@ -154,7 +154,7 @@ export default function HomeScreen() {
             icon={<Heart size={20} color={themeState.colors.primary.main} />}
             onPress={() => router.push("/profile/favorites")}
           />
-          {!isLoadingFavorites ? (
+          {isLoadingFavorites ? (
             <FlashList
               data={Array(3).fill(0)}
               horizontal

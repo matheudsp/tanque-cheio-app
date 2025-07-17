@@ -52,13 +52,6 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <Stack.Screen
-        options={{
-          title: "Editar Perfil",
-          headerBackTitle: "Voltar",
-        }}
-      />
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}

@@ -13,7 +13,7 @@ export function useSession() {
 
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup = segments[0] === 'auth';
     const isAppRoot = segments.length === 0;
 
     if (isAuthenticated) {

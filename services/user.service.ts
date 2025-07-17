@@ -5,13 +5,11 @@ export const usersAPI = {
   getCurrentUser: async (): Promise<User> => {
     try {
       const data = await apiRequest("/v1/users/me");
-      // console.log('GET CURRENT USER',data)
-      // Adiciona uma verificação para garantir que os dados recebidos são válidos
+
       if (!data || !data.id) {
         throw new Error("Dados do usuário inválidos recebidos da API.");
       }
 
-      // Retorna diretamente os dados do usuário
       return data;
     } catch (error) {
       console.error("Get current user error:", error);
@@ -24,7 +22,6 @@ export const usersAPI = {
    */
   registerPushToken: async (tokenData: RegisterPushTokenDTO): Promise<void> => {
     try {
-  
       await apiRequest("/v1/push-notifications/tokens/register", {
         //
         method: "POST",

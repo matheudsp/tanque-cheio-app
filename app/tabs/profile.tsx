@@ -109,11 +109,11 @@ export default function ProfileScreen() {
             label: "Meus Alertas de Preço",
             onPress: () => router.push("/profile/favorites"),
           },
-          {
-            icon: <User size={20} color={themeState.colors.primary.main} />,
-            label: "Informações Pessoais",
-            onPress: () => router.push("/profile/personal-info"),
-          },
+          // {
+          //   icon: <User size={20} color={themeState.colors.primary.main} />,
+          //   label: "Informações Pessoais",
+          //   onPress: () => router.push("/profile/personal-info"),
+          // },
           {
             icon: <Settings size={20} color={themeState.colors.primary.main} />,
             label: "Preferências",
@@ -131,11 +131,11 @@ export default function ProfileScreen() {
       {
         title: "Outros",
         items: [
-          {
-            icon: <Bell size={20} color={themeState.colors.primary.main} />,
-            label: "Notificações",
-            onPress: () => router.push("/profile/notifications"),
-          },
+          // {
+          //   icon: <Bell size={20} color={themeState.colors.primary.main} />,
+          //   label: "Notificações",
+          //   onPress: () => router.push("/profile/notifications"),
+          // },
 
           {
             icon: <Wrench size={20} color={themeState.colors.primary.main} />,
@@ -197,9 +197,9 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               style={styles.editProfileButton}
-              onPress={() => router.push("/profile/edit")}
+              onPress={() => router.push("/profile")}
             >
-              <Text style={styles.editProfileText}>Editar perfil</Text>
+              <Text style={styles.editProfileText}>Meu perfil</Text>
             </TouchableOpacity>
           </View>
 

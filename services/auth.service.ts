@@ -38,6 +38,30 @@ export const authAPI = {
     }
   },
 
+  loginWithGoogle: async (idToken: string): Promise<LoginResponseDto> => {
+    try {
+      const response: LoginResponseDto = await apiRequest(
+        "/auth/google/login", 
+        {
+          method: "POST",
+          body: JSON.stringify({ idToken }), 
+        }
+      );
+
+      if (!response.data || !response.data.access_token) {
+        throw new Error(
+          "Resposta de login inválida: Token de acesso não recebido"
+        );
+      }
+
+      await saveTokenData(response);
+
+      return response;
+    } catch (error) {
+      console.error("Erro no login com Google:", error);
+      throw error;
+    }
+  },
   register: async (userData: RegisterUserDto): Promise<RegisterResponseDTO> => {
     try {
       // Convert userData to match backend expectations

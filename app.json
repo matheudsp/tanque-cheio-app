@@ -4,7 +4,7 @@
     "slug": "tanquecheio",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "tanquecheio",
+    "scheme": "com.matheudsp.tanquecheio",
     "newArchEnabled": true,
     "icon": "./assets/images/adaptive-foreground.png",
     "ios": {
@@ -23,6 +23,8 @@
     },
     "plugins": [
       "expo-router",
+      "expo-web-browser",
+      "expo-secure-store",
       [
         "expo-build-properties",
         {

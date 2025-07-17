@@ -23,14 +23,15 @@ interface UserState {
 
   // Actions
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string) => Promise<void>;
   register: (userData: RegisterUserDto) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<boolean>;
   resetPassword: (data: ResetPasswordDto) => Promise<boolean>;
-
   updateProfile: (userData: Partial<User>) => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   updatePreferences: (preferences: User["preferences"]) => Promise<void>;
+  fetchCurrentUser: () => Promise<void>;
   checkAuthOnInit: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
   setIsPremium: (isPremium: boolean) => void;
@@ -45,6 +46,7 @@ const convertLoginResponseToUser = (loginResponse: LoginResponseDto): User => {
     id: user.id,
     name: user.name,
     email: user.email,
+    provider: user.provider,
     created_at: user.created_at,
     updated_at: user.updated_at,
     deleted_at: user.deleted_at,
@@ -87,15 +89,14 @@ export const useUserStore = create<UserState>()(
       },
       togglePremiumStatus: () => {
         set((state) => ({ isPremium: !state.isPremium }));
-        const newStatus = !get().isPremium;
-        toast.info({
-          title: "Status Premium Alterado",
-          description: `Agora você ${
-            newStatus ? "É" : "NÃO é"
-          } um usuário Premium.`,
-        });
+        // const newStatus = !get().isPremium;
+        // toast.info({
+        //   title: "Status Premium Alterado",
+        //   description: `Agora você ${
+        //     newStatus ? "É" : "NÃO é"
+        //   } um usuário Premium.`,
+        // });
       },
-
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
@@ -136,6 +137,53 @@ export const useUserStore = create<UserState>()(
           });
 
           console.error("Erro no login:", error);
+          set({
+            error: errorMessage,
+            isLoading: false,
+            isAuthenticated: false,
+            user: null,
+          });
+          throw error;
+        }
+      },
+
+      loginWithGoogle: async (idToken: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response: LoginResponseDto = await authAPI.loginWithGoogle(
+            idToken
+          );
+
+          if (
+            !response.data ||
+            !response.data.access_token ||
+            !response.data.user
+          ) {
+            throw new Error("Resposta de login inválida");
+          }
+
+          const userData = convertLoginResponseToUser(response);
+
+          set({
+            user: userData,
+            isLoading: false,
+            isAuthenticated: true,
+            error: null,
+          });
+
+          await _registerPushToken();
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "Não foi possível autenticar com o Google.";
+
+          toast.error({
+            title: "Falha na Autenticação",
+            description: errorMessage,
+          });
+
+          console.error("Erro no login com Google:", error);
           set({
             error: errorMessage,
             isLoading: false,
@@ -345,6 +393,19 @@ export const useUserStore = create<UserState>()(
             isLoading: false,
           });
           throw error;
+        }
+      },
+      fetchCurrentUser: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const currentUser = await usersAPI.getCurrentUser();
+          set({ user: currentUser, isLoading: false });
+        } catch (error) {
+          console.error("Failed to fetch user data:", error);
+          set({
+            error: "Não foi possível carregar os dados do usuário.",
+            isLoading: false,
+          });
         }
       },
 
